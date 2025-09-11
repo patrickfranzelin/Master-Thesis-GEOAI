@@ -1,8 +1,9 @@
 # --- PROJ/GDAL wie in deinem Skript ---
 import os
 CONDA = os.environ.get("CONDA_PREFIX", r"C:\Users\franz\miniconda3\envs\geoai")
-os.environ.setdefault("PROJ_LIB",  fr"{CONDA}\Library\share\proj")
-os.environ.setdefault("GDAL_DATA", fr"{CONDA}\Library\share\gdal")
+os.environ["PROJ_LIB"]  = fr"{CONDA}\Library\share\proj"
+os.environ["GDAL_DATA"] = fr"{CONDA}\Library\share\gdal"
+
 
 import warnings, torch, cv2, numpy as np, rasterio
 from rasterio.windows import Window
@@ -16,8 +17,8 @@ from tqdm import tqdm
 from transformers import AutoImageProcessor, SegformerForSemanticSegmentation
 
 # =================== USER PARAMS ===================
-GEOTIFF_PATH = r"C:\git\Master-Thesis-GEOAI\data\ortho_4.tif"
-OUT_GPKG     = r"C:\git\Master-Thesis-GEOAI\outputs\buildings_segformer.gpkg"
+GEOTIFF_PATH = r"D:\git\Master-Thesis-GEOAI\data\ortho_4.tif"
+OUT_GPKG     = r"D:\git\Master-Thesis-GEOAI\outputs\buildings_segformer.gpkg"
 LAYER_NAME   = "buildings_segformer"
 
 # HF-Checkpoint (zum Testen ADE20K; austauschbar)
@@ -173,7 +174,18 @@ def main():
         print("ℹ️ Keine Gebäude gefunden – anderes Checkpoint versuchen oder Schwellen lockern.")
         return
 
-    gdf = gpd.GeoDataFrame(attrs[:len(geoms)], geometry=geoms, crs=crs)
+    # Stelle sicher: nur echte Einzel-Geometrien in `geoms`
+    flat_geoms = []
+    for g in geoms:
+        if isinstance(g, list):
+            flat_geoms.extend(g)
+        else:
+            flat_geoms.append(g)
+
+    valid_geoms = [g for g in flat_geoms if g and hasattr(g, "is_valid") and g.is_valid and not g.is_empty]
+    valid_attrs = attrs[:len(valid_geoms)]
+    gdf = gpd.GeoDataFrame(valid_attrs, geometry=valid_geoms, crs=crs)
+
     gdf["__wkb__"] = gdf.geometry.apply(lambda g: g.wkb)
     gdf = gdf.drop_duplicates(subset="__wkb__").drop(columns="__wkb__")
     os.makedirs(os.path.dirname(OUT_GPKG), exist_ok=True)

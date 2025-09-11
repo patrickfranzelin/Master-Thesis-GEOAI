@@ -1,15 +1,11 @@
 # --- PROJ/GDAL Pfade zuerst setzen (ganz oben!) ---
 import os
 CONDA = os.environ.get("CONDA_PREFIX", r"C:\Users\franz\miniconda3\envs\geoai")
-os.environ.setdefault("PROJ_LIB",  fr"{CONDA}\Library\share\proj")
-os.environ.setdefault("GDAL_DATA", fr"{CONDA}\Library\share\gdal")
+os.environ["PROJ_LIB"] = fr"{CONDA}\Library\share\proj"
+os.environ["GDAL_DATA"] = fr"{CONDA}\Library\share\gdal"
 
-# pyproj explizit auf den Datenordner zeigen (falls nötig)
-try:
-    from pyproj import datadir as _pd
-    _pd.set_data_dir(os.environ["PROJ_LIB"])
-except Exception:
-    pass
+from pyproj import datadir as _pd
+_pd.set_data_dir(os.environ["PROJ_LIB"])
 
 import warnings
 import rasterio
@@ -19,10 +15,10 @@ import matplotlib.pyplot as plt
 
 
 # --- Pfade anpassen ---
-GEOTIFF_PATH = r"D:\Masterarbeit\data\ortho_4.tif"
-GPKG_PATH    = r"D:\Masterarbeit\outputs\buildings_sam_tiles.gpkg"
-LAYER_NAME   = "buildings_sam"
-OUT_PNG      = r"D:\Masterarbeit\outputs\overlay_preview.png"  # oder None, um nicht zu speichern
+GEOTIFF_PATH = r"D:\git\Master-Thesis-GEOAI\data\ortho_4.tif"
+GPKG_PATH    = r"D:\git\Master-Thesis-GEOAI\outputs\buildings_segformer.gpkg"
+LAYER_NAME   = "buildings_segformer"
+OUT_PNG      = r"D:\git\Master-Thesis-GEOAI\outputs\overlay_preview_seg.png"  # oder None, um nicht zu speichern
 
 # --- Anzeige-Parameter ---
 VECTOR_EDGEWIDTH = 1.2
