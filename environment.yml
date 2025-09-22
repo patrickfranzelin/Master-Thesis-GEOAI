@@ -1,0 +1,35 @@
+name: geoai-qa
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  # Core Python
+  - python=3.11
+
+  # Geo stack
+  - geopandas
+  - shapely
+  - rasterio
+  - fiona
+  - pyproj
+  - gdal
+  - rtree
+
+  # Data science / utils
+  - numpy
+  - pandas
+  - scikit-image
+  - matplotlib
+
+  # Image + cv
+  - pillow
+  - opencv
+
+  # Jupyter (optional, für Notebooks)
+  - jupyterlab
+
+  # Install pip packages
+  - pip
+  - pip:
+      - openai>=1.30
+      - tqdm
