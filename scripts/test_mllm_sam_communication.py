@@ -21,8 +21,8 @@ from segment_anything import sam_model_registry, SamPredictor
 # ---------- USER PARAMS ----------
 BASE_DIR     = Path(__file__).resolve().parent.parent
 GEOTIFF_PATH = str(BASE_DIR / "data" / "ortho_4.tif")
-IN_GPKG      = str(BASE_DIR / "outputs" / "buildings_sam_tiles.gpkg")
-IN_LAYER     = "buildings_sam"
+IN_GPKG      = str(BASE_DIR / "outputs" / "buildings_segformer.gpkg")
+IN_LAYER     = "buildings_segformer"
 OUT_GPKG     = str(BASE_DIR / "outputs" / "buildings_mllm_corrected.gpkg")
 OUT_LAYER    = "buildings_mllm"
 
@@ -41,33 +41,87 @@ DEBUG_CHIP_DIR = BASE_DIR / "outputs" / "debug_chips"
 from openai import OpenAI
 client = OpenAI()  # reads OPENAI_API_KEY from env
 
-SYSTEM_PROMPT = (
-    "You are a strict QA inspector for building footprints in orthoimagery. "
-    "Given an RGB chip with a red outline of the candidate polygon, "
-    "you must judge the quality VERY strictly. "
-    "If the polygon does not align *perfectly* with the visible roof edges "
-    "(e.g. shifted, rounded corners, wrong angle, partial roof), "
-    "you MUST add a fix with {\"op\":\"mask_refine\",\"enabled\":true} "
-    "in the suggested_fix list, in addition to any other fixes. "
-    "Do not accept polygons that are 'close enough'. "
-    "Return ONLY valid JSON with fields:\n"
-    "{"
-    "\"is_building\": true/false,"
-    "\"confidence\": 0..1,"
-    "\"issues\": [\"shadow_inclusion\",\"vegetation_overlap\",\"road_or_path\","
-    "\"open_polygon\",\"partial_roof\",\"shape_inaccurate\",\"not_a_building\","
-    "\"too_small\",\"missing_part\",\"other\"],"
-    "\"suggested_fix\": [ ... ]"
-    "}"
-)
+SYSTEM_PROMPT = """
+You are a strict QA inspector for building footprints in orthoimagery.
+
+TASK
+- You receive an RGB chip (satellite/ortho) with a red outline showing a candidate footprint.
+- Judge the candidate VERY strictly: accept only if the outline matches the visible roof edges precisely
+  (no shift, no rounded corners, correct angles, no partial roof).
+
+OUTPUT
+- Return ONLY a single valid JSON object (no extra text). Use exactly this schema and no extra keys:
+
+{
+  "is_building": true or false,
+  "confidence": <float from 0.0 to 1.0>,
+  "issues": [
+    "shadow_inclusion","vegetation_overlap","road_or_path","open_polygon",
+    "partial_roof","shape_inaccurate","not_a_building","too_small","missing_part","other"
+  ],
+  "suggested_fix": [
+    // If is_building=true, ALWAYS include at least:
+    {"op":"mask_refine","enabled": true}
+    // Additional optional fixes allowed:
+    // {"op":"buffer","meters": <float>},
+    // {"op":"simplify","tolerance_m": <float>},
+    // {"op":"remove_small_components","min_area_m2": <float>},
+    // {"op":"erode","meters": <float>}, {"op":"dilate","meters": <float>},
+    // {"op":"snap_to_rect"}
+  ],
+  "positive_points": [[x,y], ...],
+  "negative_points": [[x,y], ...]
+}
+
+RULES
+- Coordinates in positive_points/negative_points are pixel positions (x,y) in the provided chip
+  (origin top-left, x to the right, y down). Integers preferred.
+- The chip includes a visible white grid with labels (step = 50 px). Use these labels to help place coordinates correctly.
+- If and only if is_building = true:
+    * Provide at least 4 positive_points placed ON the roof interior.
+    * Provide at least 4 negative_points clearly OUTSIDE the building
+      (on vegetation, road, bare ground or shadows off the roof). Negative points must NOT be on the roof.
+    * Include {"op":"mask_refine","enabled": true} in suggested_fix.
+- If is_building = false:
+    * Set confidence low (<= 0.3), list relevant issues,
+      and set positive_points = [] and negative_points = [] (or omit them).
+- Be conservative: if unsure, mark is_building=false.
+- Do not invent geometry outside what is visible; do not output values out of the chip bounds.
+- Output must be valid JSON only (no comments, no trailing commas, no prose).
+"""
 
 
-def ask_mllm_for_fixes(img_b64_png: str) -> dict:
-    """Send one chip to the MLLM and get JSON fixes back."""
+def add_grid_overlay(img, step=50):
+    """Draw a white grid with labels every <step> pixels on the chip."""
+    h, w, _ = img.shape
+    overlay = img.copy()
+    for x in range(0, w, step):
+        cv2.line(overlay, (x, 0), (x, h), (255, 255, 255), 1)
+        cv2.putText(overlay, str(x), (x+2, 12),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0,255,255), 1)
+    for y in range(0, h, step):
+        cv2.line(overlay, (0, y), (w, y), (255, 255, 255), 1)
+        cv2.putText(overlay, str(y), (2, y+12),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0,255,255), 1)
+    return overlay
+
+
+def tiles_to_pixels(tiles, step=50):
+    points = []
+    for tx, ty in tiles:
+        px = tx
+        py = ty
+        points.append([px, py])
+    return np.array(points, dtype=np.float32)
+
+def ask_mllm_for_fixes(img_b64_png: str, out_json_path: Path) -> dict:
+    """Send one chip to the MLLM and get JSON fixes back, also save to disk."""
     msg = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": [
-            {"type": "text", "text": "Inspect the footprint and respond with JSON."},
+            {"type": "text", "text": "Inspect the footprint and respond with JSON. "
+                                     "If possible, also return 'positive_points' and 'negative_points' "
+                                     "as pixel coordinates (x,y) in the image chip."},
             {"type": "image_url", "image_url": {"url": "data:image/png;base64," + img_b64_png}}
         ]}
     ]
@@ -78,10 +132,73 @@ def ask_mllm_for_fixes(img_b64_png: str) -> dict:
         response_format={"type": "json_object"},
     )
     try:
-        return json.loads(resp.choices[0].message.content)
+        result = json.loads(resp.choices[0].message.content)
+        # Save raw JSON to file
+        with open(out_json_path, "w", encoding="utf-8") as f:
+            json.dump(result, f, indent=2)
+        return result
     except Exception as e:
         print(f"[WARN] Failed to parse model JSON: {e}")
         return {"is_building": True, "confidence": 0.5, "issues": [], "suggested_fix": []}
+
+
+def run_sam_refine(chip_rgb_uint8, poly_world, chip_transform,
+                   sam_ckpt_path: str, model_type: str = "vit_b",
+                   mllm_result: dict = None):
+    """
+    Verfeinert das Polygon mit SAM.
+    Nutzt MLLM positive/negative Punkte, falls vorhanden.
+    """
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    sam = sam_model_registry[model_type](checkpoint=sam_ckpt_path)
+    sam.to(device=device)
+    predictor = SamPredictor(sam)
+    predictor.set_image(chip_rgb_uint8)
+
+    box_xyxy = polygon_to_chip_bbox(poly_world, chip_transform)
+
+    # ---- Punkte sammeln ----
+    if mllm_result:
+        pos_px = np.array([[float(x), float(y)] for x, y in mllm_result.get("positive_points", [])], dtype=np.float32)
+        neg_px = np.array([[float(x), float(y)] for x, y in mllm_result.get("negative_points", [])], dtype=np.float32)
+
+    else:
+        pos_world = sample_points_in_polygon(poly_world, n=8) or [poly_world.representative_point().coords[0]]
+        pos_px = project_xy_to_chip(pos_world, chip_transform)
+        outer = poly_world.buffer(0.7)
+        ring = outer.difference(poly_world)
+        neg_world = sample_points_in_polygon(ring, n=8) if not ring.is_empty else []
+        neg_px = project_xy_to_chip(neg_world, chip_transform) if neg_world else np.empty((0, 2), np.float32)
+
+    if len(pos_px) == 0 and box_xyxy is None:
+        return None
+
+    point_coords = np.vstack([pos_px, neg_px]) if len(neg_px) else pos_px
+    point_labels = np.hstack([np.ones(len(pos_px), dtype=np.int32),
+                              np.zeros(len(neg_px), dtype=np.int32)]) if len(neg_px) else np.ones(len(pos_px), np.int32)
+
+    masks, scores, _ = predictor.predict(
+        point_coords=point_coords if len(point_coords) else None,
+        point_labels=point_labels if len(point_coords) else None,
+        box=None,
+        multimask_output=False,
+    )
+    if masks is None or len(masks) == 0:
+        return None
+
+    mask = (masks[0].astype(np.uint8) > 0).astype(np.uint8)
+
+    # Debug speichern
+    debug_mask = (mask * 255).astype(np.uint8)
+    mask_img = Image.fromarray(debug_mask)
+    mask_img.save(f"{DEBUG_CHIP_DIR}/poly_{random.randint(0, 9999)}_mask.png")
+
+    overlay = chip_rgb_uint8.copy()
+    overlay[mask > 0] = (255, 0, 0)
+    Image.fromarray(overlay).save(f"{DEBUG_CHIP_DIR}/poly_{random.randint(0, 9999)}_overlay.png")
+
+    return mask_to_polygon(mask, chip_transform)
+
 
 # ---- utilities ----
 def to_png_b64(arr_rgb_uint8) -> str:
@@ -181,73 +298,14 @@ def project_xy_to_chip(points, chip_transform):
         px, py = inv * (x, y)
         out.append([float(px), float(py)])
     return np.array(out, dtype=np.float32)
+def save_mllm_points(chip_rgb, pos_px, neg_px, out_path):
+    img = chip_rgb.copy()
+    for x, y in pos_px.astype(int):
+        cv2.circle(img, (x, y), 4, (0,255,0), -1)  # grün = positiv
+    for x, y in neg_px.astype(int):
+        cv2.circle(img, (x, y), 4, (0,0,255), -1)  # rot = negativ
+    Image.fromarray(img).save(out_path)
 
-def run_sam_refine(chip_rgb_uint8, poly_world, chip_transform, sam_ckpt_path: str, model_type: str = "vit_b"):
-    """
-    Verfeinert das gegebene Polygon mit SAM:
-    - Prompt: Bounding Box + positive Punkte im Inneren, negative Punkte knapp außerhalb.
-    - Rückgabe: neues (Multi)Polygon in Weltkoordinaten oder None.
-    """
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    # 1) SAM laden
-    sam = sam_model_registry[model_type](checkpoint=sam_ckpt_path)
-    sam.to(device=device)
-    predictor = SamPredictor(sam)
-
-    # 2) Bild setzen (SAM erwartet RGB uint8)
-    predictor.set_image(chip_rgb_uint8)
-
-    # 3) Box + Punkte aus Polygon ableiten (alles in Chip-Pixelcoords)
-    box_xyxy = polygon_to_chip_bbox(poly_world, chip_transform)
-
-    # positive Punkte im Polygon
-    pos_world = sample_points_in_polygon(poly_world, n=8) or [poly_world.representative_point().coords[0]]
-    pos_px = project_xy_to_chip(pos_world, chip_transform)
-
-    # negative Punkte: in einem schmalen Außenring
-    outer = poly_world.buffer(0.7)  # ~0.7m – bei 10cm GSD ~7 px
-    ring = outer.difference(poly_world)
-    neg_world = sample_points_in_polygon(ring, n=8) if not ring.is_empty else []
-    neg_px = project_xy_to_chip(neg_world, chip_transform) if neg_world else np.empty((0, 2), np.float32)
-
-    if len(pos_px) == 0 and box_xyxy is None:
-        return None
-
-    point_coords = np.vstack([pos_px, neg_px]) if len(neg_px) else pos_px
-    point_labels = np.hstack([np.ones(len(pos_px), dtype=np.int32),
-                              np.zeros(len(neg_px), dtype=np.int32)]) if len(neg_px) else np.ones(len(pos_px), np.int32)
-
-    # 4) SAM vorhersagen
-    masks, scores, _ = predictor.predict(
-        point_coords=point_coords if len(point_coords) else None,
-        point_labels=point_labels if len(point_coords) else None,
-        box=box_xyxy.astype(np.float32),
-        multimask_output=False,
-    )
-    if masks is None or len(masks) == 0:
-        return None
-
-    mask = (masks[0].astype(np.uint8) > 0).astype(np.uint8)
-
-    # --- DEBUG: Maske speichern ---
-    debug_mask = (mask * 255).astype(np.uint8)  # 0/255 Bild
-    mask_img = Image.fromarray(debug_mask)
-    mask_img.save(f"{DEBUG_CHIP_DIR}/poly_{random.randint(0, 9999)}_mask.png")
-
-    # optional: Overlay auf RGB
-    overlay = chip_rgb_uint8.copy()
-    overlay[mask > 0] = (255, 0, 0)  # rot einfärben
-    Image.fromarray(overlay).save(f"{DEBUG_CHIP_DIR}/poly_{random.randint(0, 9999)}_overlay.png")
-
-    if masks is None or len(masks) == 0:
-        return None
-
-    mask = (masks[0].astype(np.uint8) > 0).astype(np.uint8)  # HxW, {0,1}
-
-    # 5) Maske zurück in Welt-Geometrie
-    new_geom = mask_to_polygon(mask, chip_transform)
-    return new_geom
 # ---- main loop ----
 def main():
     warnings.filterwarnings("ignore", category=UserWarning)
@@ -293,11 +351,10 @@ def main():
             print(f"Polygon #{idx} | centroid=({centroid.x:.1f}, {centroid.y:.1f}), area={poly.area:.1f}")
 
             # clear debug file on first run
-            if idx == 0 and os.path.exists("outputs/debug_polygons.gpkg"):
-                os.remove("outputs/debug_polygons.gpkg")
-
-            debug = gpd.GeoDataFrame(geometry=[poly], crs=gdf.crs)
-            debug.to_file("outputs/debug_polygons.gpkg", layer="test5", driver="GPKG", mode="a")
+            # Debug sammeln (am Ende einmal schreiben)
+            if "debug_geoms" not in locals():
+                debug_geoms = []
+            debug_geoms.append(poly)
 
             if poly is None or poly.is_empty:
                 if idx % LOG_EVERY_N == 0:
@@ -330,20 +387,28 @@ def main():
                     )
 
                 poly_xy = polygon_to_chip_pixels(poly, chip_transform)
+
                 chip = render_chip(rgb, poly_xy, draw_outline=True)
-                # Save debug chip
+
+                # ---- Grid overlay für MLLM ----
+                chip_grid = add_grid_overlay(chip, step=50)
+
+                # Save debug chip mit Grid
                 chip_path = DEBUG_CHIP_DIR / f"poly_{i}.png"
-                Image.fromarray(chip).save(chip_path)
-                print(f"  - Saved debug chip: {chip_path}")
+                Image.fromarray(chip_grid).save(chip_path)
+                print(f"  - Saved debug chip with grid: {chip_path}")
 
-                centroid = poly.centroid
-                print(
-                    f"Polygon #{i} (orig_id={idx}) | centroid=({centroid.x:.1f}, {centroid.y:.1f}), area={poly.area:.1f}")
-
-                img_b64 = to_png_b64(chip)
+                # Bild für MLLM als Base64
+                img_b64 = to_png_b64(chip_grid)
 
                 # ---- MLLM call
-                result = ask_mllm_for_fixes(img_b64)
+                result = ask_mllm_for_fixes(img_b64, DEBUG_CHIP_DIR / f"poly_{i}_mllm.json")
+                pos_px = np.array(result.get("positive_points", []), dtype=np.int32)
+                neg_px = np.array(result.get("negative_points", []), dtype=np.int32)
+                if len(pos_px) or len(neg_px):
+                    save_mllm_points(chip, pos_px, neg_px, DEBUG_CHIP_DIR / f"poly_{i}_points.png")
+
+                print(f"  - MLLM result (conf={result.get('confidence', 0):.2f}, issues={result.get('issues', [])})")
                 if SHOW_FIX_JSON:
                     print(f"  - #{idx}: MLLM JSON: {result}")
 
@@ -374,8 +439,11 @@ def main():
                                 # SAM-Checkpoint (anpassen falls Pfad anders)
                                 sam_ckpt = r"C:\git\Master-Thesis-GEOAI\sam_vit_b.pth"
                                 if os.path.exists(sam_ckpt):
-                                    new_geom = run_sam_refine(chip, geom, chip_transform, sam_ckpt_path=sam_ckpt,
-                                                              model_type="vit_b")
+                                    new_geom = run_sam_refine(chip, geom, chip_transform,
+                                                              sam_ckpt_path=sam_ckpt,
+                                                              model_type="vit_b",
+                                                              mllm_result=result)
+
                                     if new_geom and not new_geom.is_empty:
                                         geom = new_geom
                                         # Maske nachziehen für evtl. weitere Morphologie-Ops
@@ -442,8 +510,25 @@ def main():
 
     out = gpd.GeoDataFrame(out_rows, geometry=out_geoms, crs=gdf.crs)
     out.to_file(OUT_GPKG, layer=OUT_LAYER, driver="GPKG")
+    # Debug-Geometrien einmalig speichern
+    if 'debug_geoms' in locals() and debug_geoms:
+        dbg_path = BASE_DIR / "outputs" / "debug_polygons.gpkg"
+        if dbg_path.exists():
+            dbg_path.unlink()
+        gpd.GeoDataFrame(geometry=debug_geoms, crs=gdf.crs).to_file(dbg_path, layer="test5", driver="GPKG")
+        print(f"[INFO] Wrote {len(debug_geoms)} debug polygons → {dbg_path}")
 
     print(f"[7/7] ✅ Done. Wrote {len(out)} features → {OUT_GPKG} (layer={OUT_LAYER})")
+
+    # Overlay finales Polygon auf Chip
+    final_img = chip.copy()
+    if geom and not geom.is_empty:
+        # transform Polygon nach Chip-Pixelcoords
+        poly_xy = polygon_to_chip_pixels(geom, chip_transform)
+        drw = ImageDraw.Draw(Image.fromarray(final_img))
+        drw.line(poly_xy + [poly_xy[0]], fill=(0, 255, 255), width=2)  # cyan = final
+        Image.fromarray(final_img).save(DEBUG_CHIP_DIR / f"poly_{i}_final.png")
+
 
 if __name__ == "__main__":
     main()
