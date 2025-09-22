@@ -3,5 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="C:\Users\franz\miniconda3\envs\geoai" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="C:\Users\franz\miniconda3\envs\geoai" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="geoai-qa" project-jdk-type="Python SDK" />
 </project>
