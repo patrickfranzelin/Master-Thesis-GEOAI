@@ -94,26 +94,18 @@ Two-stage pipeline (SAM4MLLM) → MLLM proposes, SAM segments.
 
 Vision-language grounding (Kosmos-2) → direct text-to-pixels.
 
+
 # QA Pipeline Flow
 
 ```mermaid
 flowchart TD
-
-    A[Input: Orthophoto + SegFormer/SAM polygons] --> B[Clip chip around polygon]
-
+    A[Input: Orthophoto + SegFormer or SAM polygons] --> B[Clip chip around polygon]
     B --> C[Overlay polygon + grid for QA chip]
-
-    C --> D[MLLM (GPT-4V/LLaVA)]
-    D -->|JSON output: is_building, issues, pos/neg points| E{Valid building?}
-
+    C --> D[MLLM step: e.g. GPT-4V, LLaVA]
+    D -->|JSON with is_building, issues, points| E{Valid building?}
     E -->|No| F[Discard polygon]
-    E -->|Yes| G[Run SAM refinement with points/mask]
-
-    G --> H[Apply fixes: buffer, simplify, snap_to_rect, erode/dilate]
-
-    H --> I[Validate geometry: area, topology]
-
-    I -->|Valid| J[Save to GeoPackage]
+    E -->|Yes| G[Run SAM refinement with points or mask]
+    G --> I[Validate geometry: area, topology]
+     -->|Valid| J[Save to GeoPackage]
     I -->|Invalid| F
-
-    J --> K[Final Debug Outputs (mask, overlay, refined polygon)]
+    J --> K[Final debug outputs: mask, overlay, refined polygon]
