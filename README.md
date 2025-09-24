@@ -12,7 +12,7 @@ Below are examples showing the three main steps of the proposed QA pipeline:
 
 | Raw Extraction         | MLLM QA          | Refined Result        |
 |------------------------|------------------|-----------------------|
-| ![raw](Theory/img.png) | ![qa](theory/img_2.png) | ![refined](theory/img_1.png) |
+| ![raw](Theory/img.png) | ![qa](Theory/img_2.png) | ![refined](Theory/img_1.png) |
 
 ---
 
@@ -20,7 +20,7 @@ Below are examples showing the three main steps of the proposed QA pipeline:
 
 | Raw Extraction    | MLLM QA          | Refined Result        |
 |-------------------|------------------|-----------------------|
-| ![raw](theory/img_4.png) | ![qa](theory/img_5.png) | ![refined](theory/img_3.png) |
+| ![raw](Theory/img_4.png) | ![qa](Theory/img_5.png) | ![refined](Theory/img_3.png) |
 
 ---
 
@@ -28,7 +28,7 @@ Below are examples showing the three main steps of the proposed QA pipeline:
 
 | Raw Extraction    | MLLM QA | Refined Result        |
 |-------------------|---------|-----------------------|
-| ![raw](theory/img_6.png) | ![qa](theory/poly_4_points.png) | ![refined](theory/img_7.png) |
+| ![raw](Theory/img_6.png) | ![qa](Theory/poly_4_points.png) | ![refined](Theory/img_7.png) |
 
 ---
 
