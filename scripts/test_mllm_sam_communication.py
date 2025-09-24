@@ -26,7 +26,7 @@ IN_LAYER     = "buildings_segformer"
 OUT_GPKG     = str(BASE_DIR / "outputs" / "buildings_mllm_corrected.gpkg")
 OUT_LAYER    = "buildings_mllm"
 
-MODEL        = "gpt-4o-mini"   # upgrade to gpt-4o for higher quality
+MODEL        = "gpt-4.1"   # upgrade to gpt-4o for higher quality
 CHIP_SIZE_PX = 384             # 256–512 is a good range
 PAD_METERS   = 3.0
 CONF_DROP    = 0.20
@@ -42,52 +42,37 @@ from openai import OpenAI
 client = OpenAI()  # reads OPENAI_API_KEY from env
 
 SYSTEM_PROMPT = """
-You are a strict QA inspector for building footprints in orthoimagery.
+You are a QA inspector for building footprints in orthoimagery.
 
 TASK
-- You receive an RGB chip (satellite/ortho) with a red outline showing a candidate footprint.
-- Judge the candidate VERY strictly: accept only if the outline matches the visible roof edges precisely
-  (no shift, no rounded corners, correct angles, no partial roof).
+Step 1: Decide if the object in the picture is a building roof or not.
+Step 2: If it is a building, check if the red outline has mistakes 
+        (misaligned edges, partial roof, wrong shape, etc.).
 
 OUTPUT
-- Return ONLY a single valid JSON object (no extra text). Use exactly this schema and no extra keys:
+Return ONLY valid JSON in this schema:
 
 {
   "is_building": true or false,
-  "confidence": <float from 0.0 to 1.0>,
   "issues": [
+    // empty list if no problems,
+    // else choose from:
     "shadow_inclusion","vegetation_overlap","road_or_path","open_polygon",
-    "partial_roof","shape_inaccurate","not_a_building","too_small","missing_part","other"
+    "partial_roof","shape_inaccurate","too_small","missing_part","other"
   ],
-  "suggested_fix": [
-    // If is_building=true, ALWAYS include at least:
-    {"op":"mask_refine","enabled": true}
-    // Additional optional fixes allowed:
-    // {"op":"buffer","meters": <float>},
-    // {"op":"simplify","tolerance_m": <float>},
-    // {"op":"remove_small_components","min_area_m2": <float>},
-    // {"op":"erode","meters": <float>}, {"op":"dilate","meters": <float>},
-    // {"op":"snap_to_rect"}
-  ],
-  "positive_points": [[x,y], ...],
-  "negative_points": [[x,y], ...]
+  "positive_points": [[x,y], ...],   // optional, only if issues != []
+  "negative_points": [[x,y], ...]    // optional, only if issues != []
 }
 
 RULES
-- Coordinates in positive_points/negative_points are pixel positions (x,y) in the provided chip
-  (origin top-left, x to the right, y down). Integers preferred.
-- The chip includes a visible white grid with labels (step = 50 px). Use these labels to help place coordinates correctly.
-- If and only if is_building = true:
-    * Provide at least 4 positive_points placed ON the roof interior.
-    * Provide at least 4 negative_points clearly OUTSIDE the building
-      (on vegetation, road, bare ground or shadows off the roof). Negative points must NOT be on the roof.
-    * Include {"op":"mask_refine","enabled": true} in suggested_fix.
-- If is_building = false:
-    * Set confidence low (<= 0.3), list relevant issues,
-      and set positive_points = [] and negative_points = [] (or omit them).
-- Be conservative: if unsure, mark is_building=false.
-- Do not invent geometry outside what is visible; do not output values out of the chip bounds.
-- Output must be valid JSON only (no comments, no trailing commas, no prose).
+- If is_building = false → issues = ["not_a_building"], positive_points = [], negative_points = [].
+- If is_building = true and issues = [] → perfect match, no points needed.
+- If is_building = true and issues != []:
+    * Provide at least 4 positive_points clearly INSIDE the roof.
+    * Provide at least 4 negative_points clearly OUTSIDE (on vegetation, roads, shadows, bare ground).
+    * Coordinates are pixel positions (x,y) in the chip (origin top-left).
+    * Use the visible white grid with labels (step = 50 px) to place coordinates consistently.
+- Output must be valid JSON only (no extra text, no comments).
 """
 
 
@@ -318,7 +303,8 @@ def main():
 
     print(f"[2/7] Reading polygons from {IN_GPKG} (layer='{IN_LAYER}') ...")
     gdf = gpd.read_file(IN_GPKG, layer=IN_LAYER)
-    gdf = gdf.sample(5, random_state=42)
+    #gdf = gdf.sample(5, random_state=42)
+    gdf = gdf.sample(5)
     n = len(gdf)
     if n == 0:
         print("[INFO] No polygons to QA. Exiting.")
@@ -361,12 +347,17 @@ def main():
                     print(f"  - #{idx}: skipped (empty geometry)")
                 continue
 
-            # chip bounds
+            # chip bounds – enlarge relative to polygon size
             minx, miny, maxx, maxy = poly.bounds
-            bx = max(minx - PAD_METERS, src.bounds.left)
-            by = max(miny - PAD_METERS, src.bounds.bottom)
-            Bx = min(maxx + PAD_METERS, src.bounds.right)
-            By = min(maxy + PAD_METERS, src.bounds.top)
+            poly_w = maxx - minx
+            poly_h = maxy - miny
+            pad_x = max(PAD_METERS, 0.5 * poly_w)  # at least PAD_METERS, else half the width
+            pad_y = max(PAD_METERS, 0.5 * poly_h)
+
+            bx = max(minx - pad_x, src.bounds.left)
+            by = max(miny - pad_y, src.bounds.bottom)
+            Bx = min(maxx + pad_x, src.bounds.right)
+            By = min(maxy + pad_y, src.bounds.top)
 
             try:
                 window = from_bounds(bx, by, Bx, By, transform=src.transform)
@@ -388,7 +379,8 @@ def main():
 
                 poly_xy = polygon_to_chip_pixels(poly, chip_transform)
 
-                chip = render_chip(rgb, poly_xy, draw_outline=True)
+                chip_clean = render_chip(rgb, poly_xy, draw_outline=False)  # no red outline
+                chip = render_chip(rgb, poly_xy, draw_outline=True)  # for debug & MLLM
 
                 # ---- Grid overlay für MLLM ----
                 chip_grid = add_grid_overlay(chip, step=50)
@@ -439,7 +431,7 @@ def main():
                                 # SAM-Checkpoint (anpassen falls Pfad anders)
                                 sam_ckpt = r"C:\git\Master-Thesis-GEOAI\sam_vit_b.pth"
                                 if os.path.exists(sam_ckpt):
-                                    new_geom = run_sam_refine(chip, geom, chip_transform,
+                                    new_geom = run_sam_refine(chip_clean, geom, chip_transform,
                                                               sam_ckpt_path=sam_ckpt,
                                                               model_type="vit_b",
                                                               mllm_result=result)
@@ -475,6 +467,25 @@ def main():
                     except Exception as e:
                         print(f"    [WARN] Failed to apply fix {fx}: {e}")
 
+                # ---- Always run SAM if issues exist and points provided
+                if result.get("issues") and (len(pos_px) or len(neg_px)):
+                    sam_ckpt = r"C:\git\Master-Thesis-GEOAI\sam_vit_b.pth"
+                    if os.path.exists(sam_ckpt):
+                        new_geom = run_sam_refine(
+                            chip, geom, chip_transform,
+                            sam_ckpt_path=sam_ckpt,
+                            model_type="vit_b",
+                            mllm_result=result
+                        )
+                        if new_geom and not new_geom.is_empty:
+                            geom = new_geom
+                            mask = rasterize_polygon(geom, out_shape=chip.shape[:2],
+                                                     transform=chip_transform)
+                            print("    [SAM] refined mask applied (issues+points)")
+                    else:
+                        print(f"    [WARN] SAM checkpoint not found at {sam_ckpt} – skip mask_refine")
+
+                # ---- Validate geometry
                 if not geom or geom.is_empty:
                     if idx % LOG_EVERY_N == 0:
                         print(f"  - #{idx}: empty after fixes → skip")
@@ -483,6 +494,7 @@ def main():
                     if idx % LOG_EVERY_N == 0:
                         print(f"  - #{idx}: too small after fixes (area={geom.area:.2f})")
                     continue
+
 
                 out_geoms.append(geom)
                 out_rows.append(row.drop(labels=["geometry"], errors="ignore").to_dict())
