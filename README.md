@@ -1,4 +1,13 @@
-# Intermediate Results: Building Footprint QA
+# Interim Results: LLM-Assisted Quality Assurance in Building Segmentation
+The initial idea is to use a large language model (LLM) to perform quality assurance checks on automatically generated building footprints produced by a visual model.
+The key challenge lies in integrating the two models, since they are based on fundamentally different technical approaches.
+
+The plan is to first use a visual model to generate a building mask. Afterwards, the LLM evaluates the mask by identifying typical errors, such as shadows being included, missing parts of the building, or polygons that do not actually represent buildings. The LLM’s suggestions must then be translated into a format that the visual model can understand and apply.
+
+In my tests with the combination of SAM and ChatGPT-4.1, this feedback could take the form of a point mask: the LLM places positive points on the building and negative points outside it, which the visual model can process to improve the mask. Alternatively, bounding boxes or full masks can also be used as correction input.
+
+This combination of multimodal LLMs and visual models has so far mainly been explored for interactive tasks, where the LLM instructs the visual model what to segment. However, using the LLM to assess and correct already generated masks represents a as far as I now new approach.
+
 
 Below are examples showing the three main steps of the proposed QA pipeline:
 
