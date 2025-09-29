@@ -106,6 +106,8 @@ Vision-language grounding (Kosmos-2) → direct text-to-pixels.
 
 # QA Pipeline Flow
 
+![raw](Theory/flowchart_v1.png)
+
 ```mermaid
 flowchart TD
     A[Input: Orthophoto + SegFormer or SAM polygons] --> B[Clip chip around polygon]
