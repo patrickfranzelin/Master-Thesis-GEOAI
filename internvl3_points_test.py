@@ -7,26 +7,43 @@ import re
 import cv2
 import numpy as np
 import os
+#!/usr/bin/env python3
+import os
+
+# ============================================================
+# CACHE PATH FIX — must be set before importing transformers
+# ============================================================
+os.environ["HF_HOME"] = "/data/hf_cache"
+os.environ["HUGGINGFACE_HUB_CACHE"] = "/data/hf_cache"
+os.environ["TRANSFORMERS_CACHE"] = "/data/hf_cache"   # backward compat only
+os.environ["TORCH_HOME"] = "/data/torch_cache"
+os.environ["XDG_CACHE_HOME"] = "/data/.cache"
+os.environ["TMPDIR"] = "/data/tmp"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["SAFETENSORS_FAST_GPU"] = "1"
+
+print("✅ Environment paths set")
+print("HF cache:", os.getenv("HF_HOME"))
+print("Torch cache:", os.getenv("TORCH_HOME"))
+
 
 # ============================================================
 # CONFIGURATION
 # ============================================================
 model_id = "OpenGVLab/InternVL3-8B"
-image_path = "/data/Master-Thesis-GEOAI/Theory/img.png"
+image_path = "/data/Master-Thesis-GEOAI/Theory/img_4.png"
 out_path = "/data/Master-Thesis-GEOAI/outputs/internvl_points.png"
-
 question = (
     "<image>\n"
-    "You are a precise visual inspector. "
-    "Look at the red polygon drawn in this aerial image. "
-    "Output exactly eight 2D pixel coordinates in this JSON format:\n"
-    "{'inside': [[x1, y1], [x2, y2], [x3, y3], [x4, y4]], "
-    "'outside': [[x5, y5], [x6, y6], [x7, y7], [x8, y8]]}\n"
+    "You are a precise visual inspector.\n"
+    "Look at the red polygon in this aerial image.\n"
+    "Output exactly eight 2D pixel coordinates in JSON format like this:\n"
+    "{'inside': [[x1, y1], [x2, y2], [x3, y3], [x4, y4]], 'outside': [[x5, y5], [x6, y6], [x7, y7], [x8, y8]]}\n"
     "Rules:\n"
-    "- Coordinates must be integer pixel values.\n"
-    "- Choose 4 points clearly **inside** the red polygon (on the building roof).\n"
-    "- Choose 4 points clearly **outside** the polygon (ground or surrounding area).\n"
-    "- Do not include any explanations or words — output only the JSON object."
+    "- Each coordinate must be two integers.\n"
+    "- Choose 4 points well distributed **inside** the polygon (on the roof, not clustered).\n"
+    "- Choose 4 points clearly **outside** the polygon (on grass or road, not clustered).\n"
+    "- Do not include explanations or words — output only the JSON object."
 )
 
 
