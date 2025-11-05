@@ -25,7 +25,7 @@ from tqdm import tqdm
 import torch
 
 # =================== USER PARAMS ===================
-GEOTIFF_PATH = r"C:\git\Master-Thesis-GEOAI\data\ortho_4.tif"
+GEOTIFF_PATH = r"/data/ortho_4.tif"
 SAM_CKPT     = r"C:\git\Master-Thesis-GEOAI\sam_vit_b.pth"
 OUT_GPKG     = r"C:\git\Master-Thesis-GEOAI\outputs\buildings_sam_tiles.gpkg"
 LAYER_NAME   = "buildings_sam"

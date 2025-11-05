@@ -1,0 +1,41 @@
+from __future__ import annotations
+import numpy as np, cv2
+from rasterio.windows import Window
+from rasterio.enums import Resampling
+from typing import Iterator, Tuple
+
+def to_rgb_uint8(bxhxw: np.ndarray) -> np.ndarray:
+    arr = bxhxw[:3] if bxhxw.shape[0] >= 3 else np.vstack([bxhxw] + [bxhxw[-1:]]*(3-bxhxw.shape[0]))
+    arr = np.moveaxis(arr, 0, -1)
+    if arr.dtype != np.uint8:
+        lo, hi = np.percentile(arr, [2, 98])
+        scale = max(hi - lo, 1e-6)
+        arr = np.clip((arr - lo)/scale, 0, 1)
+        arr = (arr*255).astype(np.uint8)
+    return arr
+
+def enhance_local_contrast(rgb: np.ndarray) -> np.ndarray:
+    try:
+        lab = cv2.cvtColor(rgb, cv2.COLOR_RGB2LAB)
+        l, a, b = cv2.split(lab)
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        l2 = clahe.apply(l)
+        return cv2.cvtColor(cv2.merge([l2, a, b]), cv2.COLOR_LAB2RGB)
+    except Exception:
+        return rgb
+
+def iter_tiles(src, tile: int, overlap: int) -> Iterator[Tuple[Window, np.ndarray, np.ndarray]]:
+    W, H = src.width, src.height
+    tw, th = min(tile, W), min(tile, H)
+    y_step, x_step = max(1, th - overlap), max(1, tw - overlap)
+    for top in range(0, H, y_step):
+        for left in range(0, W, x_step):
+            w = min(tw, W - left); h = min(th, H - top)
+            if w <= 0 or h <= 0: continue
+            win = Window(left, top, w, h)
+            arr = src.read(out_dtype=np.float32, window=win, resampling=Resampling.bilinear)
+            alpha = None
+            if src.count >= 4:
+                try: alpha = src.read(4, window=win, out_dtype=np.uint8)
+                except Exception: pass
+            yield win, arr, alpha

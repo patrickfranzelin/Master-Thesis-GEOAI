@@ -1,0 +1,37 @@
+data:
+  geotiff: "data/ortho_4.tif"
+  out_gpkg: "outputs/buildings_sam.gpkg"
+  out_layer: "buildings"
+  out_points_png: "outputs/points_preview.png"
+
+sam:
+  checkpoint: "sam_vit_b.pth"
+  tile_size: 512
+  overlap: 32
+  points_per_side: 8
+  upscale: 1.5
+  generator:
+    points_per_side: 8
+    points_per_batch: 8
+    crop_n_layers: 0
+    crop_overlap_ratio: 0.0
+    pred_iou_thresh: 0.85
+    stability_score_thresh: 0.90
+    box_nms_thresh: 0.6
+    min_mask_region_area: 0
+
+post:
+  min_area_m2: 8.0
+  max_area_m2: 20000.0
+  min_pix_side: 4
+  aspect_max: 6.0
+  merge_gap_m: 1.0
+  clean_buffer_m: 0.30
+  clean_debuffer_m: 0.30
+  simplify_tol_m: 0.25
+  building_score_min: 0.45
+
+mllm:
+  model_id: "OpenGVLab/InternVL3-8B"
+  device: "auto"        # "cuda" | "cpu" | "auto"
+  max_new_tokens: 256
