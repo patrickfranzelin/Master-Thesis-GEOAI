@@ -2,31 +2,15 @@
 from __future__ import annotations
 import os, sys, json
 import rasterio, geopandas as gpd, numpy as np, cv2
-from shapely.geometry import Polygon, box
 from tqdm import tqdm
+
+from src.geo.tiler import crop_for_polygon
 from utils.env import set_cache_env
 from utils.io import load_yaml, ensure_dir, save_json
 from sam.sam_segmenter import SamSegmenter
 from post.filters import PolygonPostProcessor
 from mllm.internvl_client import InternVL3Points
 from viz.annotate import draw_points
-
-def crop_for_polygon(src, poly: Polygon, pad_px: int = 16):
-    # crop around polygon bbox (in pixel space: approximate via bounds -> row/col via inverse affine)
-    inv = ~src.transform
-    minx, miny, maxx, maxy = poly.bounds
-    cmin, rmin = inv * (minx, miny)
-    cmax, rmax = inv * (maxx, maxy)
-    r0, r1 = int(max(0, np.floor(min(rmin, rmax)) - pad_px)), int(min(src.height, np.ceil(max(rmin, rmax)) + pad_px))
-    c0, c1 = int(max(0, np.floor(min(cmin, cmax)) - pad_px)), int(min(src.width, np.ceil(max(cmin, cmax)) + pad_px))
-    win = rasterio.windows.Window(c0, r0, max(1, c1-c0), max(1, r1-r0))
-    arr = src.read(window=win, out_dtype=np.uint8)
-    rgb = np.moveaxis(arr[:3], 0, -1)
-    # polygon to local crop coords
-    xs = (np.array([p[0] for p in poly.exterior.coords]) - (src.transform.c + c0*src.transform.a)) / src.transform.a
-    ys = (np.array([p[1] for p in poly.exterior.coords]) - (src.transform.f + r0*src.transform.e)) / src.transform.e
-    poly_xy = list(zip(xs.astype(int).tolist(), ys.astype(int).tolist()))
-    return rgb, poly_xy
 
 def main():
     set_cache_env()
