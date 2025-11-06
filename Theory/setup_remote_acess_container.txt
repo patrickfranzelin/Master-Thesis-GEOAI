@@ -13,3 +13,6 @@ cd /data/Master-Thesis-GEOAI
 source .venv/bin/activate
 
 python internvl3_points_test.py
+
+cd C:\git\Master-Thesis-GEOAI
+python -m src.cli
