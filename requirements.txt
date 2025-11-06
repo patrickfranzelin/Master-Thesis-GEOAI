@@ -1,13 +1,37 @@
-torch>=2.3
-torchvision>=0.18
-transformers>=4.44
-accelerate>=0.33
-safetensors>=0.4
-Pillow>=10.3
-opencv-python-headless>=4.10
-numpy>=1.26
-tqdm>=4.66
-pyproj>=3.6
-shapely>=2.0
-geopandas>=0.14
-rasterio>=1.3
+# --- Array, math, image processing ---
+numpy
+opencv-python
+pillow
+tqdm
+
+# --- Geospatial stack ---
+rasterio
+geopandas
+shapely
+pyproj
+
+# --- Deep learning + vision models (CUDA 12.4 nightly build for RTX 50-series) ---
+torch
+torchvision
+torchaudio
+
+# --- SAM model (Segment Anything) ---
+segment-anything
+
+# --- HuggingFace + Transformers stack ---
+transformers
+accelerate
+safetensors
+sentencepiece
+huggingface-hub
+
+# --- Visualization & plotting ---
+matplotlib
+
+# --- Utility packages ---
+rich
+pyyaml
+
+# --- Optional but recommended for performance ---
+scipy
+onnxruntime-gpu ; platform_system != "Darwin"

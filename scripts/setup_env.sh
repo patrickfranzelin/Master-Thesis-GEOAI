@@ -1,30 +1,24 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -euo pipefail
 
-# Persist heavy caches
-export HF_HOME=/data/hf_cache
-export HUGGINGFACE_HUB_CACHE=/data/hf_cache
-export TRANSFORMERS_CACHE=/data/hf_cache
-export TORCH_HOME=/data/torch_cache
-export XDG_CACHE_HOME=/data/.cache
-export TMPDIR=/data/tmp
-export TOKENIZERS_PARALLELISM=false
-export SAFETENSORS_FAST_GPU=1
+echo "=== Setting up Master-Thesis-GEOAI environment ==="
 
-mkdir -p "$HF_HOME" "$TORCH_HOME" "$XDG_CACHE_HOME" "$TMPDIR"
-
-# venv via uv or python
-if [ ! -d ".venv" ]; then
-  if command -v uv >/dev/null 2>&1; then
-    uv venv
-  else
-    python3 -m venv .venv
-  fi
+# install uv if missing
+if ! command -v uv &>/dev/null; then
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  export PATH="$HOME/.local/bin:$PATH"
 fi
 
-# Activate & install
-source .venv/bin/activate
-pip install -U pip wheel
-pip install -r requirements.txt
+# set up cache paths (works local + container)
+source ./cache_env.sh
 
-echo "✅ Env ready. To use later: source .venv/bin/activate"
+# create venv
+uv venv --python 3.10
+
+# activate
+source .venv/bin/activate
+
+# install requirements
+uv pip install -r requirements.txt
+
+echo "✅ Environment ready! Activate with: source .venv/bin/activate"
