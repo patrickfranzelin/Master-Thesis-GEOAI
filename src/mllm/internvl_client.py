@@ -15,18 +15,16 @@ def set_hf_env():
 
 
 class InternVL3Points:
-    def __init__(self, model_id: str, device: str, max_new_tokens: int = 256):
+    def __init__(self, model_id: str, device: str = "cuda", max_new_tokens: int = 256):
         set_hf_env()
         dev = ("cuda" if torch.cuda.is_available() else "cpu") if device == "auto" else device
         dtype = torch.bfloat16 if (dev == "cuda") else torch.float32
 
         print(f"🔧 Loading model: {model_id} on {dev}")
-        # ✅ Use AutoModel (NOT AutoModelForCausalLM)
         self.model = AutoModel.from_pretrained(
             model_id,
             torch_dtype=dtype,
             low_cpu_mem_usage=True,
-            device_map="auto" if dev == "cuda" else None,
             trust_remote_code=True
         ).eval().to(dev)
 
@@ -58,12 +56,14 @@ class InternVL3Points:
         prompt = points_prompt()
 
         with torch.no_grad():
-            # ✅ Correct call for InternVL2 models
-            out = self.model.chat(
+            # ✅ Correct call for InternVL 2.5 models
+            out, _ = self.model.chat(
                 self.tok,
                 pixel_values,
                 prompt,
-                dict(max_new_tokens=self.max_new_tokens, do_sample=False)
+                generation_config=dict(max_new_tokens=self.max_new_tokens, do_sample=False),
+                history=None,
+                return_history=True
             )
 
         matches = re.findall(r"\[\s*(\d+)\s*,\s*(\d+)\s*\]", out)

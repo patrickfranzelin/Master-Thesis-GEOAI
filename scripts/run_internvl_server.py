@@ -6,9 +6,11 @@ from src.mllm.internvl_client import InternVL3Points
 
 app = FastAPI(title="InternVL Server", version="1.0")
 
-# Load heavy model once
-print(" Loading InternVL model ...")
-model = InternVL3Points("OpenGVLab/InternVL2-4B", device="cuda", max_new_tokens=256)
+# ============================================================
+# Load InternVL 2.5-4B once
+# ============================================================
+print("🔄 Loading InternVL2_5-4B model ...")
+model = InternVL3Points("OpenGVLab/InternVL2_5-4B", device="cuda", max_new_tokens=256)
 print("✅ Model ready.")
 
 @app.post("/infer_points")
@@ -22,4 +24,3 @@ async def infer_points(image: UploadFile, poly_json: str = Form(...)):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=7860)
-
