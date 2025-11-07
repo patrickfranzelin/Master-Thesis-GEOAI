@@ -1,7 +1,7 @@
 from __future__ import annotations
 import re, os, cv2, numpy as np
 from PIL import Image, ImageDraw
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModel, AutoTokenizer
 import torch
 from .prompts import points_prompt
 
@@ -21,8 +21,8 @@ class InternVL3Points:
         dtype = torch.bfloat16 if (dev == "cuda") else torch.float32
 
         print(f"🔧 Loading model: {model_id} on {dev}")
-        # ✅ FIX: Use AutoModelForCausalLM instead of AutoModel
-        self.model = AutoModelForCausalLM.from_pretrained(
+        # ✅ Use AutoModel (NOT AutoModelForCausalLM)
+        self.model = AutoModel.from_pretrained(
             model_id,
             torch_dtype=dtype,
             low_cpu_mem_usage=True,
@@ -55,10 +55,10 @@ class InternVL3Points:
         ])
 
         pixel_values = tfm(img).unsqueeze(0).to(self.dev, dtype=self.model.dtype)
-
         prompt = points_prompt()
 
         with torch.no_grad():
+            # ✅ Correct call for InternVL2 models
             out = self.model.chat(
                 self.tok,
                 pixel_values,
