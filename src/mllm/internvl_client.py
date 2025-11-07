@@ -63,8 +63,7 @@ class InternVL3Points:
                 self.tok,
                 pixel_values,
                 prompt,
-                max_new_tokens=self.max_new_tokens,
-                do_sample=False
+                dict(max_new_tokens=self.max_new_tokens, do_sample=False)
             )
 
         matches = re.findall(r"\[\s*(\d+)\s*,\s*(\d+)\s*\]", out)
