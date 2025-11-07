@@ -1,37 +1,29 @@
 data:
-  geotiff: "data/ortho_4.tif"
-  out_gpkg: "outputs/buildings_sam.gpkg"
-  out_layer: "buildings"
-  out_points_png: "outputs/points_preview.png"
+  geotiff: data/zurich.tif
+  out_gpkg: outputs/buildings.gpkg
+  out_layer: buildings
+  out_crops_dir: outputs/crops
+  out_points_png: outputs/points_preview.png
 
 sam:
-  checkpoint: "sam_vit_b.pth"
-  tile_size: 512
-  overlap: 32
-  points_per_side: 8
-  upscale: 1.5
+  checkpoint: sam_vit_b.pth
   generator:
-    points_per_side: 8
-    points_per_batch: 8
-    crop_n_layers: 0
-    crop_overlap_ratio: 0.0
-    pred_iou_thresh: 0.85
-    stability_score_thresh: 0.90
-    box_nms_thresh: 0.6
-    min_mask_region_area: 0
+    points_per_side: 32
+    pred_iou_thresh: 0.86
+    stability_score_thresh: 0.92
+  tile_size: 1024
+  overlap: 128
+  upscale: 1.0
+  device: auto
 
 post:
-  min_area_m2: 8.0
-  max_area_m2: 20000.0
-  min_pix_side: 4
-  aspect_max: 6.0
+  min_area_m2: 10
+  max_area_m2: 10000
+  clean_buffer_m: 0.5
+  clean_debuffer_m: 0.5
   merge_gap_m: 1.0
-  clean_buffer_m: 0.30
-  clean_debuffer_m: 0.30
-  simplify_tol_m: 0.25
-  building_score_min: 0.45
 
 mllm:
-  model_id: "OpenGVLab/InternVL3-8B"
-  device: "auto"        # "cuda" | "cpu" | "auto"
+  model_id: OpenGVLab/InternVL2-8B
+  device: cuda
   max_new_tokens: 256

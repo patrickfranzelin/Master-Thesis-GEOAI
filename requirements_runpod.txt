@@ -1,0 +1,25 @@
+# --- Core ---
+numpy
+opencv-python-headless
+pillow
+tqdm
+pyyaml
+
+# --- Deep Learning (pre-installed in nvcr.io/nvidia/pytorch:24.01-py3) ---
+torch
+torchvision
+torchaudio
+
+# --- Hugging Face + Transformers stack ---
+transformers
+accelerate
+safetensors
+sentencepiece
+huggingface-hub
+
+# --- API Server ---
+fastapi
+uvicorn
+
+# --- Optional performance helpers ---
+scipy

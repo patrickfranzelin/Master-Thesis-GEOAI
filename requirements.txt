@@ -1,8 +1,10 @@
-# --- Array, math, image processing ---
+# --- Core utilities ---
 numpy
 opencv-python
 pillow
 tqdm
+pyyaml
+rich
 
 # --- Geospatial stack ---
 rasterio
@@ -10,28 +12,22 @@ geopandas
 shapely
 pyproj
 
-# --- Deep learning + vision models (CUDA 12.4 nightly build for RTX 50-series) ---
+# --- Deep learning (SAM etc.) ---
 torch
 torchvision
 torchaudio
-
-# --- SAM model (Segment Anything) ---
 segment-anything
 
-# --- HuggingFace + Transformers stack ---
+# --- Transformers stack (optional if you test MLLM locally) ---
 transformers
 accelerate
 safetensors
 sentencepiece
 huggingface-hub
 
-# --- Visualization & plotting ---
+# --- Visualization ---
 matplotlib
 
-# --- Utility packages ---
-rich
-pyyaml
-
-# --- Optional but recommended for performance ---
+# --- Optional performance helpers ---
 scipy
 onnxruntime-gpu ; platform_system != "Darwin"
