@@ -1,9 +1,10 @@
 from __future__ import annotations
 import re, os, cv2, numpy as np
 from PIL import Image, ImageDraw
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 from .prompts import points_prompt
+
 
 def set_hf_env():
     os.environ.setdefault("HF_HOME", "/data/hf_cache")
@@ -12,28 +13,38 @@ def set_hf_env():
     os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
     os.environ.setdefault("SAFETENSORS_FAST_GPU", "1")
 
+
 class InternVL3Points:
     def __init__(self, model_id: str, device: str, max_new_tokens: int = 256):
         set_hf_env()
         dev = ("cuda" if torch.cuda.is_available() else "cpu") if device == "auto" else device
         dtype = torch.bfloat16 if (dev == "cuda") else torch.float32
-        self.model = AutoModel.from_pretrained(
-            model_id, dtype=dtype, low_cpu_mem_usage=True, use_flash_attn=True, trust_remote_code=True
+
+        print(f"🔧 Loading model: {model_id} on {dev}")
+        # ✅ FIX: Use AutoModelForCausalLM instead of AutoModel
+        self.model = AutoModelForCausalLM.from_pretrained(
+            model_id,
+            torch_dtype=dtype,
+            low_cpu_mem_usage=True,
+            device_map="auto" if dev == "cuda" else None,
+            trust_remote_code=True
         ).eval().to(dev)
+
         self.tok = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True, use_fast=False)
         self.dev = dev
         self.max_new_tokens = max_new_tokens
+        print("✅ InternVL model initialized successfully.")
 
     @staticmethod
-    def overlay_polygon(img: Image.Image, poly_xy: list[tuple[int,int]]) -> Image.Image:
+    def overlay_polygon(img: Image.Image, poly_xy: list[tuple[int, int]]) -> Image.Image:
         draw = ImageDraw.Draw(img)
-        draw.line(poly_xy + [poly_xy[0]], fill=(255,0,0), width=3)
+        draw.line(poly_xy + [poly_xy[0]], fill=(255, 0, 0), width=3)
         return img
 
-    def infer_points(self, rgb_crop: np.ndarray, poly_xy: list[tuple[int,int]]) -> dict | None:
+    def infer_points(self, rgb_crop: np.ndarray, poly_xy: list[tuple[int, int]]) -> dict | None:
         img = Image.fromarray(rgb_crop)
         img = self.overlay_polygon(img, poly_xy)
-        # preprocess
+
         from torchvision import transforms as T
         from torchvision.transforms.functional import InterpolationMode
         tfm = T.Compose([
@@ -42,11 +53,23 @@ class InternVL3Points:
             T.ToTensor(),
             T.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
         ])
+
         pixel_values = tfm(img).unsqueeze(0).to(self.dev, dtype=self.model.dtype)
 
         prompt = points_prompt()
-        out = self.model.chat(self.tok, pixel_values, prompt, dict(max_new_tokens=self.max_new_tokens, do_sample=False))
+
+        with torch.no_grad():
+            out = self.model.chat(
+                self.tok,
+                pixel_values,
+                prompt,
+                max_new_tokens=self.max_new_tokens,
+                do_sample=False
+            )
+
         matches = re.findall(r"\[\s*(\d+)\s*,\s*(\d+)\s*\]", out)
-        if len(matches) < 8: return None
-        coords = [(int(x), int(y)) for x,y in matches[:8]]
+        if len(matches) < 8:
+            return None
+
+        coords = [(int(x), int(y)) for x, y in matches[:8]]
         return {"inside": coords[:4], "outside": coords[4:8], "raw": out}
