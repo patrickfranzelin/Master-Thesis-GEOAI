@@ -7,9 +7,9 @@ from .prompts import points_prompt
 
 
 def set_hf_env():
-    os.environ.setdefault("HF_HOME", "/data/hf_cache")
-    os.environ.setdefault("HUGGINGFACE_HUB_CACHE", "/data/hf_cache")
-    os.environ.setdefault("TRANSFORMERS_CACHE", "/data/hf_cache")
+    os.environ.setdefault("HF_HOME", "/workspace/hf_cache")
+    os.environ.setdefault("HUGGINGFACE_HUB_CACHE", "/workspace/hf_cache")
+    os.environ.setdefault("TRANSFORMERS_CACHE", "/workspace/hf_cache")
     os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
     os.environ.setdefault("SAFETENSORS_FAST_GPU", "1")
 

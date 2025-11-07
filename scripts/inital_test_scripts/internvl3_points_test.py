@@ -30,7 +30,7 @@ print("Torch cache:", os.getenv("TORCH_HOME"))
 # ============================================================
 # CONFIGURATION
 # ============================================================
-model_id = "OpenGVLab/InternVL3-8B"
+model_id = "OpenGVLab/InternVL3-4sB"
 image_path = "/data/Master-Thesis-GEOAI/Theory/img_4.png"
 out_path = "/data/Master-Thesis-GEOAI/outputs/internvl_points.png"
 question = (

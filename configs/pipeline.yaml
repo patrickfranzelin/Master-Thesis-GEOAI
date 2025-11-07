@@ -24,6 +24,6 @@ post:
   merge_gap_m: 1.0
 
 mllm:
-  model_id: OpenGVLab/InternVL2-8B
+  model_id: OpenGVLab/InternVL2-4B
   device: cuda
   max_new_tokens: 256
