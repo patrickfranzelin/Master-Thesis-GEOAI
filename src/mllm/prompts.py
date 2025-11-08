@@ -1,4 +1,4 @@
-def grid_points_prompt() -> str:
+def points_prompt() -> str:
     return (
         "<image>\n"
         "You are a precise visual inspector.\n"

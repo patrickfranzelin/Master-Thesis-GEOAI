@@ -23,7 +23,7 @@ import numpy as np, cv2, geopandas as gpd, rasterio
 from tqdm import tqdm
 from src.viz.annotate import overlay_numbered_grid, is_black_or_empty, plot_mllm_points
 from src.geo.tiler import crop_for_polygon, local_to_global_points, sample_polygons
-from src.mllm.prompts import grid_points_prompt
+from src.mllm.prompts import points_prompt
 
 
 # ==============================================================
@@ -83,7 +83,7 @@ def main():
             cv2.imwrite(ml_input_path, cv2.cvtColor(vis, cv2.COLOR_RGB2BGR))
 
             # Prepare for sending
-            prompt = grid_points_prompt()
+            prompt = points_prompt()
             _, tmp_png = cv2.imencode(".png", cv2.cvtColor(vis, cv2.COLOR_RGB2BGR))
             files = {"image": (f"sample_{i}.png", tmp_png.tobytes(), "image/png")}
             data = {"poly_json": json.dumps({"poly_xy": poly_xy, "prompt": prompt})}
