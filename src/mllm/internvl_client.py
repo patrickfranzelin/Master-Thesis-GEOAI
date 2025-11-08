@@ -14,24 +14,33 @@ def set_hf_env():
     os.environ.setdefault("SAFETENSORS_FAST_GPU", "1")
 
 
+from transformers import BitsAndBytesConfig
+
 class InternVL3Points:
     def __init__(self, model_id: str, device: str = "cuda", max_new_tokens: int = 256):
         set_hf_env()
         dev = ("cuda" if torch.cuda.is_available() else "cpu") if device == "auto" else device
-        dtype = torch.bfloat16 if (dev == "cuda") else torch.float32
 
-        print(f"🔧 Loading model: {model_id} on {dev}")
+        print(f"🔧 Loading model: {model_id} on {dev} (4-bit quantized)")
+        bnb_cfg = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_compute_dtype=torch.bfloat16,
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_quant_type="nf4",
+        )
+
         self.model = AutoModel.from_pretrained(
             model_id,
-            torch_dtype=dtype,
-            low_cpu_mem_usage=True,
-            trust_remote_code=True
-        ).eval().to(dev)
+            trust_remote_code=True,
+            device_map="auto",
+            quantization_config=bnb_cfg,
+        ).eval()
 
         self.tok = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True, use_fast=False)
         self.dev = dev
         self.max_new_tokens = max_new_tokens
         print("✅ InternVL model initialized successfully.")
+
 
     @staticmethod
     def overlay_polygon(img: Image.Image, poly_xy: list[tuple[int, int]]) -> Image.Image:
