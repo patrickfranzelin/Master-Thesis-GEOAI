@@ -31,7 +31,7 @@ from src.mllm.prompts import points_prompt
 # ==============================================================
 GPKG_PATH = "outputs/buildings_sam_tiles.gpkg"
 GEOTIFF_PATH = "data/ortho_4.tif"
-API_URL = "https://9a8sbumc2yel96-7860.proxy.runpod.net/infer_points"
+API_URL = "https://jnd8d16bjgblig-7860.proxy.runpod.net/infer_points"
 
 OUT_JSON = "outputs/mllm_results.json"
 OUT_PREVIEW_DIR = "outputs/mllm_previews"
@@ -60,7 +60,9 @@ def main():
     with rasterio.open(GEOTIFF_PATH) as src:
         for i, poly in enumerate(tqdm(polys, desc="Grid verification", ncols=90)):
             try:
-                crop, poly_xy, (c0, r0) = crop_for_polygon(src, poly, pad_factor=0.3, min_pad_px=PAD_PX)
+                crop, poly_xy, (c0, r0) = crop_for_polygon(
+                    src, poly, pad_factor=0.3, min_pad_px=PAD_PX
+                )
             except Exception as e:
                 print(f"⚠️ Crop failed for polygon {i}: {e}")
                 continue
@@ -68,21 +70,18 @@ def main():
             if is_black_or_empty(crop):
                 continue
 
-            # Grid overlay + inference
-            # Save raw crop that MLLM receives
-            crop_path = os.path.join(OUT_PREVIEW_DIR, f"sample_{i:02d}_crop.png")
-            cv2.imwrite(crop_path, cv2.cvtColor(crop, cv2.COLOR_RGB2BGR))
-
-            # Grid overlay (the one actually sent to MLLM)
-            # Grid overlay + polygon drawing
+            # ============================================================
+            # 1️⃣ Create the exact image the MLLM sees (grid + polygon)
+            # ============================================================
             vis = overlay_numbered_grid(crop, GRID_SIZE)
             cv2.polylines(vis, [np.array(poly_xy, np.int32)], True, (255, 0, 0), 2)
 
-            # Save what MLLM actually sees
             ml_input_path = os.path.join(OUT_PREVIEW_DIR, f"sample_{i:02d}_ml_input.png")
             cv2.imwrite(ml_input_path, cv2.cvtColor(vis, cv2.COLOR_RGB2BGR))
 
-            # Prepare for sending
+            # ============================================================
+            # 2️⃣ Send to MLLM API
+            # ============================================================
             prompt = points_prompt()
             _, tmp_png = cv2.imencode(".png", cv2.cvtColor(vis, cv2.COLOR_RGB2BGR))
             files = {"image": (f"sample_{i}.png", tmp_png.tobytes(), "image/png")}
@@ -96,26 +95,36 @@ def main():
                 print(f"⚠️ Request {i} failed: {e}")
                 continue
 
+            # ============================================================
+            # 3️⃣ Overlay the predicted points for visualization
+            # ============================================================
             inside = resp.get("inside", [])
             outside = resp.get("outside", [])
-            vis = plot_mllm_points(vis, inside, outside, poly_xy)
 
-            out_img = os.path.join(OUT_PREVIEW_DIR, f"sample_{i:02d}_preview.png")
-            cv2.imwrite(out_img, cv2.cvtColor(vis, cv2.COLOR_RGB2BGR))
+            overlay_vis = vis.copy()
+            for (x, y) in inside:
+                cv2.circle(overlay_vis, (int(x), int(y)), 4, (0, 255, 0), -1)  # green = inside
+            for (x, y) in outside:
+                cv2.circle(overlay_vis, (int(x), int(y)), 4, (0, 0, 255), -1)  # red = outside
 
-            # Optional: save global CRS points
+            overlay_path = os.path.join(OUT_PREVIEW_DIR, f"sample_{i:02d}_overlay.png")
+            cv2.imwrite(overlay_path, cv2.cvtColor(overlay_vis, cv2.COLOR_RGB2BGR))
+
+            # ============================================================
+            # 4️⃣ Save to GeoPackage and record metadata
+            # ============================================================
             if inside and outside:
                 inside_global = local_to_global_points(inside, src.transform, c0, r0)
                 outside_global = local_to_global_points(outside, src.transform, c0, r0)
                 save_points_to_gpkg(out_gpkg, inside_global, outside_global, i, src.crs)
-            # Optional: store per-polygon metadata for analysis
+
             results.append({
                 "id": i,
                 "area": float(poly.area),
-                "valid": True,
                 "inside_count": len(inside),
                 "outside_count": len(outside),
-                "grid_input": os.path.basename(out_img),
+                "ml_input": os.path.basename(ml_input_path),
+                "overlay": os.path.basename(overlay_path),
                 "response": resp
             })
 

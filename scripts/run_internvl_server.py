@@ -9,7 +9,7 @@ app = FastAPI(title="InternVL Server", version="1.0")
 # ============================================================
 # Load InternVL 2.5-4B once
 # ============================================================
-print("🔄 Loading InternVL2_5-4B model ...")
+print("🔄 Loading InternVL2_5-8B model ...")
 model = InternVL3Points("OpenGVLab/InternVL2_5-4B", device="cuda", max_new_tokens=256)
 print("✅ Model ready.")
 

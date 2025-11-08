@@ -5,7 +5,7 @@ from transformers import AutoProcessor, AutoModel
 # ==========================================
 #  InternVL model setup
 # ==========================================
-model_id = "OpenGVLab/InternVL2-4B"   # or "OpenGVLab/InternVL3-8B"
+model_id = "OpenGVLab/InternVL2-8B"   # or "OpenGVLab/InternVL3-8B"
 print(f"🔄 Loading model: {model_id}")
 
 device = "cuda" if torch.cuda.is_available() else "cpu"

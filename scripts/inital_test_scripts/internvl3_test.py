@@ -7,7 +7,7 @@ from transformers import AutoModel, AutoTokenizer
 # ============================================================
 #  CONFIGURATION
 # ============================================================
-model_id = "OpenGVLab/InternVL3-4B"
+model_id = "OpenGVLab/InternVL3-8B"
 image_path = "/data/Master-Thesis-GEOAI/Theory/img.png"
 question = (
     "<image>\nYou are a visual evaluator. "
