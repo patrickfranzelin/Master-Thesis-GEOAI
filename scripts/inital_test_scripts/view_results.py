@@ -16,9 +16,9 @@ import matplotlib.pyplot as plt
 
 # --- Pfade anpassen ---
 GEOTIFF_PATH = r"D:\git\Master-Thesis-GEOAI\data\ortho_4.tif"
-GPKG_PATH    = r"D:\git\Master-Thesis-GEOAI\outputs\buildings_segformer.gpkg"
-LAYER_NAME   = "buildings_segformer"
-OUT_PNG      = r"D:\git\Master-Thesis-GEOAI\outputs\overlay_preview_seg.png"  # oder None, um nicht zu speichern
+GPKG_PATH    = r"D:\git\Master-Thesis-GEOAI\outputs\buildings_sam_tiles.gpkg"
+LAYER_NAME   = "buildings_sam"
+OUT_PNG      = r"D:\git\Master-Thesis-GEOAI\outputs\overlay_preview_sam.png"  # oder None, um nicht zu speichern
 
 # --- Anzeige-Parameter ---
 VECTOR_EDGEWIDTH = 1.2
