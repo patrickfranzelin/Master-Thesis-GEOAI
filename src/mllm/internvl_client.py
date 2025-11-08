@@ -22,12 +22,13 @@ class InternVL3Points:
         dev = ("cuda" if torch.cuda.is_available() else "cpu") if device == "auto" else device
 
         print(f"🔧 Loading model: {model_id} on {dev} (4-bit quantized)")
-        bnb_cfg = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_compute_dtype=torch.bfloat16,
-            bnb_4bit_use_double_quant=True,
-            bnb_4bit_quant_type="nf4",
-        )
+        self.model = AutoModel.from_pretrained(
+            model_id,
+            trust_remote_code=True,
+            low_cpu_mem_usage=True,
+            device_map="auto", 
+            load_in_4bit=True
+        ).eval()
 
         self.model = AutoModel.from_pretrained(
             model_id,
