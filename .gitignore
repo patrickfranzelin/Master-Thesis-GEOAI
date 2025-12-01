@@ -1,0 +1,5 @@
+outputs/
+data/
+.venv/
+.git/
+scripts/SetUpRunpodDou.txt
