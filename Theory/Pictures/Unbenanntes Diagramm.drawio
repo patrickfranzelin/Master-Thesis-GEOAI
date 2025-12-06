@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" version="29.2.4">
   <diagram name="Seite-1" id="glQ7QCZWkuhKVaoNRfRG">
-    <mxGraphModel dx="751" dy="409" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="676" dy="338" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -214,11 +214,11 @@
         <mxCell id="Wjg99aShMGt_rSGXWDPN-368" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="64" vertex="1">
           <mxGeometry height="14" width="20" x="343" y="777" as="geometry" />
         </mxCell>
-        <mxCell id="Wjg99aShMGt_rSGXWDPN-378" parent="1" style="text;whiteSpace=wrap;" value="Input Image" vertex="1">
-          <mxGeometry height="24.44" width="70.11" x="29.39" y="674.78" as="geometry" />
+        <mxCell id="Wjg99aShMGt_rSGXWDPN-378" parent="1" style="text;whiteSpace=wrap;" value="Input RGB Image" vertex="1">
+          <mxGeometry height="24.44" width="97.61" x="16.89" y="675.56" as="geometry" />
         </mxCell>
         <mxCell id="Wjg99aShMGt_rSGXWDPN-379" parent="1" style="text;whiteSpace=wrap;" value="Convolution 1" vertex="1">
-          <mxGeometry height="23.78" width="78" x="150" y="615" as="geometry" />
+          <mxGeometry height="23.78" width="78" x="140" y="673.22" as="geometry" />
         </mxCell>
         <mxCell id="Wjg99aShMGt_rSGXWDPN-380" parent="1" style="text;whiteSpace=wrap;" value="Convolution 2" vertex="1">
           <mxGeometry height="26" width="76.63" x="323" y="674" as="geometry" />
