@@ -10,7 +10,7 @@ import os
 
 # Setup
 client = OpenAI(api_key="EMPTY", base_url="https://7ygcmpo7igft4k-7860.proxy.runpod.net/v1")
-folder_path = Path(r"D:\git\Master-Thesis-GEOAI\gdb_results")
+folder_path = Path(r"D:\git\Master-Thesis-GEOAI\data\test_patches")
 output_folder = folder_path / "results"
 output_folder.mkdir(exist_ok=True)
 
@@ -27,6 +27,33 @@ def add_grid_overlay(img, step=50):
         cv2.putText(overlay, str(y), (5, y + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
     return overlay
 
+
+def add_chess_grid(img, cols=10, rows=10):
+    """Add A-G (cols) x 1-rows chess grid with labels at intersections."""
+    h, w, _ = img.shape
+    overlay = img.copy()
+
+    # Vertical lines (cols+1 lines for cols cells)
+    for i in range(cols + 1):
+        x = int(i * w / cols)
+        cv2.line(overlay, (x, 0), (x, h), (255, 255, 255), 1)
+
+    # Horizontal lines (rows+1 lines for rows cells)
+    for i in range(rows + 1):
+        y = int(i * h / rows)
+        cv2.line(overlay, (0, y), (w, y), (255, 255, 255), 1)
+
+    # Labels at intersections: Col letter + row number (e.g., "B4")
+    for col in range(cols):
+        col_letter = chr(ord('A') + col)
+        x_col = int(col * w / cols) + 5  # Slight offset
+        for row in range(rows):
+            y_row = int((row + 0.5) * h / rows)  # Center of cell
+            label = f"{col_letter}{row + 1}"
+            cv2.putText(overlay, label, (x_col, y_row + 5),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+
+    return overlay
 
 
 def parse_json_safe(raw):
@@ -58,12 +85,13 @@ for img_path in image_files:
             print(f"❌ Failed to load {img_path.name}")
             continue
 
-        img_grid = add_grid_overlay(img_raw)
+        #img_grid = add_grid_overlay(img_raw)
+        img_grid = add_chess_grid(img_raw)
         grid_path = output_folder / f"{img_path.stem}_grid.png"
         cv2.imwrite(str(grid_path), img_grid)
         img_b64 = base64.b64encode(grid_path.read_bytes()).decode("utf-8")
 
-        prompt = """Precise inspector. See WHITE GRID (50px steps, cyan labels).
+        prompt2 = """Precise inspector. See WHITE GRID (50px steps, cyan labels).
 
         Building visible.
 
@@ -81,6 +109,25 @@ for img_path in image_files:
         - Each coord = 2 integers [x,y]
         - GRID intersections ONLY: 0,50,100,150,...
         - ALWAYS JSON (ignore "no buildings")"""
+
+        prompt = """You are a precise pixel locator. Analyze the aerial image with chessboard grid (columns A-G left-right, rows 1-10 top-bottom).
+
+        Step 1: Identify the house/roof (rectangular structure with roof tiles/color).
+        Step 2: Select EXACTLY 3 distinct grid intersections STRICTLY inside the roof/house (e.g., center areas).
+        Step 3: Select EXACTLY 3 distinct grid intersections clearly outside (e.g., grass/empty space, not touching boundary).
+        
+        Rules:
+        - Use only grid labels (e.g., B3, F7).
+        - Diverse positions: spread across object.
+        - Inside: fully covered by roof pixels.
+        - Outside: no overlap with house.
+        
+        Output ONLY valid JSON, no extra text:
+        {
+          "inside": ["B4", "D6", "E3"],
+          "outside": ["A2", "G9", "C10"]
+        }
+        """
 
         resp = client.chat.completions.create(
             model="internvl8b",
@@ -109,6 +156,30 @@ for img_path in image_files:
         }
         all_results.append(result)
 
+
+        def chess_to_pixels(label, w, h, cols=10, rows=10):
+            """
+            Convert grid label like 'B3' to pixel center of that cell.
+            A-J → columns 0-9, 1-10 → rows 0-9.
+            """
+            label = label.strip().upper()
+            if not label:
+                raise ValueError("Empty grid label")
+
+            col_char = label[0]
+            row_part = label[1:]
+
+            col = ord(col_char) - ord('A')  # A→0, B→1, ...
+            row = int(row_part) - 1  # "1"→0, "10"→9
+
+            if not (0 <= col < cols and 0 <= row < rows):
+                raise ValueError(f"Grid label out of range: {label}")
+
+            x = int((col + 0.5) * w / cols)
+            y = int((row + 0.5) * h / rows)
+            return x, y
+
+
         # === STEP 3: VISUALIZE RESULT ===
         overlay = img_raw.copy()
         # House points (green)
@@ -123,7 +194,8 @@ for img_path in image_files:
             cv2.putText(overlay, f"[{x},{y}]", (x + 15, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
         # Add faint grid reference
-        overlay_grid = add_grid_overlay(overlay, step=50)
+        #overlay_grid = add_grid_overlay(overlay, step=50)
+        overlay_grid = add_chess_grid(overlay)
 
         # Save RESULT
         result_path = output_folder / f"{img_path.stem}_result.png"

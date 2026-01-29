@@ -3,10 +3,6 @@ import os, json, yaml
 import geopandas as gpd
 from shapely.geometry import Point
 
-def load_yaml(path: str) -> dict:
-    with open(path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
-
 def ensure_dir(p: str) -> None:
     os.makedirs(os.path.dirname(p), exist_ok=True)
 
