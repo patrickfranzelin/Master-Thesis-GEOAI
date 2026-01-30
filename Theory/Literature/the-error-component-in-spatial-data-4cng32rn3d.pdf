@@ -1,0 +1,4535 @@
+%PDF-1.3
+%‚„œ”
+1 0 obj
+<<
+/Type /Pages
+/Count 10
+/Kids [ 3 0 R 4 0 R 5 0 R 6 0 R 7 0 R 8 0 R 9 0 R 10 0 R 11 0 R 12 0 R ]
+>>
+endobj
+2 0 obj
+<<
+/Producer (PyPDF2)
+/Title (The\040error\040component\040in\040spatial\040data)
+/Author (Nicholas\040R\056\040Chrisman)
+/Subject (No\040map\040can\040be\040picked\040apart\040into\040completely\040independent\040pellets\040of\040information\056\040There\040is\040something\040collective\040and\040comprehensive\040about\040the\040spatial\040representation\056\040First\054\040the\040map\040is\040spatially\040continuous\040and\040comiected\056\040There\040is\040also\040a\040deeper\040reason\056\040Individual\040facts\040become\040more\040useful\040i\040nformation\040through\040an\040interaction\040with\040a\040structure\040of\040theory\040that\040provides\040a\040context\040to\040interpret\040the\040individual\040facts\056\040In\040common\040usage\054\040the\040main\040distinction\040between\040data\040and\040information\040arises\040from\040meaning\054\040but\040meaning\040is\040context\040dependent\056\040To\040be\040more\040concrete\054\040the\040process\040of\040converting\040a\040particular\040fact\040into\040information\040must\040comprehend\040the\040fitness\040of\040that\040fact\040for\040some\040particular\040purpose\056\040This\040line\040of\040argument\040provides\040an\040important\040introduction\040to\040the\040role\040of\040data\040quality\040in\040an\040information\040system\056\040Quality\040has\040various\040definitions\040in\040industrial\040engineering\040\050Hayes\040and\040Romig\0401977\051\054\040but\040one\040accepted\040definition\040is\040\140fitness\040for\040use\047\040\050Chrisman\0401983\051\056\040Recently\054\040the\040US\040National\040Committee\040Digital\040Cartographic\040Data\040Standards\040Task\040Force\040\050DCDSTF\0401988\051\040has\040adopted\040this\040definition\040formally\040for\040inclusion\040in\040a\040US\040national\040standard\040for\040exchange\040of\040spatial\040data\056\040The\040standard\040requires\040a\040quality\040report\040that\040provides\040the\040basis\040for\040a\040user\040to\040make\040the\040final\040judgement\040the\040conversion\040to\040information\040by\040interpretation\040for\040a\040particular\040use\056\040N\040R\040CHRISMAN)
+/Keywords (01\040Jan\0402005\054\040Data\040quality\054\040Information\040system\054\040Context\040\050language\040use\051)
+>>
+endobj
+3 0 obj
+<<
+/Annots 14 0 R
+/Contents 15 0 R
+/MediaBox [ 0 0 594 841 ]
+/Parent 1 0 R
+/Resources 18 0 R
+/Thumb 24 0 R
+/Type /Page
+>>
+endobj
+4 0 obj
+<<
+/Annots 25 0 R
+/Contents 26 0 R
+/MediaBox [ 0 0 594 841 ]
+/Parent 1 0 R
+/Resources 29 0 R
+/Thumb 32 0 R
+/Type /Page
+>>
+endobj
+5 0 obj
+<<
+/Annots 33 0 R
+/Contents 34 0 R
+/MediaBox [ 0 0 594 841 ]
+/Parent 1 0 R
+/Resources 37 0 R
+/Thumb 40 0 R
+/Type /Page
+>>
+endobj
+6 0 obj
+<<
+/Annots 41 0 R
+/Contents 42 0 R
+/MediaBox [ 0 0 594 841 ]
+/Parent 1 0 R
+/Resources 45 0 R
+/Thumb 48 0 R
+/Type /Page
+>>
+endobj
+7 0 obj
+<<
+/Annots 49 0 R
+/Contents 50 0 R
+/MediaBox [ 0 0 594 841 ]
+/Parent 1 0 R
+/Resources 53 0 R
+/Thumb 56 0 R
+/Type /Page
+>>
+endobj
+8 0 obj
+<<
+/Annots 57 0 R
+/Contents 58 0 R
+/MediaBox [ 0 0 594 841 ]
+/Parent 1 0 R
+/Resources 61 0 R
+/Thumb 64 0 R
+/Type /Page
+>>
+endobj
+9 0 obj
+<<
+/Annots 65 0 R
+/Contents 66 0 R
+/MediaBox [ 0 0 594 841 ]
+/Parent 1 0 R
+/Resources 69 0 R
+/Thumb 72 0 R
+/Type /Page
+>>
+endobj
+10 0 obj
+<<
+/Annots 73 0 R
+/Contents 74 0 R
+/MediaBox [ 0 0 594 841 ]
+/Parent 1 0 R
+/Resources 77 0 R
+/Thumb 80 0 R
+/Type /Page
+>>
+endobj
+11 0 obj
+<<
+/Annots 81 0 R
+/Contents 82 0 R
+/MediaBox [ 0 0 594 841 ]
+/Parent 1 0 R
+/Resources 85 0 R
+/Thumb 90 0 R
+/Type /Page
+>>
+endobj
+12 0 obj
+<<
+/Annots 91 0 R
+/Contents 92 0 R
+/MediaBox [ 0 0 594 841 ]
+/Parent 1 0 R
+/Resources 95 0 R
+/Thumb 99 0 R
+/Type /Page
+>>
+endobj
+13 0 obj
+<<
+/Type /Catalog
+/Pages 1 0 R
+>>
+endobj
+14 0 obj
+[ ]
+endobj
+15 0 obj
+[ 16 0 R 17 0 R ]
+endobj
+16 0 obj
+<<
+/Length 0
+>>
+stream
+
+endstream
+endobj
+17 0 obj
+<<
+/Length 6066
+>>
+stream
+BT
+0 g
+/OP11Font0 16 Tf
+0 0 0 rg
+78 Tz
+1 0 0 1 291 782 Tm
+(12) Tj
+/OP11Font1 24 Tf
+101 Tz
+1 0 0 1 136 722 Tm
+(THE ERROR COMPONENT IN) Tj
+99 Tz
+1 0 0 1 214 702 Tm
+(SPATIAL DATA) Tj
+/OP11Font2 11 Tf
+93 Tz
+1 0 0 1 72 525 Tm
+(BACKGROUND: ERROR AND DATA) Tj
+94 Tz
+1 0 0 1 72 511 Tm
+(QUALITY DEFINITIONS) Tj
+/OP11Font1 12 Tf
+93 Tz
+1 0 0 1 51 475 Tm
+(No map can be picked apart into completely) Tj
+60 Tz
+1 0 0 1 51 462 Tm
+(i) Tj
+94 Tz
+1 0 0 1 54 462 Tm
+(ndependent pellets of information. There is) Tj
+93 Tz
+1 0 0 1 51 449 Tm
+(something collective and comprehensive about the) Tj
+94 Tz
+1 0 0 1 51 436 Tm
+(spatial representation. First, the map is spatially) Tj
+93 Tz
+1 0 0 1 51 422 Tm
+(continuous and comiected. There is also a deeper) Tj
+1 0 0 1 51 409 Tm
+(reason. Individual facts become more useful) Tj
+30 Tz
+1 0 0 1 51 396 Tm
+(i) Tj
+93 Tz
+1 0 0 1 54 396 Tm
+(nformation through an interaction with a structure) Tj
+1 0 0 1 51 382 Tm
+(of theory that provides a context to interpret the) Tj
+1 0 0 1 50 369 Tm
+(individual facts. In common usage, the main) Tj
+1 0 0 1 50 355 Tm
+(distinction between data and information arises) Tj
+1 0 0 1 50 342 Tm
+(from meaning, but meaning is context dependent.) Tj
+1 0 0 1 50 328 Tm
+(To be more concrete, the process of converting a) Tj
+1 0 0 1 51 315 Tm
+(particular fact into information must comprehend) Tj
+92 Tz
+1 0 0 1 51 302 Tm
+(the fitness of that fact for some particular purpose.) Tj
+93 Tz
+1 0 0 1 51 289 Tm
+(This line of argument provides an important) Tj
+60 Tz
+1 0 0 1 51 275 Tm
+(i) Tj
+93 Tz
+1 0 0 1 54 275 Tm
+(ntroduction to the role of data quality in an) Tj
+60 Tz
+1 0 0 1 51 262 Tm
+(i) Tj
+92 Tz
+1 0 0 1 54 262 Tm
+(nformation system.) Tj
+91 Tz
+1 0 0 1 72 248 Tm
+(Quality has various definitions in industrial) Tj
+92 Tz
+1 0 0 1 51 235 Tm
+(engineering \(Hayes and Romig 1977\), but one) Tj
+91 Tz
+1 0 0 1 51 222 Tm
+(accepted definition is `fitness for use' \(Chrisman) Tj
+93 Tz
+1 0 0 1 51 208 Tm
+(1983\). Recently, the US National Committee) Tj
+1 0 0 1 51 195 Tm
+(Digital Cartographic Data Standards Task Force) Tj
+73 Tz
+1 0 0 1 51 181 Tm
+(\() Tj
+92 Tz
+1 0 0 1 55 181 Tm
+(DCDSTF 1988\) has adopted this definition) Tj
+1 0 0 1 51 168 Tm
+(formally for inclusion in a US national standard for) Tj
+93 Tz
+1 0 0 1 51 155 Tm
+(exchange of spatial data. The standard requires a) Tj
+1 0 0 1 51 141 Tm
+(quality report that provides the basis for a user to) Tj
+1 0 0 1 51 128 Tm
+(make the final judgement - the conversion to) Tj
+60 Tz
+1 0 0 1 51 114 Tm
+(i) Tj
+94 Tz
+1 0 0 1 54 114 Tm
+(nformation by interpretation for a particular use.) Tj
+/OP11Font0 16 Tf
+98 Tz
+1 0 0 1 242 662 Tm
+(N R CHRISMAN) Tj
+/OP11Font3 11 Tf
+1 0 0 1 111 622 Tm
+(Although most data gathering disciplines treat error as an embarrassing issue to be) Tj
+99 Tz
+1 0 0 1 111 608 Tm
+(expunged, the error inherent in spatial data deserves closer attention and public) Tj
+1 0 0 1 111 595 Tm
+(understanding. This chapter presents a review of the components of error in spatial) Tj
+1 0 0 1 111 582 Tm
+(data, based on Sinton's scheme of roles in the measurement process and also on the) Tj
+1 0 0 1 111 569 Tm
+(categories in the US Proposed Standard for Digital Cartographic Data Quality.) Tj
+/OP11Font1 12 Tf
+93 Tz
+1 0 0 1 307 529 Tm
+(This particular element of the US proposal has also) Tj
+1 0 0 1 308 515 Tm
+(been adopted, at least in spirit, by a British proposal) Tj
+92 Tz
+1 0 0 1 308 502 Tm
+(\(Haywood 1986\), and the French \(Salge and Sclafer) Tj
+50 Tz
+1 0 0 1 308 489 Tm
+(1) Tj
+91 Tz
+1 0 0 1 313 489 Tm
+(989\), among others.) Tj
+93 Tz
+1 0 0 1 328 475 Tm
+(Quality is a neutral term, fitting for a national) Tj
+92 Tz
+1 0 0 1 308 462 Tm
+(standard, but the tough issues of quality are best) Tj
+93 Tz
+1 0 0 1 307 449 Tm
+(evoked by the loaded word `error'. In common) Tj
+92 Tz
+1 0 0 1 308 436 Tm
+(usage, error is a bad thing, and many professions) Tj
+94 Tz
+1 0 0 1 307 422 Tm
+(related to spatial data share this attitude. For) Tj
+92 Tz
+1 0 0 1 307 409 Tm
+(instance, geodesists, surveyors and) Tj
+93 Tz
+1 0 0 1 307 396 Tm
+(photogrammetrists go to great lengths to reduce the) Tj
+94 Tz
+1 0 0 1 307 382 Tm
+(error in their measurement products. For these) Tj
+92 Tz
+1 0 0 1 307 369 Tm
+(disciplines the full attention focuses on the) Tj
+1 0 0 1 307 356 Tm
+(reduction of deviation between positional) Tj
+94 Tz
+1 0 0 1 307 342 Tm
+(measurements and `ground truth'. Cartographers,) Tj
+93 Tz
+1 0 0 1 307 329 Tm
+(perhaps because they often cannot remove all error,) Tj
+1 0 0 1 307 316 Tm
+(have two incompatible approaches, both designed) Tj
+1 0 0 1 307 303 Tm
+(to avoid the issue. One tendency is to generate) Tj
+1 0 0 1 307 289 Tm
+(authoritative maps, through their official status or) Tj
+1 0 0 1 307 276 Tm
+(some other form of paternalism. The traditional) Tj
+92 Tz
+1 0 0 1 307 263 Tm
+(approach to standards places little emphasis on a) Tj
+94 Tz
+1 0 0 1 307 249 Tm
+(user's determination of a particular need. The other) Tj
+92 Tz
+1 0 0 1 307 236 Tm
+(tendency, more common in academic circles, adopts) Tj
+1 0 0 1 307 222 Tm
+(the communication paradigm and expects the) Tj
+93 Tz
+1 0 0 1 307 209 Tm
+(cartographer to use all means to communicate the) Tj
+91 Tz
+1 0 0 1 307 195 Tm
+(message \(Robinson) Tj
+/OP11Font3 11 Tf
+97 Tz
+1 0 0 1 396 196 Tm
+(et al.) Tj
+/OP11Font1 12 Tf
+92 Tz
+1 0 0 1 421 196 Tm
+(1984\). The communication) Tj
+1 0 0 1 307 182 Tm
+(paradigm, like a paternalist agency, assumes that) Tj
+93 Tz
+1 0 0 1 307 169 Tm
+(the map maker controls the process, particularly the) Tj
+60 Tz
+1 0 0 1 307 156 Tm
+(j) Tj
+92 Tz
+1 0 0 1 310 156 Tm
+(udgement of fitness for use. In summary, the) Tj
+1 0 0 1 307 142 Tm
+(disciplines of mapping technology are bent on) Tj
+1 0 0 1 307 129 Tm
+(reducing error or minimizing its importance. While) Tj
+93 Tz
+1 0 0 1 307 116 Tm
+(this may be a reasonable approach to foster the) Tj
+83 Tz
+1 0 0 1 527 74 Tm
+(165) Tj
+0 g
+ET
+
+endstream
+endobj
+18 0 obj
+<<
+/Font <<
+/OP11Font0 19 0 R
+/OP11Font1 20 0 R
+/OP11Font2 21 0 R
+/OP11Font3 22 0 R
+>>
+/ProcSet 23 0 R
+/XObject <<
+/thumbnail_background_Page_0 24 0 R
+>>
+>>
+endobj
+19 0 obj
+<<
+/BaseFont /Courier
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font0
+/Subtype /Type1
+/Type /Font
+/Widths [ 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 ]
+>>
+endobj
+20 0 obj
+<<
+/BaseFont /Times-Roman
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font1
+/Subtype /Type1
+/Type /Font
+/Widths [ 0 280 340 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 340 410 500 500 840 785 185 340 340 500 560 250 340 250 290 500 500 500 500 500 500 500 500 500 500 290 290 565 565 565 440 925 720 670 670 725 610 555 720 720 335 390 725 615 880 720 720 560 720 665 555 605 715 715 945 725 725 610 335 275 335 475 500 330 450 500 450 500 450 340 500 500 275 275 500 275 775 500 500 500 500 340 390 285 500 500 720 500 500 450 490 200 490 550 350 500 350 340 500 450 1000 500 500 340 1000 565 340 890 350 610 350 350 340 340 445 445 350 500 1000 340 990 390 340 730 350 450 730 250 340 500 500 500 500 210 500 340 770 280 500 570 340 770 340 410 570 300 300 340 510 460 250 340 300 310 500 750 750 750 445 720 720 720 720 720 720 885 675 615 615 615 615 340 340 340 340 720 720 720 720 720 720 720 565 720 720 720 720 720 720 560 500 450 450 450 450 450 450 670 450 450 450 450 450 280 280 280 280 500 500 500 500 500 500 500 565 500 500 500 500 500 500 500 500 ]
+>>
+endobj
+21 0 obj
+<<
+/BaseFont /Helvetica-Bold
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font2
+/Subtype /Type1
+/Type /Font
+/Widths [ 0 280 340 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 335 485 555 555 890 725 245 340 340 390 585 280 340 280 280 555 555 555 555 555 555 555 555 555 555 340 340 585 585 585 610 975 715 715 715 715 665 615 780 715 280 550 725 610 835 715 775 675 775 725 665 610 710 665 945 665 665 610 330 280 340 590 555 340 555 610 555 610 555 340 610 610 280 280 555 280 890 610 610 610 610 390 560 340 610 555 775 555 555 500 395 275 395 590 350 560 350 285 560 500 1000 560 560 340 1000 665 335 1000 350 610 350 350 275 275 500 500 350 560 1000 340 1000 560 340 940 350 500 615 285 330 555 555 555 555 280 555 335 735 375 560 585 340 735 340 400 590 340 340 340 615 550 285 340 340 370 560 840 840 840 610 725 725 725 725 725 725 1000 725 670 670 670 670 280 280 280 280 730 730 780 780 780 780 780 590 780 725 725 725 725 675 675 610 560 560 560 560 560 560 880 560 560 560 560 560 285 285 285 285 610 610 610 610 610 610 610 590 610 610 610 610 610 560 610 560 ]
+>>
+endobj
+22 0 obj
+<<
+/BaseFont /Times-Italic
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font3
+/Subtype /Type1
+/Type /Font
+/Widths [ 0 280 340 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 340 410 500 500 840 785 185 340 340 500 560 250 340 250 290 500 500 500 500 500 500 500 500 500 500 290 290 565 565 565 440 925 720 670 670 725 610 555 720 720 335 390 725 615 880 720 720 560 720 665 555 605 715 715 945 725 725 610 335 275 335 475 500 330 450 500 450 500 450 340 500 500 275 275 500 275 775 500 500 500 500 340 390 285 500 500 720 500 500 450 490 200 490 550 350 500 350 340 500 450 1000 500 500 340 1000 565 340 890 350 610 350 350 340 340 445 445 350 500 1000 340 990 390 340 730 350 450 730 250 340 500 500 500 500 210 500 340 770 280 500 570 340 770 340 410 570 300 300 340 510 460 250 340 300 310 500 750 750 750 445 720 720 720 720 720 720 885 675 615 615 615 615 340 340 340 340 720 720 720 720 720 720 720 565 720 720 720 720 720 720 560 500 450 450 450 450 450 450 670 450 450 450 450 450 280 280 280 280 500 500 500 500 500 500 500 565 500 500 500 500 500 500 500 500 ]
+>>
+endobj
+23 0 obj
+[ /PDF /Text /ImageB /ImageC /ImageI ]
+endobj
+24 0 obj
+<<
+/BitsPerComponent 1
+/ColorSpace /DeviceGray
+/DecodeParms <<
+/Columns 83
+/K -1
+>>
+/Filter /CCITTFaxDecode
+/Height 117
+/ImageMask false
+/Name /thumbnail_background_Page_0
+/Subtype /Image
+/Type /XObject
+/Width 83
+/Length 822
+>>
+stream
+#¢8»ËèóQ˘>»ié8˛KÁë‰]#
+""aH#£xàƒDéé":#®àè»ö0édtGQÚ.§¬6Ñ—DtGŒ":≤âF"Ö)‘‘è#éå#éã¢:#˘#¢ËÚàààààààå÷ã¢:#¢Ë∫8è£—tmDDDDDDG…b*—Ö:ƒ|æ_#°F""$Ña—‰mrÑ]!L(àëà˙.àËé≤:,∫ààààà»".àËé¢"2t]DtGGNå#èë—¥GD~""""""#3DtGDtGE—ÑmDÑGF¥m—¯ààäB'à§"#!°ö! —¢"GGî˙#‰tc.À£Ëéå—∏$å%#®ààààààà…‚/óE—ºÕÕ£ôtGQûmÚ:.é#»“#£#¢:#¢>}DDDDDDDDeå—’FÑ]Dt_ààààààÃ——»Ëéå":#Êë.àËæGGëZqQàóCPàÍ#>âtm2>]D|∫.¢"GB""#4E—Ñ]ÛèóIF¥y—ÑyDDDDDDDDfhéàËéé";#£éã£»éã£»⁄6àË¬ààààààààà tb"ƒ]ÛË¬#®à§"ô¢:8àËèó»Ëéç£Dë—.É3ù"""""""GA∆Nã‚1$äÖ:!ë—§aE—Ú:/Gë‘aààààåùDtGE– Bfè¢Ë∫.å#¬1ƒDDDDDDF#¢˘¥r.é®¬.àË∫8àËéç®àààààààÃ—ºéàË∫#¢:#¢:<è#tGDt.àËéå(àààààààààåêã¢:#¢:#¢:#£∫4À¢;>ç®ààé"(!
+}‚Ëƒ"jCXë§òÃ(âB"3R#£»‚1Ö#£éà˘#¢>a‘!≥éqÃÁséPÂ®(rú° r∏´(r®"""""""#4»Ë¬#¢ËéàË¬.ågthã¢:9óQ˘Ÿ¯Âa‹G¯
+endstream
+endobj
+25 0 obj
+[ ]
+endobj
+26 0 obj
+[ 27 0 R 28 0 R ]
+endobj
+27 0 obj
+<<
+/Length 0
+>>
+stream
+
+endstream
+endobj
+28 0 obj
+<<
+/Length 7716
+>>
+stream
+BT
+0 g
+/OP11Font0 10 Tf
+0 0 0 rg
+89 Tz
+1 0 0 1 87 812 Tm
+(N R Chrisman) Tj
+/OP11Font1 12 Tf
+93 Tz
+1 0 0 1 87 777 Tm
+(current divisions of labour, it does not lead to the) Tj
+92 Tz
+1 0 0 1 87 764 Tm
+(full exploitation of spatial information.) Tj
+93 Tz
+1 0 0 1 108 750 Tm
+(Error is not a problem unique to spatial) Tj
+1 0 0 1 86 737 Tm
+(evidence. Other disciplines have created other) Tj
+92 Tz
+1 0 0 1 86 723 Tm
+(solutions which are worth considering. Most) Tj
+91 Tz
+1 0 0 1 86 710 Tm
+(physical, biological and social sciences integrate) Tj
+93 Tz
+1 0 0 1 86 697 Tm
+(data collectors and data analysts into the same) Tj
+92 Tz
+1 0 0 1 86 684 Tm
+(discipline, while mapping places them in distinct) Tj
+93 Tz
+1 0 0 1 86 670 Tm
+(guilds. Perhaps as a result, error bars or some other) Tj
+92 Tz
+1 0 0 1 86 657 Tm
+(estimates appear on the display of most physical) Tj
+94 Tz
+1 0 0 1 86 643 Tm
+(measurements. Also, even the popular press) Tj
+93 Tz
+1 0 0 1 86 630 Tm
+(presents a standard error of estimate for opinion) Tj
+1 0 0 1 86 617 Tm
+(poll results. Reporting error is not a sign of) Tj
+92 Tz
+1 0 0 1 86 603 Tm
+(weakness in these other disciplines, because the) Tj
+1 0 0 1 86 590 Tm
+(error estimate provides crucial information which) Tj
+94 Tz
+1 0 0 1 86 577 Tm
+(must be preserved for correct interpretation. The) Tj
+92 Tz
+1 0 0 1 86 563 Tm
+(most developed scientific approach to error is the) Tj
+1 0 0 1 86 550 Tm
+(body of statistical procedures which have developed) Tj
+93 Tz
+1 0 0 1 86 537 Tm
+(over the past century. However, many of the) Tj
+1 0 0 1 86 523 Tm
+(advanced techniques in statistics are not attuned to) Tj
+1 0 0 1 86 510 Tm
+(the problems inherent in geographical information.) Tj
+1 0 0 1 107 496 Tm
+(For some attempts to understand the statistical) Tj
+92 Tz
+1 0 0 1 86 483 Tm
+(basis of errors in spatial databases see White \(1978\),) Tj
+93 Tz
+1 0 0 1 86 470 Tm
+(Goodchild and Dubuc \(1987\) and Goodchild and) Tj
+91 Tz
+1 0 0 1 86 457 Tm
+(Gopal \(1989\).) Tj
+100 Tz
+1 0 0 1 86 410 Tm
+(Basic terms for error) Tj
+92 Tz
+1 0 0 1 86 390 Tm
+(Before delving deeper, it is useful to present some) Tj
+94 Tz
+1 0 0 1 86 376 Tm
+(fundamental terms to discuss error. Under the) Tj
+92 Tz
+1 0 0 1 86 363 Tm
+(general intent of describing data quality the goal is) Tj
+1 0 0 1 86 350 Tm
+(to describe fitness for some particular use. Many) Tj
+1 0 0 1 86 336 Tm
+(numerically oriented disciplines have developed a) Tj
+93 Tz
+1 0 0 1 86 323 Tm
+(concept of error as a deviation \(or distance\)) Tj
+1 0 0 1 86 309 Tm
+(between a measurement and the `true' value.) Tj
+92 Tz
+1 0 0 1 86 296 Tm
+(Different disciplines use different terms to refer to) Tj
+1 0 0 1 86 283 Tm
+(this concept, and some of these terms conflict. This) Tj
+1 0 0 1 86 270 Tm
+(chapter will follow the general practice of the) Tj
+91 Tz
+1 0 0 1 86 256 Tm
+(mapping sciences \(see DCDSTF 1988: 28\) and use) Tj
+92 Tz
+1 0 0 1 86 243 Tm
+(the term accuracy to refer to the closeness of an) Tj
+93 Tz
+1 0 0 1 86 229 Tm
+(observation to a true value \(or one accepted as) Tj
+92 Tz
+1 0 0 1 86 216 Tm
+(true\). This definition of accuracy implies an) Tj
+94 Tz
+1 0 0 1 86 203 Tm
+(independent, objective external reality and sets the) Tj
+93 Tz
+1 0 0 1 86 189 Tm
+(highest standard for the concept of accuracy. In) Tj
+92 Tz
+1 0 0 1 86 176 Tm
+(some contexts, a measurement system may produce) Tj
+93 Tz
+1 0 0 1 86 163 Tm
+(inaccurate results that preserve local relationships.) Tj
+92 Tz
+1 0 0 1 86 149 Tm
+(Statistically, such a condition arises from) Tj
+33 Tz
+1 0 0 1 87 136 Tm
+(,) Tj
+94 Tz
+1 0 0 1 89 136 Tm
+(systematic' error \(as opposed to random error\).) Tj
+91 Tz
+1 0 0 1 87 123 Tm
+(Systematic error involves a uniform shift of values,) Tj
+92 Tz
+1 0 0 1 87 109 Tm
+(hence the term `bias' which is applied in some) Tj
+75 Tz
+1 0 0 1 86 68 Tm
+(16) Tj
+83 Tz
+1 0 0 1 96 68 Tm
+(6) Tj
+91 Tz
+1 0 0 1 344 776 Tm
+(measurement sciences. Such systems are described) Tj
+92 Tz
+1 0 0 1 344 763 Tm
+(by cartographers as having `relative accuracy', but) Tj
+91 Tz
+1 0 0 1 344 749 Tm
+(this property is usually a sign that the process of) Tj
+94 Tz
+1 0 0 1 343 735 Tm
+(data preparation \(compilation\) has not been) Tj
+92 Tz
+1 0 0 1 343 722 Tm
+(completed. In the spirit of `fitness for use', relative) Tj
+91 Tz
+1 0 0 1 343 709 Tm
+(accuracy may be perfectly viable for some) Tj
+92 Tz
+1 0 0 1 343 696 Tm
+(applications, while unfit for others which depend on) Tj
+1 0 0 1 343 683 Tm
+(geodetic registration.) Tj
+91 Tz
+1 0 0 1 364 669 Tm
+(The concept of accuracy is essentially) Tj
+60 Tz
+1 0 0 1 343 656 Tm
+(i) Tj
+93 Tz
+1 0 0 1 346 655 Tm
+(ndependent of the issue of resolution although both) Tj
+1 0 0 1 343 642 Tm
+(contribute to overall data quality. The resolution of) Tj
+92 Tz
+1 0 0 1 343 629 Tm
+(a measurement system is the minimum distance) Tj
+1 0 0 1 343 615 Tm
+(which can be recorded. Clearly, resolution sets a) Tj
+60 Tz
+1 0 0 1 343 603 Tm
+(l) Tj
+92 Tz
+1 0 0 1 346 602 Tm
+(ower bound on accuracy. It is considered good) Tj
+1 0 0 1 343 589 Tm
+(practice to make this minimum difference smaller) Tj
+1 0 0 1 343 576 Tm
+(than the accuracy of the whole system, but a user) Tj
+93 Tz
+1 0 0 1 343 563 Tm
+(should not confuse the two. Both resolution and) Tj
+92 Tz
+1 0 0 1 343 549 Tm
+(accuracy can be applied to the various components) Tj
+94 Tz
+1 0 0 1 342 536 Tm
+(of spatial information, both attributes \(Dueker) Tj
+91 Tz
+1 0 0 1 343 523 Tm
+(1979\) and positions \(Tobler 1988; see also Fisher) Tj
+89 Tz
+1 0 0 1 343 510 Tm
+(1991 in this volume\).) Tj
+92 Tz
+1 0 0 1 363 496 Tm
+(This chapter argues that error is an integral) Tj
+1 0 0 1 342 483 Tm
+(part of spatial information processing. The) Tj
+1 0 0 1 342 469 Tm
+(goal is to cover the full range of error in) Tj
+1 0 0 1 342 456 Tm
+(geographical databases as a fundamental) Tj
+94 Tz
+1 0 0 1 342 443 Tm
+(introduction to the nature of spatial data. The) Tj
+92 Tz
+1 0 0 1 342 430 Tm
+(chapter first describes the conceptual role of error in) Tj
+93 Tz
+1 0 0 1 342 416 Tm
+(the nature of spatial data with particular attention) Tj
+92 Tz
+1 0 0 1 342 403 Tm
+(to the question `How many dimensions?' This is) Tj
+91 Tz
+1 0 0 1 342 390 Tm
+(followed by a review of spatial error models in a) Tj
+92 Tz
+1 0 0 1 342 376 Tm
+(variety of disciplines, structured by the categories) Tj
+94 Tz
+1 0 0 1 342 363 Tm
+(proposed for the Quality Report mandated by the) Tj
+93 Tz
+1 0 0 1 342 349 Tm
+(US National Committee for Digital Cartographic) Tj
+1 0 0 1 342 336 Tm
+(Data Standards. From this review, a comprehensive) Tj
+91 Tz
+1 0 0 1 342 323 Tm
+(view of error should emerge.) Tj
+/OP11Font0 10 Tf
+103 Tz
+1 0 0 1 363 269 Tm
+(DEALING WITH SPATIAL DATA: HOW) Tj
+110 Tz
+1 0 0 1 363 255 Tm
+(MANY'DIMENSIONS?) Tj
+/OP11Font1 12 Tf
+92 Tz
+1 0 0 1 342 230 Tm
+(It is relatively commonplace, particularly for those) Tj
+93 Tz
+1 0 0 1 342 217 Tm
+(schooled in thematic cartography, to consider) Tj
+92 Tz
+1 0 0 1 342 203 Tm
+(spatial data to consist of two major ingredients:) Tj
+93 Tz
+1 0 0 1 342 190 Tm
+(position and attribute \(see, e.g. Peucker 1972: 23\).) Tj
+1 0 0 1 342 177 Tm
+(However, the concept of information in GIS cannot) Tj
+1 0 0 1 342 163 Tm
+(be restricted to recording attribute and position;) Tj
+94 Tz
+1 0 0 1 342 150 Tm
+(more `dimensions' are required. Any measurement) Tj
+1 0 0 1 342 137 Tm
+(of these components has an inherent uncertainty. In) Tj
+1 0 0 1 342 124 Tm
+(general, error must not be treated as a potentially) Tj
+93 Tz
+1 0 0 1 342 110 Tm
+(embarrassing inconvenience, because error) Tj
+0 g
+ET
+
+endstream
+endobj
+29 0 obj
+<<
+/Font <<
+/OP11Font0 30 0 R
+/OP11Font1 31 0 R
+>>
+/ProcSet 23 0 R
+/XObject <<
+/thumbnail_background_Page_1 32 0 R
+>>
+>>
+endobj
+30 0 obj
+<<
+/BaseFont /Helvetica-Bold
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font0
+/Subtype /Type1
+/Type /Font
+/Widths [ 0 280 340 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 335 485 555 555 890 725 245 340 340 390 585 280 340 280 280 555 555 555 555 555 555 555 555 555 555 340 340 585 585 585 610 975 715 715 715 715 665 615 780 715 280 550 725 610 835 715 775 675 775 725 665 610 710 665 945 665 665 610 330 280 340 590 555 340 555 610 555 610 555 340 610 610 280 280 555 280 890 610 610 610 610 390 560 340 610 555 775 555 555 500 395 275 395 590 350 560 350 285 560 500 1000 560 560 340 1000 665 335 1000 350 610 350 350 275 275 500 500 350 560 1000 340 1000 560 340 940 350 500 615 285 330 555 555 555 555 280 555 335 735 375 560 585 340 735 340 400 590 340 340 340 615 550 285 340 340 370 560 840 840 840 610 725 725 725 725 725 725 1000 725 670 670 670 670 280 280 280 280 730 730 780 780 780 780 780 590 780 725 725 725 725 675 675 610 560 560 560 560 560 560 880 560 560 560 560 560 285 285 285 285 610 610 610 610 610 610 610 590 610 610 610 610 610 560 610 560 ]
+>>
+endobj
+31 0 obj
+<<
+/BaseFont /Times-Roman
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font1
+/Subtype /Type1
+/Type /Font
+/Widths [ 0 280 340 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 340 410 500 500 840 785 185 340 340 500 560 250 340 250 290 500 500 500 500 500 500 500 500 500 500 290 290 565 565 565 440 925 720 670 670 725 610 555 720 720 335 390 725 615 880 720 720 560 720 665 555 605 715 715 945 725 725 610 335 275 335 475 500 330 450 500 450 500 450 340 500 500 275 275 500 275 775 500 500 500 500 340 390 285 500 500 720 500 500 450 490 200 490 550 350 500 350 340 500 450 1000 500 500 340 1000 565 340 890 350 610 350 350 340 340 445 445 350 500 1000 340 990 390 340 730 350 450 730 250 340 500 500 500 500 210 500 340 770 280 500 570 340 770 340 410 570 300 300 340 510 460 250 340 300 310 500 750 750 750 445 720 720 720 720 720 720 885 675 615 615 615 615 340 340 340 340 720 720 720 720 720 720 720 565 720 720 720 720 720 720 560 500 450 450 450 450 450 450 670 450 450 450 450 450 280 280 280 280 500 500 500 500 500 500 500 565 500 500 500 500 500 500 500 500 ]
+>>
+endobj
+32 0 obj
+<<
+/BitsPerComponent 1
+/ColorSpace /DeviceGray
+/DecodeParms <<
+/Columns 83
+/K -1
+>>
+/Filter /CCITTFaxDecode
+/Height 117
+/ImageMask false
+/Name /thumbnail_background_Page_1
+/Subtype /Image
+/Type /XObject
+/Width 83
+/Length 1024
+>>
+stream
+Ê§GQ⁄
+9©Ã":/—tGDtqF3»éã∆DDDDDDDFuDtGÕÊtGFºéé#à⁄#Æ"""""#ÃF„ëòE—Ë‚ç0ÑDBb'—Y.àËæa¢:ëà ÑDE°eV",ø!£àéå":#¢:8†Ü""""2.ã£h⁄4D˘À¢>]DDDDDDL‘÷àËéã¢:=ë—dty–ƒDDDDDd4o!‰tA£èë‘DDDFHDtGDtGDtGà˘D4GE—»Ë‚3‚""¡ààààåJtOóEÚ˘—E—ÑGSR–‚"1èÚ:í3ËéÑDb"HR1ÚË∫#¢>$|éè£#¢:6¢""""""2ü/—‰]—|‚0å"åéåduêÚ:#£héà˘:3Dt]—GtGF8ààààààààŒàéã¢:#ÂÛòG„H∫0àÍ""""$t!8B#!(Vg—RB.â–àóB"1!—tGã¢:/àËéã£6}F—Ö–àåÜà˘FÛ¬.àËéÑéàÍ"""""#5#h⁄0å"Ë◊õàË‚#¢:#®ààààààÕH∆q—¥GDtGGÛéã‰t{.¢""""""#$.å#∫#¢Ë—D|⁄#£Eqâ ÂQ	DeMF|∫#¢:#Ò»Ë¬#Êy¥GE‘ÜçàààƒD®E—tc.àÍ""#:#éã¢:$dËáô®àààà»qÑ_.è">_4EÛhéàËèõE‘!ƒDFÑDGàà»ƒ@—!DtGQ
+Hã¢Ï∫#¢:0ã¢:(D|¬/¬b""""""#:dtGàËéã£àéàh∫#¢Ëﬂé#éã¢¸DDFCF—¥GÃ":.à˘Qv§4o#ƒta’‚""‚&àéà˘À≤ÍtCtí#´â—WàÕhDF.À£Q8è≈—tGè£ÑGDto/óE¯ààààààà tmD|éàlÚ7ë—ÑaDDDDDFCDtq£h∫0é":#‰t]FQîÂafÚ˘∏ ÑF"""}JZSDtGAG»Ë∫#‰uí.àÒåéé":$":/ë—tGD|∆c#®ààààààààåÍç£∫1ë——¢#£héà˘‰o.¢"""""""2GD|¬#£h∫.å#4GDtaG6àËé¢""""""8àå‘çÁÚ:#£—Ÿta≤á<1¸Ì
+?‡
+endstream
+endobj
+33 0 obj
+[ ]
+endobj
+34 0 obj
+[ 35 0 R 36 0 R ]
+endobj
+35 0 obj
+<<
+/Length 0
+>>
+stream
+
+endstream
+endobj
+36 0 obj
+<<
+/Length 7831
+>>
+stream
+BT
+0 g
+/OP11Font0 12 Tf
+0 0 0 rg
+92 Tz
+1 0 0 1 62 776 Tm
+(provides a critical component in judging fitness for) Tj
+94 Tz
+1 0 0 1 62 762 Tm
+(use. Understanding the error in spatial databases is) Tj
+93 Tz
+1 0 0 1 62 749 Tm
+(necessary to ensure appropriate application of GIS) Tj
+1 0 0 1 62 735 Tm
+(and to ensure progress in theory and tool) Tj
+95 Tz
+1 0 0 1 61 723 Tm
+(development.) Tj
+/OP11Font1 11 Tf
+91 Tz
+1 0 0 1 61 676 Tm
+(Basic dimensions) Tj
+/OP11Font0 12 Tf
+93 Tz
+1 0 0 1 61 655 Tm
+(It does not take a complex philosophical effort to) Tj
+1 0 0 1 61 641 Tm
+(observe that we inhabit a three-dimensional world.) Tj
+1 0 0 1 61 628 Tm
+(Distances of length, breadth and height serve to) Tj
+1 0 0 1 60 615 Tm
+(construct human artefacts and place them on the) Tj
+1 0 0 1 61 601 Tm
+(landscape. Thus, it is to be expected that a spatial) Tj
+1 0 0 1 60 588 Tm
+(database \(a GIS\) be embedded in the basic) Tj
+94 Tz
+1 0 0 1 60 575 Tm
+(dimensions of the earth.) Tj
+92 Tz
+1 0 0 1 82 561 Tm
+(But are these physical dimensions the only) Tj
+93 Tz
+1 0 0 1 60 548 Tm
+(ones? This question must be answered in order to) Tj
+94 Tz
+1 0 0 1 60 535 Tm
+(understand the complete nature of spatial data. A) Tj
+91 Tz
+1 0 0 1 60 522 Tm
+(scientific investigation must occur in the full) Tj
+92 Tz
+1 0 0 1 60 508 Tm
+(dimensionality of the problem or critical issues) Tj
+93 Tz
+1 0 0 1 60 495 Tm
+(become confused. Discovering the complete) Tj
+91 Tz
+1 0 0 1 60 481 Tm
+(dimensionality of a geographical investigation is a) Tj
+92 Tz
+1 0 0 1 60 468 Tm
+(crucial step, although it is not commonly) Tj
+93 Tz
+1 0 0 1 60 455 Tm
+(approached in these terms. The design phase of an) Tj
+1 0 0 1 59 441 Tm
+(information system, often conducted as a `needs) Tj
+1 0 0 1 60 428 Tm
+(analysis', attempts to define all the information) Tj
+1 0 0 1 60 415 Tm
+(required. In many of the routine applications of this) Tj
+1 0 0 1 59 401 Tm
+(technology, the demands for information can be) Tj
+94 Tz
+1 0 0 1 59 388 Tm
+(reasonably easily predicted. However, a major) Tj
+91 Tz
+1 0 0 1 59 375 Tm
+(advantage of a GIS lies exactly in its ability to) Tj
+94 Tz
+1 0 0 1 59 361 Tm
+(accommodate unanticipated needs. Fundamental) Tj
+92 Tz
+1 0 0 1 59 348 Tm
+(dimensions may be distinct from the details seen in) Tj
+1 0 0 1 59 335 Tm
+(a typical needs study.) Tj
+93 Tz
+1 0 0 1 80 321 Tm
+(The design of GIS must understand the) Tj
+92 Tz
+1 0 0 1 59 308 Tm
+(complete scope of the components of spatial) Tj
+93 Tz
+1 0 0 1 59 294 Tm
+(information. The basic questions behind the `nature) Tj
+1 0 0 1 59 281 Tm
+(of spatial data' are: `What do we need to know and) Tj
+1 0 0 1 59 268 Tm
+(how should we structure that knowledge?'. An) Tj
+92 Tz
+1 0 0 1 59 254 Tm
+(answer to these questions must address how we) Tj
+1 0 0 1 59 241 Tm
+(know what we know, because not all information is) Tj
+93 Tz
+1 0 0 1 59 228 Tm
+(equally reliable or useful.) Tj
+92 Tz
+1 0 0 1 80 214 Tm
+(The initial answer to the full dimensionality of) Tj
+1 0 0 1 59 201 Tm
+(geographical information can be given using the) Tj
+1 0 0 1 59 187 Tm
+(long-standing conventions of cartography. The) Tj
+93 Tz
+1 0 0 1 59 174 Tm
+(development of thematic cartography has fostered) Tj
+1 0 0 1 59 161 Tm
+(the recognition of space, attribute and time as the) Tj
+92 Tz
+1 0 0 1 59 147 Tm
+(basic components of mapping. This list seems) Tj
+1 0 0 1 59 134 Tm
+(complete for describing the surface of the earth.) Tj
+93 Tz
+1 0 0 1 59 121 Tm
+(However, the requirements for a geographical) Tj
+92 Tz
+1 0 0 1 59 108 Tm
+(information system cannot be simply contained by a) Tj
+/OP11Font1 11 Tf
+82 Tz
+1 0 0 1 395 807 Tm
+(The Error) Tj
+/OP11Font0 12 Tf
+87 Tz
+1 0 0 1 438 805 Tm
+(Component in Spatial Data) Tj
+93 Tz
+1 0 0 1 319 773 Tm
+(description of the surface of the earth. There is an) Tj
+60 Tz
+1 0 0 1 319 761 Tm
+(i) Tj
+93 Tz
+1 0 0 1 322 760 Tm
+(mportant distinction between the real world and) Tj
+1 0 0 1 319 746 Tm
+(the symbolic representations that can be) Tj
+92 Tz
+1 0 0 1 319 732 Tm
+(manipulated. To take Korzybski's \(1948\) dictum) Tj
+1 0 0 1 319 719 Tm
+(perhaps more literally than he did: `the map is not) Tj
+93 Tz
+1 0 0 1 319 706 Tm
+(the territory'. In the early enthusiasm of GIS, users) Tj
+92 Tz
+1 0 0 1 319 693 Tm
+(treated their data as a perfect model of the world) Tj
+93 Tz
+1 0 0 1 318 679 Tm
+(too often. On slight reflection, it should be apparent) Tj
+94 Tz
+1 0 0 1 318 666 Tm
+(that no representation captures a perfect replica of) Tj
+92 Tz
+1 0 0 1 318 653 Tm
+(something as complex as the earth. These forcible) Tj
+93 Tz
+1 0 0 1 318 639 Tm
+(deviations between a representation and actual) Tj
+92 Tz
+1 0 0 1 318 626 Tm
+(circumstances constitute error.) Tj
+1 0 0 1 338 613 Tm
+(Because error is inescapable, it should be) Tj
+93 Tz
+1 0 0 1 318 599 Tm
+(recognized as a fundamental dimension of data. A) Tj
+1 0 0 1 318 586 Tm
+(scheme for representation should be extended to) Tj
+30 Tz
+1 0 0 1 318 574 Tm
+(i) Tj
+93 Tz
+1 0 0 1 320 573 Tm
+(nclude the amount of deviation in each component) Tj
+1 0 0 1 318 560 Tm
+(\(space, attribute and time\). Only when error is) Tj
+92 Tz
+1 0 0 1 317 547 Tm
+(included into the representation is it possible to) Tj
+1 0 0 1 317 533 Tm
+(answer some probing questions about the) Tj
+75 Tz
+1 0 0 1 317 521 Tm
+(li) Tj
+92 Tz
+1 0 0 1 323 520 Tm
+(mitations of current knowledge.) Tj
+1 0 0 1 337 506 Tm
+(Of course, one goal of any information) Tj
+91 Tz
+1 0 0 1 317 493 Tm
+(specialist is to avoid needless error. By directly) Tj
+1 0 0 1 317 480 Tm
+(recognizing error, it may be possible to confine it to) Tj
+92 Tz
+1 0 0 1 317 467 Tm
+(acceptable limits. Still, error cannot always be) Tj
+90 Tz
+1 0 0 1 317 454 Tm
+(avoided cheaply or easily.) Tj
+/OP11Font1 11 Tf
+92 Tz
+1 0 0 1 316 407 Tm
+(Beyond dimensions: the changing roles of) Tj
+94 Tz
+1 0 0 1 316 394 Tm
+(position, attribute and error) Tj
+/OP11Font0 12 Tf
+91 Tz
+1 0 0 1 316 374 Tm
+(In 1977, David Sinton \(1978\) presented a) Tj
+93 Tz
+1 0 0 1 316 360 Tm
+(fundamental analysis of the information contained) Tj
+1 0 0 1 316 347 Tm
+(in a GIS. His three basic components \(he used the) Tj
+92 Tz
+1 0 0 1 316 334 Tm
+(terms location, theme and time\) were widely) Tj
+1 0 0 1 316 320 Tm
+(accepted long before then in thematic cartography) Tj
+49 Tz
+1 0 0 1 316 307 Tm
+([) Tj
+92 Tz
+1 0 0 1 319 307 Tm
+(Robinson \(1960: 11-12\) makes the distinction) Tj
+94 Tz
+1 0 0 1 315 294 Tm
+(between `base data' and `subject matter']. Before) Tj
+93 Tz
+1 0 0 1 315 281 Tm
+(thematic cartography emerged, map information) Tj
+91 Tz
+1 0 0 1 315 267 Tm
+(was not viewed in as analytical terms. The) Tj
+93 Tz
+1 0 0 1 315 254 Tm
+(development of thematic cartography led to the) Tj
+92 Tz
+1 0 0 1 315 241 Tm
+(recognition that the geometrical framework of a) Tj
+93 Tz
+1 0 0 1 315 227 Tm
+(map \(the base layer\) could be used to portray) Tj
+1 0 0 1 315 214 Tm
+(multiple `themes', essentially attributes of the) Tj
+1 0 0 1 315 200 Tm
+(objects represented in the base layer. In doing so,) Tj
+91 Tz
+1 0 0 1 315 187 Tm
+(there is at least a tacit recognition of time as well.) Tj
+93 Tz
+1 0 0 1 335 174 Tm
+(The critical development in Sinton's paper was) Tj
+1 0 0 1 315 161 Tm
+(the recognition of three distinct roles that location,) Tj
+92 Tz
+1 0 0 1 315 147 Tm
+(theme and time play in a particular information) Tj
+90 Tz
+1 0 0 1 315 134 Tm
+(context.) Tj
+93 Tz
+1 0 0 1 354 134 Tm
+(While the goal is to obtain a measurement,) Tj
+1 0 0 1 315 121 Tm
+(measurement of one component can only be made) Tj
+1 0 0 1 315 108 Tm
+(inside explicit constraints on the other components.) Tj
+75 Tz
+1 0 0 1 537 67 Tm
+(16) Tj
+83 Tz
+1 0 0 1 546 67 Tm
+(7) Tj
+0 g
+ET
+
+endstream
+endobj
+37 0 obj
+<<
+/Font <<
+/OP11Font0 38 0 R
+/OP11Font1 39 0 R
+>>
+/ProcSet 23 0 R
+/XObject <<
+/thumbnail_background_Page_2 40 0 R
+>>
+>>
+endobj
+38 0 obj
+<<
+/BaseFont /Times-Roman
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font0
+/Subtype /Type1
+/Type /Font
+/Widths [ 0 280 340 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 340 410 500 500 840 785 185 340 340 500 560 250 340 250 290 500 500 500 500 500 500 500 500 500 500 290 290 565 565 565 440 925 720 670 670 725 610 555 720 720 335 390 725 615 880 720 720 560 720 665 555 605 715 715 945 725 725 610 335 275 335 475 500 330 450 500 450 500 450 340 500 500 275 275 500 275 775 500 500 500 500 340 390 285 500 500 720 500 500 450 490 200 490 550 350 500 350 340 500 450 1000 500 500 340 1000 565 340 890 350 610 350 350 340 340 445 445 350 500 1000 340 990 390 340 730 350 450 730 250 340 500 500 500 500 210 500 340 770 280 500 570 340 770 340 410 570 300 300 340 510 460 250 340 300 310 500 750 750 750 445 720 720 720 720 720 720 885 675 615 615 615 615 340 340 340 340 720 720 720 720 720 720 720 565 720 720 720 720 720 720 560 500 450 450 450 450 450 450 670 450 450 450 450 450 280 280 280 280 500 500 500 500 500 500 500 565 500 500 500 500 500 500 500 500 ]
+>>
+endobj
+39 0 obj
+<<
+/BaseFont /Helvetica-Bold
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font1
+/Subtype /Type1
+/Type /Font
+/Widths [ 0 280 340 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 335 485 555 555 890 725 245 340 340 390 585 280 340 280 280 555 555 555 555 555 555 555 555 555 555 340 340 585 585 585 610 975 715 715 715 715 665 615 780 715 280 550 725 610 835 715 775 675 775 725 665 610 710 665 945 665 665 610 330 280 340 590 555 340 555 610 555 610 555 340 610 610 280 280 555 280 890 610 610 610 610 390 560 340 610 555 775 555 555 500 395 275 395 590 350 560 350 285 560 500 1000 560 560 340 1000 665 335 1000 350 610 350 350 275 275 500 500 350 560 1000 340 1000 560 340 940 350 500 615 285 330 555 555 555 555 280 555 335 735 375 560 585 340 735 340 400 590 340 340 340 615 550 285 340 340 370 560 840 840 840 610 725 725 725 725 725 725 1000 725 670 670 670 670 280 280 280 280 730 730 780 780 780 780 780 590 780 725 725 725 725 675 675 610 560 560 560 560 560 560 880 560 560 560 560 560 285 285 285 285 610 610 610 610 610 610 610 590 610 610 610 610 610 560 610 560 ]
+>>
+endobj
+40 0 obj
+<<
+/BitsPerComponent 1
+/ColorSpace /DeviceGray
+/DecodeParms <<
+/Columns 83
+/K -1
+>>
+/Filter /CCITTFaxDecode
+/Height 117
+/ImageMask false
+/Name /thumbnail_background_Page_2
+/Subtype /Image
+/Type /XObject
+/Width 83
+/Length 1095
+>>
+stream
+Ú∞ç£y¢ëqDDcö≥¬0à˘#¢:)DDDG#ƒ~CDt_3F—Ñ}Ú:#¢Ë!1î"ËﬁhçÂ—¢#¢:6ã¢?öe—»ËèDÑmDt]Ûà∫àààààààåÇ":6àËéå":.å":0¢""""# àéè":<ã¢:.ã®à B""#À¢>GE—DtaDDDDFNç¢:*H⁄0¢"R1∆#(DtCDtGE—tyDtm—~""""""3D]DtGF—ÑGE—ƒ]DtGœ¢ËèóQØ#¢:.ã¢>]—Fhèõ‚8ààààåJ"xÚ8å2ÍPà˘Ù%–ÑàåhD ≤;#¢:#¢˘≈4A&hæq"""#%‘—F—På`ÅDDFCDtfã£æfédtGFÉààààààÕ3∫.ã¢:0å">GGtqE—DuàààààààåN#éàË∫#‰tGG—tmE—æ""""A""1èóFt]I—å∫#£Õb",™ƒDDD⁄RÍNàËèõF":1ì°.Ö":àààààåÕDtyG—¢8ã‰xéàËèë—Öö#¢:.é#éã¢:!‰|éå#ô—uö#Â—ÑmFÙgóFuƒDDDDF'—#≤ËéàËﬂÕDu5õFµ3FDta‚:/àåDDDDIÚ9ë—Ö3Dt]E—ÛhéÑDb"""#(G—ÚË‚5#h˛GDuú]DtGE—DtGFà⁄/óFºéàÙDDDDDDDDFjG——ÛúGGë—ÑGFD¬.ÑDDF,√î9VSúÇB>àhDDb"kDBö#Ëéçƒt]‡@Ñ°DDDDfhºOë„4}G¥_.àÍ"""""#(DtGE—ƒGœf¸⁄8à˘Ã⁄àààààààÃ—ÑGEÛ»ƒGE—ö0ç≈—.¢,å!õF”(rá) ôCñ9‹òÂSïÕààààààƒê¶{(X†b$iêã¢:#¢>m—.àËéç¢>BGDtmõQö.ã£yÃ"Ëœ.àË∫<ç¢>^ààààààààÃ—E—GÚ!E—#¢:.àËé¢"""""""3<éàËéàË∫9Ú:6ä2Ë∫#£h∫/ó‚""êàààààåËîèë—ƒaG≤>GF»éàË∫#¢?3B"""""""1:©ôóE– YtmÛ»‚àààààÃ—#¢Ò#¢ÏéàË—Â——tGEËààààààààÃ—x∫.ã¢:#ƒtGFÃ#q#¢<GDtGDtGQùê£ˇ
+endstream
+endobj
+41 0 obj
+[ ]
+endobj
+42 0 obj
+[ 43 0 R 44 0 R ]
+endobj
+43 0 obj
+<<
+/Length 0
+>>
+stream
+
+endstream
+endobj
+44 0 obj
+<<
+/Length 7961
+>>
+stream
+BT
+0 g
+/OP11Font0 10 Tf
+0 0 0 rg
+89 Tz
+1 0 0 1 80 812 Tm
+(N R Chrisman) Tj
+/OP11Font1 12 Tf
+92 Tz
+1 0 0 1 79 777 Tm
+(The roles Sinton described are termed fixed,) Tj
+93 Tz
+1 0 0 1 79 764 Tm
+(controlled and measured. Most spatial information) Tj
+92 Tz
+1 0 0 1 79 750 Tm
+(sources fix one of the three components; in the case) Tj
+91 Tz
+1 0 0 1 79 737 Tm
+(of maps, it is time which is normally fixed. Of) Tj
+92 Tz
+1 0 0 1 79 723 Tm
+(course it is possible to graph the amount of rainfall) Tj
+1 0 0 1 79 710 Tm
+(at a specific weather station over time, but this) Tj
+1 0 0 1 79 696 Tm
+(information is usually robbed of its temporal depth) Tj
+1 0 0 1 79 683 Tm
+(when placed into the spatial framework. Whichever) Tj
+1 0 0 1 79 670 Tm
+(it is, the fixed component does not exhibit any) Tj
+93 Tz
+1 0 0 1 79 656 Tm
+(variation, by definition. In order to make a) Tj
+92 Tz
+1 0 0 1 79 643 Tm
+(measurement, a second component is usually) Tj
+1 0 0 1 79 630 Tm
+(controlled, meaning that its variation is limited and) Tj
+1 0 0 1 79 616 Tm
+(predicted. A common form of spatial control is to) Tj
+93 Tz
+1 0 0 1 79 603 Tm
+(summarize \(total, average, etc.\) a spatial) Tj
+1 0 0 1 79 589 Tm
+(distribution \(attribute\) for a collection zone or) Tj
+92 Tz
+1 0 0 1 79 576 Tm
+(administrative region. These units provide the) Tj
+93 Tz
+1 0 0 1 79 563 Tm
+(spatial control for the measurement of the thematic) Tj
+1 0 0 1 79 549 Tm
+(attribute. Once the fixed and controlled elements) Tj
+92 Tz
+1 0 0 1 79 536 Tm
+(are established, it is possible to make a) Tj
+94 Tz
+1 0 0 1 79 523 Tm
+(measurement.) Tj
+90 Tz
+1 0 0 1 100 509 Tm
+(Map sources nearly universally fix time, leaving) Tj
+93 Tz
+1 0 0 1 79 496 Tm
+(space and attribute - the two components) Tj
+92 Tz
+1 0 0 1 79 482 Tm
+(recognized by thematic cartographers. Time is a) Tj
+93 Tz
+1 0 0 1 79 469 Tm
+(rich area for further research into the nature of) Tj
+92 Tz
+1 0 0 1 79 456 Tm
+(spatial information \(Langran and Chrisman 1988\).) Tj
+93 Tz
+1 0 0 1 79 443 Tm
+(However, to build a theory of error, it is important) Tj
+92 Tz
+1 0 0 1 79 429 Tm
+(to scrutinize Sinton's distinction between controlled) Tj
+94 Tz
+1 0 0 1 79 416 Tm
+(and measured.) Tj
+92 Tz
+1 0 0 1 100 403 Tm
+(Sinton's scheme was proposed largely to) Tj
+1 0 0 1 79 389 Tm
+(organize the difference between methods that) Tj
+1 0 0 1 79 376 Tm
+(control space compared with those that control) Tj
+93 Tz
+1 0 0 1 79 363 Tm
+(attributes. Sinton's own work during that period) Tj
+92 Tz
+1 0 0 1 79 349 Tm
+(had concentrated on grid cell databases which) Tj
+60 Tz
+1 0 0 1 79 336 Tm
+(i) Tj
+91 Tz
+1 0 0 1 82 336 Tm
+(mpose a lattice of cells as a control framework for a) Tj
+93 Tz
+1 0 0 1 79 322 Tm
+(series of diverse maps. Each theme \(attribute\) was) Tj
+92 Tz
+1 0 0 1 79 309 Tm
+(measured inside each cell. While Sinton's grid) Tj
+1 0 0 1 79 295 Tm
+(inventories were typically performed by armies of) Tj
+1 0 0 1 79 282 Tm
+(students, most remote sensing sources also fall into) Tj
+91 Tz
+1 0 0 1 79 269 Tm
+(this general approach using nearly regular cells as) Tj
+92 Tz
+1 0 0 1 79 256 Tm
+(control. These remote sensing sources include) Tj
+1 0 0 1 79 242 Tm
+(satellite platforms along with photogrammetric) Tj
+93 Tz
+1 0 0 1 79 229 Tm
+(equipment used to create digital elevation matrices.) Tj
+1 0 0 1 79 216 Tm
+(Although some of these sources attempt to acquire) Tj
+1 0 0 1 79 202 Tm
+(only a categorical measurement \(e.g. of land use\),) Tj
+94 Tz
+1 0 0 1 79 189 Tm
+(the inherent method permits a measurement on a) Tj
+92 Tz
+1 0 0 1 79 175 Tm
+(continuous scale \(as, e.g. reflectance or elevation\).) Tj
+1 0 0 1 79 162 Tm
+(Not all forms of spatial control use a uniform) Tj
+1 0 0 1 79 148 Tm
+(tessellation of cells. Census tabulations and) Tj
+1 0 0 1 80 135 Tm
+(administrative data such as school attendance are) Tj
+1 0 0 1 80 122 Tm
+(usually summarized for irregular spatial units, often) Tj
+93 Tz
+1 0 0 1 80 109 Tm
+(as a means to understand an unmeasurable) Tj
+75 Tz
+1 0 0 1 80 66 Tm
+(16) Tj
+66 Tz
+1 0 0 1 90 66 Tm
+(8) Tj
+92 Tz
+1 0 0 1 336 776 Tm
+(continuous surface \(such as population density\).) Tj
+93 Tz
+1 0 0 1 336 763 Tm
+(While these varieties of data are not usually handled) Tj
+1 0 0 1 336 750 Tm
+(together, the nature of spatial control creates some) Tj
+90 Tz
+1 0 0 1 336 736 Tm
+(similarities discussed below.) Tj
+92 Tz
+1 0 0 1 356 722 Tm
+(The opposite case arises by using attributes as) Tj
+93 Tz
+1 0 0 1 336 709 Tm
+(control in order to obtain spatial measurements.) Tj
+91 Tz
+1 0 0 1 336 696 Tm
+(Sinton was particularly focused on types of maps) Tj
+92 Tz
+1 0 0 1 336 683 Tm
+(such as vegetation, geology and soils. While these) Tj
+30 Tz
+1 0 0 1 336 670 Tm
+(l) Tj
+93 Tz
+1 0 0 1 338 669 Tm
+(ook like choropleth maps made with administrative) Tj
+1 0 0 1 335 656 Tm
+(zones, they are conceptually distinct, particularly) Tj
+1 0 0 1 335 643 Tm
+(when considering the error ramifications. No term) Tj
+92 Tz
+1 0 0 1 335 629 Tm
+(has received universal approval for this form of) Tj
+91 Tz
+1 0 0 1 335 616 Tm
+(map: Chrisman \(1982a\) suggested `categorical) Tj
+94 Tz
+1 0 0 1 335 602 Tm
+(coverage', ESRI adopted the term `coverage' for a) Tj
+1 0 0 1 335 589 Tm
+(more general use in ARGINFO, Mark and Csillag) Tj
+92 Tz
+1 0 0 1 335 576 Tm
+(\(1989\) used 'area-class map' \(citing Bunge 1966: 14-) Tj
+91 Tz
+1 0 0 1 336 563 Tm
+(23\) and Muehrcke \(1986\) used `mosaic surface'. All) Tj
+92 Tz
+1 0 0 1 335 549 Tm
+(these terms communicate the difference much) Tj
+93 Tz
+1 0 0 1 335 536 Tm
+(better than Burrough's \(1986a\) use of the) Tj
+50 Tz
+1 0 0 1 335 523 Tm
+(`) Tj
+93 Tz
+1 0 0 1 337 523 Tm
+(choropleth map' to cover both cases.) Tj
+1 0 0 1 355 510 Tm
+(Beyond the categorical coverage, many other) Tj
+1 0 0 1 335 496 Tm
+(circumstances require attributes as control to obtain) Tj
+1 0 0 1 335 483 Tm
+(positional measurement. Much of the traditional) Tj
+1 0 0 1 335 470 Tm
+(cartography on topographic maps and nautical) Tj
+1 0 0 1 334 456 Tm
+(charts portrays discrete `features'. Recognition of a) Tj
+1 0 0 1 335 443 Tm
+(feature's existence is the control, then the spatial) Tj
+1 0 0 1 335 429 Tm
+(footprint is recorded. To some extent, a `feature') Tj
+92 Tz
+1 0 0 1 335 416 Tm
+(database is fairly similar to a coverage database) Tj
+1 0 0 1 335 403 Tm
+(without the concern for exhaustive, comprehensive) Tj
+91 Tz
+1 0 0 1 335 390 Tm
+(and exclusive classification. Whereas a coverage) Tj
+92 Tz
+1 0 0 1 335 377 Tm
+(forces all places to have one and only one category) Tj
+93 Tz
+1 0 0 1 335 363 Tm
+(present, a particular feature may have a number of) Tj
+92 Tz
+1 0 0 1 335 350 Tm
+(distinct characteristics, while much of the study area) Tj
+91 Tz
+1 0 0 1 335 337 Tm
+(is simply a void. Still, these two are unified to the) Tj
+92 Tz
+1 0 0 1 335 323 Tm
+(extent that the attribute classification provides) Tj
+94 Tz
+1 0 0 1 334 310 Tm
+(control to the geometric measurement. Without) Tj
+92 Tz
+1 0 0 1 334 296 Tm
+(cataloguing all of the differences, it should be) Tj
+1 0 0 1 335 283 Tm
+(apparent that these diverse cases deserve) Tj
+93 Tz
+1 0 0 1 334 270 Tm
+(consideration in understanding the nature of spatial) Tj
+94 Tz
+1 0 0 1 335 257 Tm
+(data and its inherent error.) Tj
+/OP11Font0 10 Tf
+103 Tz
+1 0 0 1 355 202 Tm
+(A TAXONOMY OF ERROR IN GIS DATA) Tj
+/OP11Font1 12 Tf
+94 Tz
+1 0 0 1 335 177 Tm
+(Understanding error in GIS must take account of) Tj
+93 Tz
+1 0 0 1 335 163 Tm
+(Sinton's framework, although an alternative) Tj
+92 Tz
+1 0 0 1 335 150 Tm
+(approach is suggested by Veregin \(1989\). This) Tj
+1 0 0 1 335 137 Tm
+(section will take up the testable components) Tj
+93 Tz
+1 0 0 1 335 124 Tm
+(specified in the US Proposed Standard, connecting) Tj
+94 Tz
+1 0 0 1 335 110 Tm
+(them to Sinton's framework. After this review, the) Tj
+0 g
+ET
+
+endstream
+endobj
+45 0 obj
+<<
+/Font <<
+/OP11Font0 46 0 R
+/OP11Font1 47 0 R
+>>
+/ProcSet 23 0 R
+/XObject <<
+/thumbnail_background_Page_3 48 0 R
+>>
+>>
+endobj
+46 0 obj
+<<
+/BaseFont /Helvetica-Bold
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font0
+/Subtype /Type1
+/Type /Font
+/Widths [ 0 280 340 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 335 485 555 555 890 725 245 340 340 390 585 280 340 280 280 555 555 555 555 555 555 555 555 555 555 340 340 585 585 585 610 975 715 715 715 715 665 615 780 715 280 550 725 610 835 715 775 675 775 725 665 610 710 665 945 665 665 610 330 280 340 590 555 340 555 610 555 610 555 340 610 610 280 280 555 280 890 610 610 610 610 390 560 340 610 555 775 555 555 500 395 275 395 590 350 560 350 285 560 500 1000 560 560 340 1000 665 335 1000 350 610 350 350 275 275 500 500 350 560 1000 340 1000 560 340 940 350 500 615 285 330 555 555 555 555 280 555 335 735 375 560 585 340 735 340 400 590 340 340 340 615 550 285 340 340 370 560 840 840 840 610 725 725 725 725 725 725 1000 725 670 670 670 670 280 280 280 280 730 730 780 780 780 780 780 590 780 725 725 725 725 675 675 610 560 560 560 560 560 560 880 560 560 560 560 560 285 285 285 285 610 610 610 610 610 610 610 590 610 610 610 610 610 560 610 560 ]
+>>
+endobj
+47 0 obj
+<<
+/BaseFont /Times-Roman
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font1
+/Subtype /Type1
+/Type /Font
+/Widths [ 0 280 340 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 340 410 500 500 840 785 185 340 340 500 560 250 340 250 290 500 500 500 500 500 500 500 500 500 500 290 290 565 565 565 440 925 720 670 670 725 610 555 720 720 335 390 725 615 880 720 720 560 720 665 555 605 715 715 945 725 725 610 335 275 335 475 500 330 450 500 450 500 450 340 500 500 275 275 500 275 775 500 500 500 500 340 390 285 500 500 720 500 500 450 490 200 490 550 350 500 350 340 500 450 1000 500 500 340 1000 565 340 890 350 610 350 350 340 340 445 445 350 500 1000 340 990 390 340 730 350 450 730 250 340 500 500 500 500 210 500 340 770 280 500 570 340 770 340 410 570 300 300 340 510 460 250 340 300 310 500 750 750 750 445 720 720 720 720 720 720 885 675 615 615 615 615 340 340 340 340 720 720 720 720 720 720 720 565 720 720 720 720 720 720 560 500 450 450 450 450 450 450 670 450 450 450 450 450 280 280 280 280 500 500 500 500 500 500 500 565 500 500 500 500 500 500 500 500 ]
+>>
+endobj
+48 0 obj
+<<
+/BitsPerComponent 1
+/ColorSpace /DeviceGray
+/DecodeParms <<
+/Columns 83
+/K -1
+>>
+/Filter /CCITTFaxDecode
+/Height 117
+/ImageMask false
+/Name /thumbnail_background_Page_3
+/Subtype /Image
+/Type /XObject
+/Width 83
+/Length 1107
+>>
+stream
+Â¬#ÒÚÑyFFB1ì£¬0¢"""""#:¢>qG¥yE———ÑGGDDDDDDDFPàËè—ÑGDtq—t_6èdt]D~"""-0B$t#àƒ!H⁄A…t" äôUâƒâÑm˘B0àË¬#‚"#ÑF7FtG»ËéàËèúÀ¢:>àÍ"""""""2#£héå":#¢>GDtGÕG#¢:.àËé¢"""""""""#$#»º]FÑNã¢>a—Ã(àààààààŒà‚#¢:.ã¢:#£^få":#¢ËéàÍ""""‚""#)—Ñ]G¢
+Ge—ÑGã¢Íààààà0Ñb2≠©QBËeéç¢:.àË∫7ë—!—‰GAafDDDDDDDD0C$":.éft]EaŸPUààààààå°FÙGDt]—!¢:0À£Í""""""#(GëûGF—tqDthàË¬#£ """""""#!£Ÿ|éåe—èEÚ?â!XE'B#Ê—Hà˘|éådxéàÍ"""""3¶]„»ùG——»æGDtGQ’à˘¥]Eta—ƒGEÛj""""""#$"˘?óDtq¢:.ã¢:#¢Ë¬0ã®àààààààà…¬#Â—¥_#¢Ëéå—x‚#¢:.ã‰tGQGDxûB# —‰$ËåQFuDËHË¬3dxè3hé¢""""2Ñ^"»⁄#£hèë—DDDDFtE—ƒqDt]‰t]¢Ë‚ààààààåËã£ù—”#¢>]Gæ"""""#!Â—ÑaDtqÛDo0éE—#≠0B#ãàààåDFS¢#¢"2°¢˘6àÒÃºGE—0¢"""""2Üc.ç—å˙7òDt_.àË∫àààààààåëG.à˘#»‚.ã¢:0àËé¢"""""""2!À£h∫6é":.ã¢ËæGF2:àààààààå°—FDt^.à˘∏éã¢:#‰|∫6¢"" Å" –ààåêç¢ÎËNä!""CFÚ˘t1íƒqF#®ÑààåêÇë—ƒGE—t]DDDDeÀ¢:.é#∫ààààåêdtGF—t]—t]≤Òr.ã¢Í"""" è
+E:":#ÊÚÒ—Ñ"#%‘°d|∫#£h®C8âóF»Í"""#:"3(gDtGÀÒî2:#Â—0àË⁄/ûE—tGF—tGD~""""""""2#¢:7ë—¶GFhæGDtGE—.àË¬àààààààãe∫1ëÚ:6àË¬#£LéàË∫#£hèq˘G¯
+endstream
+endobj
+49 0 obj
+[ ]
+endobj
+50 0 obj
+[ 51 0 R 52 0 R ]
+endobj
+51 0 obj
+<<
+/Length 0
+>>
+stream
+
+endstream
+endobj
+52 0 obj
+<<
+/Length 8152
+>>
+stream
+BT
+0 g
+/OP11Font0 12 Tf
+0 0 0 rg
+91 Tz
+1 0 0 1 63 776 Tm
+(different views of disciplines will be placed in some) Tj
+93 Tz
+1 0 0 1 63 763 Tm
+(sort of perspective.) Tj
+101 Tz
+1 0 0 1 63 716 Tm
+(Positional accuracy) Tj
+92 Tz
+1 0 0 1 63 696 Tm
+(The best established issue of accuracy in the) Tj
+93 Tz
+1 0 0 1 63 682 Tm
+(mapping sciences has been lumped into the testable) Tj
+1 0 0 1 63 669 Tm
+(component of `positional accuracy' by the US) Tj
+94 Tz
+1 0 0 1 63 655 Tm
+(Proposed Standard \(DCDSTF 1988: 132-3\). The) Tj
+92 Tz
+1 0 0 1 63 642 Tm
+(geometrical accuracy of maps has been a topic of) Tj
+94 Tz
+1 0 0 1 63 629 Tm
+(concern long before computerization. The earlier) Tj
+1 0 0 1 63 615 Tm
+(US National Map) Tj
+92 Tz
+1 0 0 1 146 615 Tm
+(Accuracy) Tj
+93 Tz
+1 0 0 1 192 615 Tm
+(Standard \(Bureau of) Tj
+92 Tz
+1 0 0 1 63 602 Tm
+(the Budget 1947\) considered the accuracy of 'well-) Tj
+93 Tz
+1 0 0 1 63 589 Tm
+(defined points' as the sole measure of a map. The) Tj
+1 0 0 1 63 575 Tm
+(well-defined point means that there is no attribute) Tj
+92 Tz
+1 0 0 1 63 562 Tm
+(ambiguity; it can act as control for the positional) Tj
+93 Tz
+1 0 0 1 63 548 Tm
+(measurement. Because it is a point, there is no) Tj
+1 0 0 1 63 535 Tm
+(dimensional ambiguity either. The focus on the) Tj
+92 Tz
+1 0 0 1 63 522 Tm
+(most identifiable cartographic features persists in) Tj
+1 0 0 1 63 508 Tm
+(the revised procedures for testing large-scale line) Tj
+93 Tz
+1 0 0 1 63 495 Tm
+(maps adopted recently by the American Society for) Tj
+94 Tz
+1 0 0 1 63 481 Tm
+(Photogrammetry and Remote Sensing \(ASPRS\)) Tj
+92 Tz
+1 0 0 1 63 468 Tm
+(\(1989\). The disciplines of geodesy, surveying and) Tj
+93 Tz
+1 0 0 1 63 455 Tm
+(photogrammetry define map accuracy as absolute) Tj
+1 0 0 1 63 441 Tm
+(positional accuracy. There was an attempt in the) Tj
+94 Tz
+1 0 0 1 63 428 Tm
+(earlier drafts of the ASPRS standard to separate the) Tj
+93 Tz
+1 0 0 1 63 415 Tm
+(components of bias \(mean deviation\) in a test,) Tj
+92 Tz
+1 0 0 1 63 401 Tm
+(leaving the relative accuracy as an identifiable) Tj
+94 Tz
+1 0 0 1 63 388 Tm
+(quantity \(standard deviation from the mean\).) Tj
+93 Tz
+1 0 0 1 63 375 Tm
+(However, there was well-placed opposition, and the) Tj
+1 0 0 1 63 361 Tm
+(standard reverted to a single measure of absolute) Tj
+1 0 0 1 64 348 Tm
+(accuracy \(root-mean-square deviation from zero\).) Tj
+1 0 0 1 63 335 Tm
+(The fact that certain government agencies wish to) Tj
+1 0 0 1 64 321 Tm
+(have a simple standard does not mean that the) Tj
+92 Tz
+1 0 0 1 64 308 Tm
+(problem is simple. A test for positional accuracy) Tj
+1 0 0 1 64 294 Tm
+(will generate a set of displacements between the) Tj
+93 Tz
+1 0 0 1 64 281 Tm
+(observed and `true' values. These numbers should) Tj
+94 Tz
+1 0 0 1 64 268 Tm
+(be reported so that a user can extract the particular) Tj
+1 0 0 1 64 254 Tm
+(measure for the particular use. In a GIS setting, bias) Tj
+93 Tz
+1 0 0 1 64 241 Tm
+(can often be eliminated through some form of best) Tj
+92 Tz
+1 0 0 1 64 228 Tm
+(fit. In fact, many geometrical measures like polygon) Tj
+93 Tz
+1 0 0 1 64 214 Tm
+(area are immune to such systematic \(`relative'\)) Tj
+1 0 0 1 64 201 Tm
+(errors \(Chrisman and Yandell 1988\), although the) Tj
+1 0 0 1 64 187 Tm
+(fundamental tool of polygon overlay relies) Tj
+83 Tz
+1 0 0 1 259 188 Tm
+(upon_) Tj
+92 Tz
+1 0 0 1 65 174 Tm
+(absolute positioning between layers.) Tj
+93 Tz
+1 0 0 1 86 161 Tm
+(In testing a GIS layer, the source of `truth' may) Tj
+1 0 0 1 65 147 Tm
+(be relatively easy to determine. There are often) Tj
+91 Tz
+1 0 0 1 65 133 Tm
+(external sources of higher accuracy for a few) Tj
+93 Tz
+1 0 0 1 65 121 Tm
+(features in a database \(such as monuments used as) Tj
+92 Tz
+1 0 0 1 65 107 Tm
+(control for topographic maps which are also located) Tj
+/OP11Font1 9 Tf
+107 Tz
+1 0 0 1 396 809 Tm
+(The Error) Tj
+/OP11Font0 12 Tf
+87 Tz
+1 0 0 1 440 808 Tm
+(Component in Spatial Data) Tj
+92 Tz
+1 0 0 1 321 776 Tm
+(in street intersections\). Still, it may be necessary to) Tj
+1 0 0 1 321 763 Tm
+(obtain the higher accuracy data directly, causing a) Tj
+93 Tz
+1 0 0 1 321 749 Tm
+(potential recursion. The ASPRS standard specifies) Tj
+1 0 0 1 321 735 Tm
+(that a check survey to determine true locations must) Tj
+92 Tz
+1 0 0 1 321 722 Tm
+(have a positional accuracy of one-third the amount) Tj
+93 Tz
+1 0 0 1 321 709 Tm
+(expected for the product to be tested. Any such) Tj
+92 Tz
+1 0 0 1 321 695 Tm
+(survey must ultimately tie back to the geodetic) Tj
+93 Tz
+1 0 0 1 321 682 Tm
+(reference network. Indeed, the geodetic reference) Tj
+92 Tz
+1 0 0 1 321 669 Tm
+(network cannot be checked in this manner, since it) Tj
+1 0 0 1 321 655 Tm
+(is constructed from relative measurements to create) Tj
+1 0 0 1 321 642 Tm
+(the absolute framework for everything else. The) Tj
+1 0 0 1 321 629 Tm
+(arcane nature of geodesy will become more relevant) Tj
+1 0 0 1 321 615 Tm
+(to the average GIS user as Global Positioning) Tj
+1 0 0 1 321 602 Tm
+(System \(GPS\) surveys become more prevalent.) Tj
+91 Tz
+1 0 0 1 341 589 Tm
+(Although the positional accuracy of maps is) Tj
+92 Tz
+1 0 0 1 320 575 Tm
+(well accepted, few actual tests are published \(one) Tj
+94 Tz
+1 0 0 1 320 562 Tm
+(test of USGS DLG data appeared in Vonderohe) Tj
+92 Tz
+1 0 0 1 321 548 Tm
+(and Chrisman 1985\). The National Map Accuracy) Tj
+1 0 0 1 321 535 Tm
+(Standard is written like the text of a nuclear) Tj
+1 0 0 1 320 522 Tm
+(weapons treaty because it places each producer in) Tj
+1 0 0 1 320 509 Tm
+(charge of the decision of whether to test or not.) Tj
+1 0 0 1 321 496 Tm
+(Users of positional information, even if it claims to) Tj
+1 0 0 1 320 482 Tm
+(comply with the National Map Accuracy Standard,) Tj
+93 Tz
+1 0 0 1 320 469 Tm
+(should be aware that the particular product was) Tj
+1 0 0 1 320 455 Tm
+(probably not tested. Most US agencies infer that the) Tj
+1 0 0 1 320 442 Tm
+(particular sheet would have passed the test based on) Tj
+92 Tz
+1 0 0 1 320 429 Tm
+(compliance with certain specified procedures and) Tj
+1 0 0 1 320 415 Tm
+(equipment. This inference should be calibrated with) Tj
+1 0 0 1 321 402 Tm
+(a testing programme, but even that may be less) Tj
+93 Tz
+1 0 0 1 320 389 Tm
+(frequent than most users imagine. As the new) Tj
+1 0 0 1 320 376 Tm
+(standards come into force, and the technology for) Tj
+92 Tz
+1 0 0 1 320 362 Tm
+(direct field measurement \(e.g. with GPS) Tj
+93 Tz
+1 0 0 1 320 349 Tm
+(technology\) becomes available, perhaps the) Tj
+90 Tz
+1 0 0 1 321 335 Tm
+(prevalence of testing will change.) Tj
+92 Tz
+1 0 0 1 341 322 Tm
+(Many of the data in a GIS do not fit the) Tj
+91 Tz
+1 0 0 1 321 309 Tm
+(restrictive definition of well-defined points. There) Tj
+93 Tz
+1 0 0 1 321 295 Tm
+(are two approaches to resolve this. The standard) Tj
+92 Tz
+1 0 0 1 321 282 Tm
+(approach assumes that all features on a map can be) Tj
+93 Tz
+1 0 0 1 321 269 Tm
+(characterized by the error in the position of the) Tj
+92 Tz
+1 0 0 1 321 256 Tm
+(well-defined points. This is an unwritten assumption) Tj
+93 Tz
+1 0 0 1 321 242 Tm
+(behind many efforts in cartography. However, this) Tj
+92 Tz
+1 0 0 1 321 229 Tm
+(assumption can only be used as a lower threshold.) Tj
+1 0 0 1 321 216 Tm
+(The uncertainty in positioning an `ill-defined' object) Tj
+1 0 0 1 321 202 Tm
+(must be added on to the error in the well-defined) Tj
+1 0 0 1 321 189 Tm
+(points. But where would the lack of definition come) Tj
+93 Tz
+1 0 0 1 321 175 Tm
+(from? The fact that an object does not have a sharp) Tj
+92 Tz
+1 0 0 1 321 162 Tm
+(location to test may come from certain geometrical) Tj
+93 Tz
+1 0 0 1 321 149 Tm
+(constraints. For example, the standards expect to) Tj
+1 0 0 1 321 135 Tm
+(test right-angle road intersections, so that the linear) Tj
+91 Tz
+1 0 0 1 321 122 Tm
+(feature can be confined to a specific point. This) Tj
+92 Tz
+1 0 0 1 322 109 Tm
+(geometrical characteristic goes beyond Sinton's) Tj
+75 Tz
+1 0 0 1 541 69 Tm
+(16) Tj
+66 Tz
+1 0 0 1 551 69 Tm
+(9) Tj
+0 g
+ET
+
+endstream
+endobj
+53 0 obj
+<<
+/Font <<
+/OP11Font0 54 0 R
+/OP11Font1 55 0 R
+>>
+/ProcSet 23 0 R
+/XObject <<
+/thumbnail_background_Page_4 56 0 R
+>>
+>>
+endobj
+54 0 obj
+<<
+/BaseFont /Times-Roman
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font0
+/Subtype /Type1
+/Type /Font
+/Widths [ 0 280 340 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 340 410 500 500 840 785 185 340 340 500 560 250 340 250 290 500 500 500 500 500 500 500 500 500 500 290 290 565 565 565 440 925 720 670 670 725 610 555 720 720 335 390 725 615 880 720 720 560 720 665 555 605 715 715 945 725 725 610 335 275 335 475 500 330 450 500 450 500 450 340 500 500 275 275 500 275 775 500 500 500 500 340 390 285 500 500 720 500 500 450 490 200 490 550 350 500 350 340 500 450 1000 500 500 340 1000 565 340 890 350 610 350 350 340 340 445 445 350 500 1000 340 990 390 340 730 350 450 730 250 340 500 500 500 500 210 500 340 770 280 500 570 340 770 340 410 570 300 300 340 510 460 250 340 300 310 500 750 750 750 445 720 720 720 720 720 720 885 675 615 615 615 615 340 340 340 340 720 720 720 720 720 720 720 565 720 720 720 720 720 720 560 500 450 450 450 450 450 450 670 450 450 450 450 450 280 280 280 280 500 500 500 500 500 500 500 565 500 500 500 500 500 500 500 500 ]
+>>
+endobj
+55 0 obj
+<<
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font1
+/Subtype /Type1
+/Type /Font
+/Widths [ 0 280 340 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 355 555 555 890 670 225 340 340 390 585 280 340 280 280 555 555 555 555 555 555 555 555 555 555 280 280 585 585 585 555 1015 670 670 720 720 670 610 775 720 280 500 665 555 830 720 780 665 780 720 665 610 715 670 950 665 665 610 275 275 275 470 555 340 555 555 500 555 555 280 555 555 225 225 500 225 835 555 555 555 555 340 500 280 555 500 720 500 500 500 340 260 340 590 350 560 350 225 560 340 1000 560 560 340 1000 665 335 1000 350 610 350 350 230 230 340 340 350 560 1000 340 1000 560 340 940 350 500 615 285 330 555 555 555 555 270 555 335 735 375 560 585 340 735 340 400 590 340 340 340 615 540 280 340 340 370 555 840 840 840 610 670 670 670 670 670 670 1000 720 670 670 670 670 280 280 280 280 730 730 780 780 780 780 780 590 780 725 725 725 725 680 680 610 560 560 560 560 560 560 890 500 560 560 560 560 285 285 285 285 560 560 560 560 560 560 560 590 610 560 560 560 560 500 560 500 ]
+>>
+endobj
+56 0 obj
+<<
+/BitsPerComponent 1
+/ColorSpace /DeviceGray
+/DecodeParms <<
+/Columns 83
+/K -1
+>>
+/Filter /CCITTFaxDecode
+/Height 117
+/ImageMask false
+/Name /thumbnail_background_Page_4
+/Subtype /Image
+/Type /XObject
+/Width 83
+/Length 1149
+>>
+stream
+ÂaQB8±«4E—åÚ#¢:#£‚8À£àèë—FÚ:àààààààààÕ2Ëç#hééd˘uê§aGÛ≈êLæmFtG»Ë∫àe!8ç≈Ú:.àÍ"""2∞§4aEÛZ8Ñ¬#£h⁄ààà§"3DGDtGE„héé#à‚#¢>]3éT 8àààààààà…——#£q¥m";<àËéàË∫.¢"""""""2t]Dto#¢ËèõGëà∆yDtGF¯àààààààà…—"˘D|ÕE—tqQ:.ÑD ÖƒDHËF) Ç5#	":#¢ËèóRÑ é8àƒHËDfë	ÏÕGëGë":ààààÑàå——Œ#ËéàËêàÈ#à∫#—öf":0è#thàËéã¢:0ådtyDDDDDDDDeº∫.è#°E—ºéàËéà˘u¢6àËÚ'E∫.åe—tGDtGDtG\DHË∫DEƒDDF'≤È1ÜâQ¶m—E—tGE—<å":#≥ã®ààäXààààå———ƒŸDtyEÚËèë—¥c#ÒíE—|ééEÛ»éã£àéã‰|∫9ƒDDDDDDDFPå#D_#¢:#£DGF—tGDta»ÙDDDDDDDFhà˘—Dt]—ts4E‚:>Dt]‘DDq!#†aåÜã¢?î!b4&–êhb$b&ãƒy2:.àËéàËæG":.¢"""""#4»ËéàË¬/üFDtGD|—DDDDDDDfàéé">]—<çFt](ààààààà t{0àËéãÂ—ÙGDtaÁÖ:#¢˘tmFÚt]À‰|≈!ötmÇààë—Nè#ä"$t2ëD|£H⁄#¢Ë¬ààààå“#¢:#Áta3»€#£hèQ¢.àË˙8å">uFG—Q:7ëÛË¬#£éè#ƒGE—:àààààà§GF– ƒaF‰}Ú:6∏1àà≥ÒSààÕt^0Ñ ÑcéfÑéé#DGE——∏é¢"""""2ÑD—Ñ}Ãe—uö":0àÒtmE:9ë—#£èƒDDDDDDfÜGç¢ËéàË⁄#Êà⁄8èdta‘DDDDDDDdËéå"˘|éàËééà∫/ëÚËﬁaQ`ÑDDfôtGE—/ó»ËÜ¨é¢"""%—Ñ.$"ù2>a—t]ÑJt0Åàé$∫#¢:#¢¯AëËàààà»Dfå#8Õ—#£qä""""#4G2:#¢;#¢>GDxéèFÚË¬6ã¢:.¢""""""""2t]ã¢Ë¬/ú»Ë⁄#£qºéà˘—~""""""""#ˇ¸
+endstream
+endobj
+57 0 obj
+[ ]
+endobj
+58 0 obj
+[ 59 0 R 60 0 R ]
+endobj
+59 0 obj
+<<
+/Length 0
+>>
+stream
+
+endstream
+endobj
+60 0 obj
+<<
+/Length 8465
+>>
+stream
+BT
+0 g
+/OP11Font0 9 Tf
+0 0 0 rg
+91 Tz
+1 0 0 1 81 815 Tm
+(N R Chrisman) Tj
+/OP11Font1 12 Tf
+93 Tz
+1 0 0 1 80 781 Tm
+(framework. However, many of the features in a GIS) Tj
+1 0 0 1 80 768 Tm
+(do not fit purely geometrical constraints. The object) Tj
+92 Tz
+1 0 0 1 80 754 Tm
+(may not really have the sharp attribute definition) Tj
+94 Tz
+1 0 0 1 80 741 Tm
+(required to rely on the attribute for control. A) Tj
+92 Tz
+1 0 0 1 80 727 Tm
+(number of research workers \(e.g. Burrough 1989\)) Tj
+1 0 0 1 80 714 Tm
+(have recognized that fuzzy sets often are a better) Tj
+1 0 0 1 80 700 Tm
+(description of certain layers. In this case, it would) Tj
+1 0 0 1 80 687 Tm
+(be impossible to test for positional accuracy without) Tj
+91 Tz
+1 0 0 1 80 673 Tm
+(converting the fuzzy classification into a sharp) Tj
+92 Tz
+1 0 0 1 80 660 Tm
+(system of control. These cases are better handled by) Tj
+60 Tz
+1 0 0 1 80 647 Tm
+(i) Tj
+92 Tz
+1 0 0 1 83 647 Tm
+(ncluding the attribute alongside the position in the) Tj
+93 Tz
+1 0 0 1 80 634 Tm
+(test, a concept developed below.) Tj
+101 Tz
+1 0 0 1 80 587 Tm
+(Attribute accuracy) Tj
+92 Tz
+1 0 0 1 80 567 Tm
+(Testing attribute accuracy falls into two broad) Tj
+93 Tz
+1 0 0 1 80 553 Tm
+(groups, depending on the level of measurement of) Tj
+1 0 0 1 80 540 Tm
+(the attribute. Position has a built-in metric, that is,) Tj
+92 Tz
+1 0 0 1 80 526 Tm
+(the conversion between coordinates and distance) Tj
+93 Tz
+1 0 0 1 80 513 Tm
+(makes sense. The measurement of error is quite) Tj
+92 Tz
+1 0 0 1 80 500 Tm
+(direct with such a metric. Some attributes use) Tj
+1 0 0 1 80 487 Tm
+(continuous scales whose values can be treated in) Tj
+93 Tz
+1 0 0 1 80 473 Tm
+(much the same manner as position. The clearest) Tj
+92 Tz
+1 0 0 1 80 460 Tm
+(example is the surface of relief or elevation,) Tj
+1 0 0 1 79 446 Tm
+(encoded in digital terrain models of various) Tj
+1 0 0 1 80 433 Tm
+(descriptions. In fact, the ASPRS standard includes) Tj
+91 Tz
+1 0 0 1 80 420 Tm
+(specific treatment of the positional accuracy of) Tj
+94 Tz
+1 0 0 1 79 406 Tm
+(contours, treated as a three-dimensional position.) Tj
+93 Tz
+1 0 0 1 79 393 Tm
+(The horizontal allowance for the contour under the) Tj
+92 Tz
+1 0 0 1 80 380 Tm
+(map accuracy standard is widened by the horizontal) Tj
+1 0 0 1 80 367 Tm
+(equivalent of half the) Tj
+1 0 0 1 179 367 Tm
+(contour) Tj
+33 Tz
+1 0 0 1 215 366 Tm
+(.) Tj
+90 Tz
+1 0 0 1 216 367 Tm
+(interval vertically.) Tj
+92 Tz
+1 0 0 1 79 353 Tm
+(This works because elevation is measured in the) Tj
+93 Tz
+1 0 0 1 80 340 Tm
+(same metric as horizontal position. In practice, the) Tj
+1 0 0 1 80 326 Tm
+(photogrammetric treatment is accepting that) Tj
+91 Tz
+1 0 0 1 80 313 Tm
+(horizontal accuracy and vertical accuracy cannot be) Tj
+93 Tz
+1 0 0 1 80 300 Tm
+(separated in the contour presentation.) Tj
+92 Tz
+1 0 0 1 101 286 Tm
+(More generally, a surface can be tested by) Tj
+93 Tz
+1 0 0 1 80 273 Tm
+(measuring the deviation between the `true' height) Tj
+92 Tz
+1 0 0 1 80 259 Tm
+(and the observed height reported by classical) Tj
+91 Tz
+1 0 0 1 80 246 Tm
+(descriptive statistics as with positions. When a) Tj
+92 Tz
+1 0 0 1 80 233 Tm
+(surface is expected to be essentially continuous, an) Tj
+60 Tz
+1 0 0 1 80 219 Tm
+(i) Tj
+91 Tz
+1 0 0 1 83 219 Tm
+(mpressive array of mathematical tools is available) Tj
+92 Tz
+1 0 0 1 80 206 Tm
+(to analyse the spatial variation. A field of) Tj
+1 0 0 1 80 193 Tm
+(geostatistics has arisen around an approach to) Tj
+94 Tz
+1 0 0 1 80 179 Tm
+(interpolation called) Tj
+25 Tz
+1 0 0 1 172 179 Tm
+(`) Tj
+90 Tz
+1 0 0 1 174 179 Tm
+(Kriging') Tj
+91 Tz
+1 0 0 1 213 180 Tm
+(which creates models) Tj
+93 Tz
+1 0 0 1 80 166 Tm
+(of spatial dependence and lag \(Burgess and Webster) Tj
+90 Tz
+1 0 0 1 81 152 Tm
+(1980; Burrough 1983, 1986a, 1991 in this volume\).) Tj
+93 Tz
+1 0 0 1 80 139 Tm
+(These models of spatial variation offer important) Tj
+1 0 0 1 80 125 Tm
+(tools to the GIS user, but they are restricted to the) Tj
+92 Tz
+1 0 0 1 81 112 Tm
+(particular form of spatial data where the attribute is) Tj
+75 Tz
+1 0 0 1 80 71 Tm
+(17) Tj
+83 Tz
+1 0 0 1 90 71 Tm
+(0) Tj
+93 Tz
+1 0 0 1 336 780 Tm
+(continuous and measured at locations controlled by) Tj
+91 Tz
+1 0 0 1 337 767 Tm
+(specific sampling sites \(e.g. wells\) or controlled to a) Tj
+92 Tz
+1 0 0 1 337 753 Tm
+(regular grid. Kriging has developed in the natural) Tj
+93 Tz
+1 0 0 1 337 739 Tm
+(sciences, often to treat interpolation between sparse) Tj
+92 Tz
+1 0 0 1 337 726 Tm
+(sampling sites. There is a related mathematics) Tj
+93 Tz
+1 0 0 1 336 713 Tm
+(developed from the spatial adaptation of time series) Tj
+91 Tz
+1 0 0 1 337 699 Tm
+(analysis in the social sciences under the general title) Tj
+33 Tz
+1 0 0 1 337 687 Tm
+(,) Tj
+93 Tz
+1 0 0 1 339 686 Tm
+(spatial autocorrelation'. Sometimes spatial) Tj
+1 0 0 1 336 673 Tm
+(autocorrelation deals with continuous measures of) Tj
+1 0 0 1 336 660 Tm
+(distance between points. However, in geography it) Tj
+75 Tz
+1 0 0 1 336 647 Tm
+(is) Tj
+92 Tz
+1 0 0 1 346 646 Tm
+(more often targeted to removing the effects of) Tj
+91 Tz
+1 0 0 1 336 633 Tm
+(spatial collection zones on spatially aggregated) Tj
+92 Tz
+1 0 0 1 336 620 Tm
+(attributes \(Cliff and Ord 1981; Goodchild 1988\).) Tj
+1 0 0 1 336 607 Tm
+(There are significant differences between the area) Tj
+1 0 0 1 336 593 Tm
+(basis of this `modifiable areal unit problem' \(Arbia) Tj
+1 0 0 1 336 580 Tm
+(1989\) and the point basis of Kriging, but both use a) Tj
+93 Tz
+1 0 0 1 336 566 Tm
+(form of spatial control, with attributes measured.) Tj
+92 Tz
+1 0 0 1 336 553 Tm
+(For this combination, there are many analytical) Tj
+93 Tz
+1 0 0 1 336 540 Tm
+(procedures which have been developed, but these) Tj
+92 Tz
+1 0 0 1 336 527 Tm
+(procedures are not as widely used as they should be) Tj
+90 Tz
+1 0 0 1 336 514 Tm
+(\(Burrough 1986b\).) Tj
+93 Tz
+1 0 0 1 356 500 Tm
+(The other group of attributes are categories,) Tj
+91 Tz
+1 0 0 1 336 487 Tm
+(usually nominal classes as used in land use, soils and) Tj
+1 0 0 1 336 473 Tm
+(vegetation inventories. Polygon coverages of such) Tj
+92 Tz
+1 0 0 1 336 460 Tm
+(maps have formed a critical core of early GIS) Tj
+1 0 0 1 336 447 Tm
+(operations because they could benefit from simple) Tj
+1 0 0 1 336 433 Tm
+(analytical tools such as polygon overlay \(Goodchild) Tj
+1 0 0 1 336 420 Tm
+(1978\). Some commentators on GIS follow the) Tj
+91 Tz
+1 0 0 1 336 407 Tm
+(pattern in most sciences and consider categorical) Tj
+93 Tz
+1 0 0 1 336 393 Tm
+(data to be of lower standing. These authors are) Tj
+92 Tz
+1 0 0 1 336 380 Tm
+(often correct in their criticism of the blind adoption) Tj
+1 0 0 1 336 367 Tm
+(of sharp set theory for much more complex) Tj
+94 Tz
+1 0 0 1 336 354 Tm
+(environments \(e.g. Burrough 1989\). However, the) Tj
+93 Tz
+1 0 0 1 336 340 Tm
+(role of control in spatial data cannot be taken by a) Tj
+94 Tz
+1 0 0 1 335 327 Tm
+(continuous measure. In the pure form, categorical) Tj
+93 Tz
+1 0 0 1 335 313 Tm
+(coverages are constructed by setting the attribute as) Tj
+1 0 0 1 335 300 Tm
+(control and measuring the location of the) Tj
+1 0 0 1 336 287 Tm
+(boundaries between classes. In practice, of course,) Tj
+92 Tz
+1 0 0 1 336 274 Tm
+(there is significant error in identifying the categories) Tj
+1 0 0 1 336 260 Tm
+(on such maps. Certain disciplines, particularly) Tj
+93 Tz
+1 0 0 1 336 247 Tm
+(remote sensing interpretation, place central) Tj
+30 Tz
+1 0 0 1 336 234 Tm
+(i) Tj
+91 Tz
+1 0 0 1 339 234 Tm
+(mportance on testing the accuracy of classification.) Tj
+93 Tz
+1 0 0 1 336 221 Tm
+(With categorical attributes, there is no such thing as) Tj
+91 Tz
+1 0 0 1 336 207 Tm
+(a close value or a metric of deviations. A class is) Tj
+92 Tz
+1 0 0 1 336 194 Tm
+(either right or wrong \(some wrong answers might be) Tj
+93 Tz
+1 0 0 1 336 181 Tm
+(ordered by degree of dissimilarity, but that nuance) Tj
+92 Tz
+1 0 0 1 336 167 Tm
+(will be ignored here\). So, there is no easy summary) Tj
+93 Tz
+1 0 0 1 336 154 Tm
+(of performance to compare with the summary) Tj
+92 Tz
+1 0 0 1 336 140 Tm
+(statistics of deviations reported in the ASPRS) Tj
+93 Tz
+1 0 0 1 336 127 Tm
+(positional test. A test involves determining the) Tj
+91 Tz
+1 0 0 1 336 114 Tm
+(classification from two sources, and ideally one) Tj
+0 g
+ET
+
+endstream
+endobj
+61 0 obj
+<<
+/Font <<
+/OP11Font0 62 0 R
+/OP11Font1 63 0 R
+>>
+/ProcSet 23 0 R
+/XObject <<
+/thumbnail_background_Page_5 64 0 R
+>>
+>>
+endobj
+62 0 obj
+<<
+/BaseFont /Courier-Bold
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font0
+/Subtype /Type1
+/Type /Font
+/Widths [ 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 ]
+>>
+endobj
+63 0 obj
+<<
+/BaseFont /Times-Roman
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font1
+/Subtype /Type1
+/Type /Font
+/Widths [ 0 280 340 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 340 410 500 500 840 785 185 340 340 500 560 250 340 250 290 500 500 500 500 500 500 500 500 500 500 290 290 565 565 565 440 925 720 670 670 725 610 555 720 720 335 390 725 615 880 720 720 560 720 665 555 605 715 715 945 725 725 610 335 275 335 475 500 330 450 500 450 500 450 340 500 500 275 275 500 275 775 500 500 500 500 340 390 285 500 500 720 500 500 450 490 200 490 550 350 500 350 340 500 450 1000 500 500 340 1000 565 340 890 350 610 350 350 340 340 445 445 350 500 1000 340 990 390 340 730 350 450 730 250 340 500 500 500 500 210 500 340 770 280 500 570 340 770 340 410 570 300 300 340 510 460 250 340 300 310 500 750 750 750 445 720 720 720 720 720 720 885 675 615 615 615 615 340 340 340 340 720 720 720 720 720 720 720 565 720 720 720 720 720 720 560 500 450 450 450 450 450 450 670 450 450 450 450 450 280 280 280 280 500 500 500 500 500 500 500 565 500 500 500 500 500 500 500 500 ]
+>>
+endobj
+64 0 obj
+<<
+/BitsPerComponent 1
+/ColorSpace /DeviceGray
+/DecodeParms <<
+/Columns 83
+/K -1
+>>
+/Filter /CCITTFaxDecode
+/Height 117
+/ImageMask false
+/Name /thumbnail_background_Page_5
+/Subtype /Image
+/Type /XObject
+/Width 83
+/Length 1088
+>>
+stream
+ÁDGDu	!éPätHQ \Üå">_0àÏéàËb"""&•(D|∫#¢˘|∆GDtGDteéw/Qî#h∫.àË⁄6éà¬#£héã¢:#ÁDDDDDDDFPàË⁄8àË∫#£héçFÑGDtGD|é¢""""""""#$"ÒG≥y:.ådta—<å(¥""""""57ë——ta—tyGx⁄#¢:.ç®àà∞B"""""1*3å∫.°îÑC!‰t_:#£∫#£hÊcàààààâ≠NàéàË⁄.àË¬0â—#¢:#∆—ç#ä""""""""3¶GÃ#éàË÷ã£h∫9ë——u
+E—¥GDËÚààà»TGd|éà˘.å">GQÇäB2åéàËD!#¢Ëé¢"y⁄àåËàËèë—ƒyÚxéç¢:0è"Í""""""#!¢Ò¥GE—tGGE—ÑGDt]—¥]—ààààààààààŒëE—Œà∫.ã¢:0àË¬0ã¢:ààààààààå÷àËéeÚ˘ƒ}GëÃdxé¢ 3!¢˝ò"<]Ö<¢hå)0äLF#:":#≈—àËÎóF—ƒ]åqB8édtGÀ¢>GFëtmÕ¢:ààààààà…ÑGDtq—Ùhå"Ò¥iƒDDDDDdåéè£Ÿ—ƒyE—‰G»Ë∫#¢Í"""9t"."#(DqúE»éàËéá8∏à≤¢""#ë4m—Ã‚5(ààå°Ã∆G2>GDr<àË¬0àËé»ËéàË⁄.¢""""""""2åéé#∫#¢:0àË—Dx∫.ã£hèƒDDDDDDDFtÃ"Ë—Ë∫#£ """#!£¬0è#qtgóE‚9ë—é"" äWFGeÚËéí
+ ‚""qDßE"âJàéàÔ#≤?——„h‚#£˙>ã£L¬.¢""""""2B/õEÚË¬8àËÚ#¢Ëèë—<àË˙ààààààààå£0ã£h⁄#¢:#‰Ëéã¢:>ã£¬#®ààààà‚"#!¢˘ts#¢ËÚ'AOÂ—DuDPB8óRFGFB"1%—©®àòR&éåéå">]Dt1!Ú;/òE—|Üå"Ëéã¢:0ã‰tGDuêÚ:#¢˘ƒ]Dtq£éàËèë——‘DDDDDDDDDgDGÃ":#¢:#¢:#¢>o7ëÛéç£Ÿ—ààààààààÇ*¢B<è#héà˘tGœ"9òÜ"#ààÜîRDGDt\»ËéÇ	îÁ¢∂ÑDDD4GDmBJ"I‰tc/À¢Ë!#©B˘BåôπËc¸
+endstream
+endobj
+65 0 obj
+[ ]
+endobj
+66 0 obj
+[ 67 0 R 68 0 R ]
+endobj
+67 0 obj
+<<
+/Length 0
+>>
+stream
+
+endstream
+endobj
+68 0 obj
+<<
+/Length 8301
+>>
+stream
+BT
+0 g
+/OP11Font0 12 Tf
+0 0 0 rg
+92 Tz
+1 0 0 1 76 781 Tm
+(should be a source of higher accuracy. The results of) Tj
+91 Tz
+1 0 0 1 76 768 Tm
+(a test will create a square misclassification matrix,) Tj
+92 Tz
+1 0 0 1 76 754 Tm
+(cross-tabulating the observed category with the true) Tj
+1 0 0 1 76 740 Tm
+(result. In reading this matrix, it is possible to) Tj
+91 Tz
+1 0 0 1 76 727 Tm
+(proceed by rows or columns. A row consists of all) Tj
+1 0 0 1 76 714 Tm
+(the observations which should have been classified) Tj
+92 Tz
+1 0 0 1 76 700 Tm
+(in a particular category. A column consists of all the) Tj
+91 Tz
+1 0 0 1 76 687 Tm
+(observations which were so classified. The diagonal) Tj
+92 Tz
+1 0 0 1 76 673 Tm
+(of the matrix will fit both, and captures the) Tj
+93 Tz
+1 0 0 1 76 660 Tm
+(agreement of the two sources. Errors along rows are) Tj
+92 Tz
+1 0 0 1 76 647 Tm
+(errors of omission with respect to that category.) Tj
+93 Tz
+1 0 0 1 76 633 Tm
+(Errors along columns are errors of commission. In) Tj
+91 Tz
+1 0 0 1 76 620 Tm
+(medicine these are called false negatives and false) Tj
+1 0 0 1 76 607 Tm
+(positives respectively.) Tj
+92 Tz
+1 0 0 1 97 593 Tm
+(It is common to summarize this matrix by the) Tj
+93 Tz
+1 0 0 1 76 580 Tm
+(percentage correct, the total of the diagonal. This) Tj
+1 0 0 1 76 566 Tm
+(measure, unfortunately, is not a reliable index of) Tj
+91 Tz
+1 0 0 1 76 553 Tm
+(success across projects with differing frequencies in) Tj
+1 0 0 1 76 540 Tm
+(the various categories \(Rosenfield and Melley 1980;) Tj
+92 Tz
+1 0 0 1 76 526 Tm
+(Chrisman 1982b\). A number of alternative) Tj
+1 0 0 1 76 513 Tm
+(measures of success have been suggested, notably) Tj
+93 Tz
+1 0 0 1 76 500 Tm
+(Cohen's Kappa, a measure which deflates the) Tj
+92 Tz
+1 0 0 1 76 486 Tm
+(percentage correct by the amount which could be) Tj
+1 0 0 1 76 473 Tm
+(expected to fall into the diagonal under an) Tj
+93 Tz
+1 0 0 1 76 459 Tm
+(independent rule of joint probability. Still the raw) Tj
+1 0 0 1 76 446 Tm
+(matrix offers the most complete information to) Tj
+90 Tz
+1 0 0 1 76 433 Tm
+(assess fitness for use.) Tj
+1 0 0 1 97 419 Tm
+(The misclassification matrix is typically) Tj
+93 Tz
+1 0 0 1 76 406 Tm
+(obtained through a process of point sampling \(Berry) Tj
+92 Tz
+1 0 0 1 76 392 Tm
+(and Baker 1968;) Tj
+91 Tz
+1 0 0 1 153 392 Tm
+(Fitzpatrick-Lins) Tj
+89 Tz
+1 0 0 1 228 393 Tm
+(1981\). A set of) Tj
+91 Tz
+1 0 0 1 76 379 Tm
+(points is selected from some spatial sampling) Tj
+92 Tz
+1 0 0 1 76 366 Tm
+(scheme, and the classification obtained from each) Tj
+93 Tz
+1 0 0 1 76 353 Tm
+(source. Despite its widespread use, there are some) Tj
+91 Tz
+1 0 0 1 76 339 Tm
+(difficulties associated with such a point-based) Tj
+92 Tz
+1 0 0 1 76 326 Tm
+(approach. The classifications on a coverage map are) Tj
+93 Tz
+1 0 0 1 76 313 Tm
+(not always a pure fit to the sharp set theory required) Tj
+92 Tz
+1 0 0 1 76 299 Tm
+(to make it work. Often a classification system has) Tj
+1 0 0 1 76 286 Tm
+(some implicit \(or explicit\) scale involved. If a point) Tj
+1 0 0 1 77 272 Tm
+(happens to fall in a convenience store \(in US) Tj
+93 Tz
+1 0 0 1 76 259 Tm
+(context; in UK a newsagent\) parking lot, does that) Tj
+92 Tz
+1 0 0 1 77 245 Tm
+(mean that a residential land use code is invalid? The) Tj
+91 Tz
+1 0 0 1 77 232 Tm
+(residential category involves a bit less homogeneity) Tj
+92 Tz
+1 0 0 1 77 219 Tm
+(than the mathematical purity would suggest. A few) Tj
+93 Tz
+1 0 0 1 77 206 Tm
+(neighbourhood commercial enterprises are a part of) Tj
+92 Tz
+1 0 0 1 77 192 Tm
+(residential character, such businesses would not) Tj
+60 Tz
+1 0 0 1 77 178 Tm
+(l) Tj
+92 Tz
+1 0 0 1 80 179 Tm
+(ocate in purely commercial surroundings anyway.) Tj
+93 Tz
+1 0 0 1 77 165 Tm
+(Hence, the point sampling method cannot really) Tj
+92 Tz
+1 0 0 1 77 152 Tm
+(test simply one point, it involves an area and it can) Tj
+1 0 0 1 77 139 Tm
+(become confused when it is near an edge. In some) Tj
+93 Tz
+1 0 0 1 77 125 Tm
+(tests, the points are deliberately positioned away) Tj
+1 0 0 1 77 112 Tm
+(from edges, but that may introduce a whole new set) Tj
+87 Tz
+1 0 0 1 408 813 Tm
+(The Error Component in Spatial Data) Tj
+92 Tz
+1 0 0 1 333 780 Tm
+(of difficulties. One alternative, not much practised) Tj
+91 Tz
+1 0 0 1 333 767 Tm
+(yet, is to produce the misclassification matrix by) Tj
+92 Tz
+1 0 0 1 333 753 Tm
+(overlaying a complete second coverage \(e.g. see) Tj
+1 0 0 1 333 739 Tm
+(Ventura, Sullivan and Chrisman 1986\). The second) Tj
+1 0 0 1 333 726 Tm
+(coverage can be chosen deliberately to use a similar) Tj
+1 0 0 1 333 713 Tm
+(scale and resolution in its categories or a more) Tj
+1 0 0 1 333 699 Tm
+(refined set of categories and more detailed scale) Tj
+1 0 0 1 333 686 Tm
+(\(see for example Beard 1987\). In either case, the) Tj
+91 Tz
+1 0 0 1 333 673 Tm
+(result of the overlay will give a raw measure of area) Tj
+60 Tz
+1 0 0 1 332 660 Tm
+(i) Tj
+93 Tz
+1 0 0 1 335 659 Tm
+(n the misclassification matrix. Furthermore, the) Tj
+91 Tz
+1 0 0 1 333 646 Tm
+(nature of the overlaid objects will give some clues to) Tj
+92 Tz
+1 0 0 1 332 633 Tm
+(the origin of the error. Chrisman \(1989\) has) Tj
+94 Tz
+1 0 0 1 332 619 Tm
+(presented a taxonomy of the results obtained. He) Tj
+92 Tz
+1 0 0 1 332 606 Tm
+(creates a basic distinction between error caused by) Tj
+91 Tz
+1 0 0 1 332 593 Tm
+(misclassifying whole objects \(identification error\)) Tj
+93 Tz
+1 0 0 1 332 579 Tm
+(and error in positioning boundaries \(discrimination) Tj
+94 Tz
+1 0 0 1 332 566 Tm
+(error\). The former is a purely attribute error, but) Tj
+91 Tz
+1 0 0 1 332 553 Tm
+(the latter includes some of the `fuzzy' effects) Tj
+92 Tz
+1 0 0 1 332 540 Tm
+(discussed by many authors. These two tendencies) Tj
+91 Tz
+1 0 0 1 332 526 Tm
+(create specific forms in the overlay test.) Tj
+1 0 0 1 332 513 Tm
+(Identification errors will have lines mainly from one) Tj
+92 Tz
+1 0 0 1 332 500 Tm
+(source, while discrimination errors will tend to have) Tj
+1 0 0 1 332 487 Tm
+(lines in roughly equal amounts from the two) Tj
+1 0 0 1 332 473 Tm
+(sources. In addition, this taxonomy is modified by) Tj
+1 0 0 1 332 460 Tm
+(the effects of scale. Smaller and larger objects may) Tj
+91 Tz
+1 0 0 1 332 447 Tm
+(clearly arise from different sources. Considering all) Tj
+92 Tz
+1 0 0 1 332 433 Tm
+(the possible ramifications of error, it seems unlikely) Tj
+1 0 0 1 332 420 Tm
+(that a single number can compress all the) Tj
+60 Tz
+1 0 0 1 332 407 Tm
+(i) Tj
+92 Tz
+1 0 0 1 335 407 Tm
+(nformation available from such a test.) Tj
+93 Tz
+1 0 0 1 353 393 Tm
+(In Sinton's framework, a test for attribute) Tj
+91 Tz
+1 0 0 1 332 380 Tm
+(accuracy fits the opposite cases compared to) Tj
+1 0 0 1 332 367 Tm
+(positional accuracy. The classical test of a well) Tj
+93 Tz
+1 0 0 1 332 353 Tm
+(defined point \(attribute controlled, position) Tj
+92 Tz
+1 0 0 1 332 340 Tm
+(measured\) depends critically on identification of the) Tj
+93 Tz
+1 0 0 1 332 327 Tm
+(proper points to test. If the wrong point is tested,) Tj
+1 0 0 1 332 313 Tm
+(error estimation procedures based on Gaussian) Tj
+92 Tz
+1 0 0 1 332 300 Tm
+(error will misbehave dramatically. There is) Tj
+91 Tz
+1 0 0 1 332 287 Tm
+(significant literature in the fields of geodesy \(e.g.) Tj
+93 Tz
+1 0 0 1 332 273 Tm
+(Crossilla 1986\) and photogrammetry \(e.g. Kubik,) Tj
+91 Tz
+1 0 0 1 333 260 Tm
+(Lyons and Merchant, 1988, and Shyue 1989\) on) Tj
+93 Tz
+1 0 0 1 332 247 Tm
+(detecting such `blunders'. Outlier handling) Tj
+1 0 0 1 333 234 Tm
+(procedures are not designed as tests of attribute) Tj
+92 Tz
+1 0 0 1 333 220 Tm
+(accuracy; their mathematics make them more like) Tj
+90 Tz
+1 0 0 1 333 207 Tm
+(the tests of logical consistency discussed below.) Tj
+93 Tz
+1 0 0 1 333 194 Tm
+(However, the fundamental cause for such blunders) Tj
+92 Tz
+1 0 0 1 333 180 Tm
+(may be in the identification of the point to test.) Tj
+/OP11Font1 11 Tf
+89 Tz
+1 0 0 1 333 147 Tm
+(B. Logical consistency) Tj
+/OP11Font0 12 Tf
+93 Tz
+1 0 0 1 333 127 Tm
+(The traditional approach to map accuracy never) Tj
+92 Tz
+1 0 0 1 333 114 Tm
+(makes explicit mention of a category of testing) Tj
+0 g
+ET
+
+endstream
+endobj
+69 0 obj
+<<
+/Font <<
+/OP11Font0 70 0 R
+/OP11Font1 71 0 R
+>>
+/ProcSet 23 0 R
+/XObject <<
+/thumbnail_background_Page_6 72 0 R
+>>
+>>
+endobj
+70 0 obj
+<<
+/BaseFont /Times-Roman
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font0
+/Subtype /Type1
+/Type /Font
+/Widths [ 0 280 340 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 340 410 500 500 840 785 185 340 340 500 560 250 340 250 290 500 500 500 500 500 500 500 500 500 500 290 290 565 565 565 440 925 720 670 670 725 610 555 720 720 335 390 725 615 880 720 720 560 720 665 555 605 715 715 945 725 725 610 335 275 335 475 500 330 450 500 450 500 450 340 500 500 275 275 500 275 775 500 500 500 500 340 390 285 500 500 720 500 500 450 490 200 490 550 350 500 350 340 500 450 1000 500 500 340 1000 565 340 890 350 610 350 350 340 340 445 445 350 500 1000 340 990 390 340 730 350 450 730 250 340 500 500 500 500 210 500 340 770 280 500 570 340 770 340 410 570 300 300 340 510 460 250 340 300 310 500 750 750 750 445 720 720 720 720 720 720 885 675 615 615 615 615 340 340 340 340 720 720 720 720 720 720 720 565 720 720 720 720 720 720 560 500 450 450 450 450 450 450 670 450 450 450 450 450 280 280 280 280 500 500 500 500 500 500 500 565 500 500 500 500 500 500 500 500 ]
+>>
+endobj
+71 0 obj
+<<
+/BaseFont /Helvetica-Bold
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font1
+/Subtype /Type1
+/Type /Font
+/Widths [ 0 280 340 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 335 485 555 555 890 725 245 340 340 390 585 280 340 280 280 555 555 555 555 555 555 555 555 555 555 340 340 585 585 585 610 975 715 715 715 715 665 615 780 715 280 550 725 610 835 715 775 675 775 725 665 610 710 665 945 665 665 610 330 280 340 590 555 340 555 610 555 610 555 340 610 610 280 280 555 280 890 610 610 610 610 390 560 340 610 555 775 555 555 500 395 275 395 590 350 560 350 285 560 500 1000 560 560 340 1000 665 335 1000 350 610 350 350 275 275 500 500 350 560 1000 340 1000 560 340 940 350 500 615 285 330 555 555 555 555 280 555 335 735 375 560 585 340 735 340 400 590 340 340 340 615 550 285 340 340 370 560 840 840 840 610 725 725 725 725 725 725 1000 725 670 670 670 670 280 280 280 280 730 730 780 780 780 780 780 590 780 725 725 725 725 675 675 610 560 560 560 560 560 560 880 560 560 560 560 560 285 285 285 285 610 610 610 610 610 610 610 590 610 610 610 610 610 560 610 560 ]
+>>
+endobj
+72 0 obj
+<<
+/BitsPerComponent 1
+/ColorSpace /DeviceGray
+/DecodeParms <<
+/Columns 83
+/K -1
+>>
+/Filter /CCITTFaxDecode
+/Height 117
+/ImageMask false
+/Name /thumbnail_background_Page_6
+/Subtype /Image
+/Type /XObject
+/Width 83
+/Length 1119
+>>
+stream
+Âk.ã¢:#Â—µuFhéå—B#¢àààâö6ßDG·úB13B2åéàËè§b/òDt]ÀÂÛ∫àààààààâ¥aHhƒqE—"Ëéà˘¡‘¬àààààààà…ta—ºèòÕ¢ËèDtG»Ò¯ààààààà…èòF2Ëéå#éè":.ã¢:>àË⁄ààààààààåÜç¢ËéàË∫#¢Ë‚#£àéå">q——Q:HDDDDDb$|°3»éàÙêÑDDbTë—IéàËæGE—F—Bàààà„(DtGDtaD|øî":#¢>a¢˘ààààààààåëDtGE„hæ}DtGGëÓ""""""2B.àËéè£h¬)—thàÍ"""""2]Ú:*—àƒ}‚"&¥"QàâÑmDtGRQöàî)B#ƒtGà˘ãÂ„»éà˘|M®ààààààåÜè#àéç£∫<ã¢˘¥N¢"""""2.ç£DtqF3éã£à∫/ƒDDDDDDDf¥y—ƒa":6å"ËæaDDDDDDd8éàÒtaàË∫#£y/Ú:#¢:#¢:#£hè¬*–àààà†B""8åDFJQ!¢:FGFt]—.å#M¢:3Dta—‘DDDDDDDDFHE—DtGE—ÑGDtGFº∫#¢ÒtGE—ÑGDt]DDDDDDDDDDDFtFÑaF—œ#hÜå(àààààåßEÚ6å#héç£ΩFkã≤>GF2Ñ]Ú˘ÑG¬ à≤¶QXô°JB&à®QöëtqàË∆}Ûà∫.ã∆DDDDDDdÑGE—åºyF¥aGÚ:ààààààåÜâ¬0ç¢:6àË∫7òG—Ö—Õ£»º}Ú:#¢:#∆ë—u 2:#¢Ïæ]F2:#£hàCÑDD⁄ë–Œà˙Mq|èõE—ÑG‚""""3R0ã£éà˘/ë—ºéã¢:.àËéã¢Ë∫à‚"""""""2B#¢>GJG»Ë—EÚÏ‚#£»éã®àààààààå°Dt}EÚË∆GG——Ñmå(àààààààåó»Ë—EÛh∫<àË‹^ààà‚"2å¬#¢:0àËèë—¥GE–ƒDDDEÑ%BâB—D&c&PÂ9Ïß(r¨™ààààà»hÚ.é2˘ÑióDtc6å"ËéàÍ"""""""2B.àËæ]DtGD|˙0àËèó»ËéàËéàÍ"""""""""2B#¢>y—ÑGDuítyDta—tG‚""""f§ÑGFÚ:#¢:/ë—#‰t1(Fhü.•ÑGDt]ÅàààùQDtGÀ‰|èóD|é¶§"""""1ˇ˛
+endstream
+endobj
+73 0 obj
+[ ]
+endobj
+74 0 obj
+[ 75 0 R 76 0 R ]
+endobj
+75 0 obj
+<<
+/Length 0
+>>
+stream
+
+endstream
+endobj
+76 0 obj
+<<
+/Length 7761
+>>
+stream
+BT
+0 g
+/OP11Font0 10 Tf
+0 0 0 rg
+89 Tz
+1 0 0 1 79 814 Tm
+(N R Chrisman) Tj
+/OP11Font1 12 Tf
+93 Tz
+1 0 0 1 78 779 Tm
+(which has become quite important in the computer) Tj
+1 0 0 1 78 766 Tm
+(age. Actually, a large amount of the manual) Tj
+91 Tz
+1 0 0 1 78 752 Tm
+(practice of cartography involved testing the logical) Tj
+1 0 0 1 78 739 Tm
+(consistency of the product with the highly) Tj
+92 Tz
+1 0 0 1 78 726 Tm
+(sophisticated visual processor of the human) Tj
+95 Tz
+1 0 0 1 77 712 Tm
+(cartographer. The human eye-mind combination) Tj
+92 Tz
+1 0 0 1 77 699 Tm
+(can detect slight gaps in linework and other) Tj
+1 0 0 1 77 685 Tm
+(patterns, but it is difficult to discipline employees to) Tj
+1 0 0 1 77 672 Tm
+(spend all day scrutinizing a complex map. In some) Tj
+91 Tz
+1 0 0 1 77 658 Tm
+(agencies, it was common to test the consistency of a) Tj
+1 0 0 1 77 645 Tm
+(coverage of polygons by colouring them in with) Tj
+92 Tz
+1 0 0 1 77 632 Tm
+(coloured pencils. This process would point out) Tj
+91 Tz
+1 0 0 1 77 619 Tm
+(missing lines by finding that colours \(keyed by the) Tj
+92 Tz
+1 0 0 1 77 605 Tm
+(soil labels\) would not have an intervening) Tj
+1 0 0 1 77 592 Tm
+(boundary. The process would also detect any) Tj
+93 Tz
+1 0 0 1 76 578 Tm
+(polygon without a label to start the colouring. It) Tj
+92 Tz
+1 0 0 1 76 565 Tm
+(might take the employee all day to check a polygon) Tj
+1 0 0 1 76 552 Tm
+(network which could be checked in a minute or less) Tj
+1 0 0 1 76 538 Tm
+(using a computer algorithm for topological testing) Tj
+91 Tz
+1 0 0 1 76 525 Tm
+(\(Chrisman 1986, 1987\).) Tj
+92 Tz
+1 0 0 1 97 511 Tm
+(The use of the topological model in modern) Tj
+91 Tz
+1 0 0 1 76 498 Tm
+(GIS provides one example of logical consistency) Tj
+93 Tz
+1 0 0 1 75 485 Tm
+(checking. The redundant nature of the topological) Tj
+92 Tz
+1 0 0 1 75 471 Tm
+(encoding can detect a number of flaws in the data) Tj
+91 Tz
+1 0 0 1 75 458 Tm
+(structure \(White 1984; Chrisman 1987\), such as) Tj
+93 Tz
+1 0 0 1 75 445 Tm
+(missing boundaries or unlabelled polygons. Use of) Tj
+60 Tz
+1 0 0 1 75 432 Tm
+(l) Tj
+90 Tz
+1 0 0 1 78 432 Tm
+(ogical consistency checks can avoid errors which) Tj
+93 Tz
+1 0 0 1 75 418 Tm
+(would be interpreted as routine errors in position or) Tj
+96 Tz
+1 0 0 1 75 405 Tm
+(attribute.) Tj
+92 Tz
+1 0 0 1 96 391 Tm
+(The topological model is not the only means to) Tj
+91 Tz
+1 0 0 1 75 378 Tm
+(check logical consistency. Whenever there is some) Tj
+92 Tz
+1 0 0 1 74 365 Tm
+(external mathematical or logical relationship which) Tj
+93 Tz
+1 0 0 1 75 351 Tm
+(must be maintained, a consistency test should be) Tj
+1 0 0 1 75 338 Tm
+(administered. Some database management systems) Tj
+60 Tz
+1 0 0 1 75 325 Tm
+(i) Tj
+93 Tz
+1 0 0 1 78 325 Tm
+(mplement valid ranges on attribute fields, but the) Tj
+1 0 0 1 74 311 Tm
+(spatial nature of a GIS, with the ability to relate) Tj
+91 Tz
+1 0 0 1 74 298 Tm
+(layers, offers a much richer set of consistency) Tj
+92 Tz
+1 0 0 1 74 284 Tm
+(checks. A simple computation of point-in-polygon) Tj
+1 0 0 1 74 271 Tm
+(could avoid placing buoys on dry land or rivers) Tj
+93 Tz
+1 0 0 1 74 258 Tm
+(outside their floodplain. Although these seem) Tj
+1 0 0 1 74 244 Tm
+(ridiculous, a GIS database will contain such errors) Tj
+92 Tz
+1 0 0 1 74 231 Tm
+(until the full analytical power of the tool is turned) Tj
+93 Tz
+1 0 0 1 74 218 Tm
+(back against its own database. Once an error is) Tj
+91 Tz
+1 0 0 1 74 205 Tm
+(detected by a logical consistency check, it may be) Tj
+93 Tz
+1 0 0 1 74 191 Tm
+(resolved through a panoply of procedures,) Tj
+92 Tz
+1 0 0 1 74 178 Tm
+(approximating the manual process of compilation) Tj
+90 Tz
+1 0 0 1 74 164 Tm
+(which resolves conflicting sources.) Tj
+104 Tz
+1 0 0 1 74 131 Tm
+(Completeness) Tj
+93 Tz
+1 0 0 1 74 110 Tm
+(The last component of testing in the US Proposed) Tj
+75 Tz
+1 0 0 1 73 70 Tm
+(17) Tj
+83 Tz
+1 0 0 1 83 70 Tm
+(2) Tj
+92 Tz
+1 0 0 1 335 777 Tm
+(Standard is completeness. In some circumstances,) Tj
+1 0 0 1 335 763 Tm
+(usually in creating a base layer of named objects) Tj
+1 0 0 1 335 750 Tm
+(such as parcels, census tracts or whatever, there is) Tj
+1 0 0 1 335 737 Tm
+(an externally known list of objects which should) Tj
+93 Tz
+1 0 0 1 335 723 Tm
+(appear in the database. A coverage of parcel) Tj
+91 Tz
+1 0 0 1 334 710 Tm
+(polygons could be tested polygon by polygon as a) Tj
+92 Tz
+1 0 0 1 334 696 Tm
+(verification of attribute accuracy. A simpler, less) Tj
+1 0 0 1 334 683 Tm
+(complete check could be performed by checking) Tj
+93 Tz
+1 0 0 1 334 669 Tm
+(whether the database included all the parcels in the) Tj
+92 Tz
+1 0 0 1 334 656 Tm
+(master list. All differences could be immediately) Tj
+91 Tz
+1 0 0 1 334 643 Tm
+(flagged as errors. Such a test falls somewhere near a) Tj
+60 Tz
+1 0 0 1 334 631 Tm
+(l) Tj
+92 Tz
+1 0 0 1 336 630 Tm
+(ogical consistency check and an attribute accuracy) Tj
+93 Tz
+1 0 0 1 333 617 Tm
+(test. For convenience, it can be termed) Tj
+91 Tz
+1 0 0 1 333 604 Tm
+(completeness.) Tj
+92 Tz
+1 0 0 1 354 590 Tm
+(Another aspect of completeness deals with the) Tj
+1 0 0 1 333 577 Tm
+(mapping rules associated with many cartographic) Tj
+1 0 0 1 333 563 Tm
+(presentations. Some categorical coverages will set a) Tj
+1 0 0 1 333 550 Tm
+(threshold of minimum areas or widths to include on) Tj
+93 Tz
+1 0 0 1 333 536 Tm
+(the map. Often these are prescribed in the manual,) Tj
+92 Tz
+1 0 0 1 333 523 Tm
+(but never explicitly tested. This aspect of the quality) Tj
+1 0 0 1 332 510 Tm
+(report deals with the scale effects discussed in the) Tj
+93 Tz
+1 0 0 1 332 497 Tm
+(context of the polygon overlay testing procedure.) Tj
+/OP11Font0 10 Tf
+100 Tz
+1 0 0 1 353 442 Tm
+(ERROR: A DISCIPLINARY MOSAIC) Tj
+/OP11Font1 12 Tf
+92 Tz
+1 0 0 1 332 417 Tm
+(Investigations of geographical information have) Tj
+93 Tz
+1 0 0 1 332 403 Tm
+(been an amalgamation pasted together from a) Tj
+92 Tz
+1 0 0 1 331 390 Tm
+(variety of different disciplines. The list of different) Tj
+93 Tz
+1 0 0 1 331 377 Tm
+(forms of error presented above naturally connects) Tj
+91 Tz
+1 0 0 1 331 363 Tm
+(to the divergent problems of specific disciplines.) Tj
+92 Tz
+1 0 0 1 331 350 Tm
+(Each discipline constitutes a group faced with a) Tj
+93 Tz
+1 0 0 1 331 337 Tm
+(particular circumstance - a particular set of tools) Tj
+1 0 0 1 331 324 Tm
+(and purposes. Any combined view depends on) Tj
+92 Tz
+1 0 0 1 331 310 Tm
+(understanding the diversity and mobilizing the) Tj
+1 0 0 1 331 297 Tm
+(different perspectives to a redefined purpose.) Tj
+93 Tz
+1 0 0 1 331 284 Tm
+(Disciplinary difergences are relatively common, but) Tj
+1 0 0 1 331 270 Tm
+(particularly notable in the treatment of spatial) Tj
+1 0 0 1 330 258 Tm
+(error.) Tj
+1 0 0 1 351 244 Tm
+(Error reduction is a primary goal in the earth) Tj
+91 Tz
+1 0 0 1 331 231 Tm
+(measurement disciplines of surveying,) Tj
+92 Tz
+1 0 0 1 330 217 Tm
+(photogrammetry and geodesy. These disciplines) Tj
+93 Tz
+1 0 0 1 330 204 Tm
+(have developed procedures to obtain reliable) Tj
+1 0 0 1 330 191 Tm
+(positional measurements through the use of) Tj
+1 0 0 1 330 177 Tm
+(repeated measurement and a specialized version of) Tj
+60 Tz
+1 0 0 1 330 164 Tm
+(l) Tj
+92 Tz
+1 0 0 1 333 164 Tm
+(east-squares estimation \(Mikhail 1976\). Much of) Tj
+93 Tz
+1 0 0 1 330 151 Tm
+(the mathematics for surveying adjustments has been) Tj
+92 Tz
+1 0 0 1 330 137 Tm
+(developed inside the discipline without substantial) Tj
+1 0 0 1 330 124 Tm
+(borrowing from other disciplines, because it is) Tj
+1 0 0 1 330 111 Tm
+(tailored to the specific form of error expected from) Tj
+0 g
+ET
+
+endstream
+endobj
+77 0 obj
+<<
+/Font <<
+/OP11Font0 78 0 R
+/OP11Font1 79 0 R
+>>
+/ProcSet 23 0 R
+/XObject <<
+/thumbnail_background_Page_7 80 0 R
+>>
+>>
+endobj
+78 0 obj
+<<
+/BaseFont /Helvetica-Bold
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font0
+/Subtype /Type1
+/Type /Font
+/Widths [ 0 280 340 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 335 485 555 555 890 725 245 340 340 390 585 280 340 280 280 555 555 555 555 555 555 555 555 555 555 340 340 585 585 585 610 975 715 715 715 715 665 615 780 715 280 550 725 610 835 715 775 675 775 725 665 610 710 665 945 665 665 610 330 280 340 590 555 340 555 610 555 610 555 340 610 610 280 280 555 280 890 610 610 610 610 390 560 340 610 555 775 555 555 500 395 275 395 590 350 560 350 285 560 500 1000 560 560 340 1000 665 335 1000 350 610 350 350 275 275 500 500 350 560 1000 340 1000 560 340 940 350 500 615 285 330 555 555 555 555 280 555 335 735 375 560 585 340 735 340 400 590 340 340 340 615 550 285 340 340 370 560 840 840 840 610 725 725 725 725 725 725 1000 725 670 670 670 670 280 280 280 280 730 730 780 780 780 780 780 590 780 725 725 725 725 675 675 610 560 560 560 560 560 560 880 560 560 560 560 560 285 285 285 285 610 610 610 610 610 610 610 590 610 610 610 610 610 560 610 560 ]
+>>
+endobj
+79 0 obj
+<<
+/BaseFont /Times-Roman
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font1
+/Subtype /Type1
+/Type /Font
+/Widths [ 0 280 340 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 340 410 500 500 840 785 185 340 340 500 560 250 340 250 290 500 500 500 500 500 500 500 500 500 500 290 290 565 565 565 440 925 720 670 670 725 610 555 720 720 335 390 725 615 880 720 720 560 720 665 555 605 715 715 945 725 725 610 335 275 335 475 500 330 450 500 450 500 450 340 500 500 275 275 500 275 775 500 500 500 500 340 390 285 500 500 720 500 500 450 490 200 490 550 350 500 350 340 500 450 1000 500 500 340 1000 565 340 890 350 610 350 350 340 340 445 445 350 500 1000 340 990 390 340 730 350 450 730 250 340 500 500 500 500 210 500 340 770 280 500 570 340 770 340 410 570 300 300 340 510 460 250 340 300 310 500 750 750 750 445 720 720 720 720 720 720 885 675 615 615 615 615 340 340 340 340 720 720 720 720 720 720 720 565 720 720 720 720 720 720 560 500 450 450 450 450 450 450 670 450 450 450 450 450 280 280 280 280 500 500 500 500 500 500 500 565 500 500 500 500 500 500 500 500 ]
+>>
+endobj
+80 0 obj
+<<
+/BitsPerComponent 1
+/ColorSpace /DeviceGray
+/DecodeParms <<
+/Columns 83
+/K -1
+>>
+/Filter /CCITTFaxDecode
+/Height 117
+/ImageMask false
+/Name /thumbnail_background_Page_7
+/Subtype /Image
+/Type /XObject
+/Width 83
+/Length 1075
+>>
+stream
+‰ÑGDtGQŸŒ9PàÒë—tGDtq—t_.å"Ë∫8ßDa"""""""#O.ã£yÑ_/ ":#°àâÑ@—8à˘tGF9!A$|éã¢>¬¬àààë—GE˘FGÀ¢<Gå ÇŸB•LDDDDM2ùrDs6àË∫#¢Ëéú∫#¢:#‚ƒDDDDDDdÑGFh¬.àË¬'G¥q—#®ààààààååE—ÑqE¬0àËéç¢:/ó·""""""#(BfàËéç¢:.âÑGE—0à˘µ
+E—Ùy—taIDDDbqDYÚ:#£ÍPã‡Å0ôPPÂg(Â!àààààâ—NàæqE—t_4À£h∫#„î":#¢Ëˆm—Ëààààà»h∫6œ":5£h∫0ã«ï!íËè—‰m»Ë∫#¢Ê]J‰ê48ààçîTSîÂ9®PÂ`ò»ËèÚt""#4à˘~CFEŸ—#¢ËﬁmDDDDqD2B#£àèâö7ët]DDDDDgTaFÑa—àéç¢:0àË≈(B""""""1.ãÂÚ:#¢Ëèë—ƒqF|èë—ƒa‘hDE±Ñ	ÜGDtGQ»héàË—‘DDe|éàË⁄=ë—¥}»ÒEÚ:ààààààèŒà∆aGëƒ#ê—¥aE—Ñ]»Ëƒ]——Ñ]FDDDDDDDDFPdGë—C‚>ÑDDb0f—|˛]Ûá»h⁄ÖàåDDL"ËéàË∫#∆—u!¢<_8ã¢:!¢:Hb"""&– t]F—Œ#Ëé≤ËéçuàFCGëà˘7úÀ¢:#¢Ë$_.àËøB#¢:.àË‚6é"ËÚ#¢Ë‚#¢:.å‘DDDDDDDDdÒ#‰xéédx¬4DtmÚ:.àËéà˘DDDDDDDDDgDB#˘x∆GFåé©hDDF'ât}ÚÍHDt#‰tGà˙FAg–åDDa8àà…—ÑGFIGDDDFPàËéå‚Ë⁄#¢:.àhéàËˆ]Qì£4GGëtq":0à˘QB1úE—/óE⁄#¢ËÚ<ã®àààé""10ã£héådu"à„ƒFODx∫#¢Ë∫/òG‚;ààé"-ùÚËéàËéÇ:#≈—ÑGG—DDDDDDDFBëxéé":6ã¢ËøãÊ—ÑmDtGDu'd|∫àîôºéàË⁄#ÂÈ>GDËÕUB"#bÀ§ãå⁄Iî8(f3»æGDz""""""#‰¸
+endstream
+endobj
+81 0 obj
+[ ]
+endobj
+82 0 obj
+[ 83 0 R 84 0 R ]
+endobj
+83 0 obj
+<<
+/Length 0
+>>
+stream
+
+endstream
+endobj
+84 0 obj
+<<
+/Length 10489
+>>
+stream
+BT
+0 g
+/OP11Font0 11 Tf
+0 0 0 rg
+101 Tz
+1 0 0 1 74 771 Tm
+(each type of equipment. By contrast, social) Tj
+1 0 0 1 74 758 Tm
+(scientists \(including geographers\) tended to develop) Tj
+1 0 0 1 74 745 Tm
+(quantitative methods by borrowing statistical tools) Tj
+102 Tz
+1 0 0 1 74 731 Tm
+(from others. The approach to error is thus imported) Tj
+101 Tz
+1 0 0 1 74 718 Tm
+(as well. Standard statistical procedures deal most) Tj
+1 0 0 1 74 704 Tm
+(directly with errors from sampling, although there) Tj
+1 0 0 1 74 691 Tm
+(has been substantial development of spatial) Tj
+102 Tz
+1 0 0 1 74 677 Tm
+(autocorrelation. Cartographers have developed two) Tj
+100 Tz
+1 0 0 1 74 664 Tm
+(distinct tracks, an analytical school and a) Tj
+1 0 0 1 73 650 Tm
+(communication school. The first fits in with) Tj
+101 Tz
+1 0 0 1 74 637 Tm
+(quantitative geography, while the second treats the) Tj
+100 Tz
+1 0 0 1 74 624 Tm
+(psychophysical process of map reading and the) Tj
+101 Tz
+1 0 0 1 74 611 Tm
+(divergence between the message intended and) Tj
+1 0 0 1 74 597 Tm
+(received. Out of these utterly incompatible) Tj
+100 Tz
+1 0 0 1 73 584 Tm
+(disciplines, the field of GIS must try to forge a) Tj
+101 Tz
+1 0 0 1 74 571 Tm
+(unified understanding of the errors that occur and) Tj
+102 Tz
+1 0 0 1 74 557 Tm
+(how they must be treated.) Tj
+/OP11Font1 12 Tf
+84 Tz
+1 0 0 1 98 520 Tm
+(LIVING WITH ERROR) Tj
+/OP11Font0 11 Tf
+101 Tz
+1 0 0 1 74 495 Tm
+(Once a model of error is developed, what good does) Tj
+1 0 0 1 73 482 Tm
+(it do? In the traditional view, say of a surveyor, a) Tj
+103 Tz
+1 0 0 1 74 469 Tm
+(measure of error helps to eradicate error. Under) Tj
+102 Tz
+1 0 0 1 74 456 Tm
+(such a regime, a data producer \(map maker\)) Tj
+100 Tz
+1 0 0 1 74 442 Tm
+(attempts to keep all maps accurate to a specified) Tj
+101 Tz
+1 0 0 1 74 429 Tm
+(tolerance. Many agencies embarking on an) Tj
+1 0 0 1 74 415 Tm
+(automation campaign do so inside the guidelines of) Tj
+1 0 0 1 74 402 Tm
+(their disciplinary perspective. It is only natural to) Tj
+1 0 0 1 74 388 Tm
+(carry along the attitudes towards error.) Tj
+1 0 0 1 95 375 Tm
+(As GIS develops, databases will become more) Tj
+1 0 0 1 74 362 Tm
+(and more pivotal to a diverse range of users, and) Tj
+1 0 0 1 74 349 Tm
+(the ability to determine a blanket tolerance will) Tj
+100 Tz
+1 0 0 1 74 335 Tm
+(become less certain. Measures of data quality will) Tj
+99 Tz
+1 0 0 1 74 322 Tm
+(provide a key to suitability for a specific task \(fitness) Tj
+102 Tz
+1 0 0 1 74 308 Tm
+(for use\).) Tj
+100 Tz
+1 0 0 1 116 308 Tm
+(With this transition, any disciplinary) Tj
+1 0 0 1 74 295 Tm
+(narrowness will not survive.) Tj
+99 Tz
+1 0 0 1 96 282 Tm
+(The field of GIS should also put significant) Tj
+102 Tz
+1 0 0 1 75 268 Tm
+(effort into the development of methods to report) Tj
+1 0 0 1 75 255 Tm
+(and visualize the error in databases. A reporting) Tj
+101 Tz
+1 0 0 1 75 241 Tm
+(scheme would permit statements, such as those) Tj
+1 0 0 1 75 228 Tm
+(permissible using standard statistical tests, except) Tj
+1 0 0 1 75 215 Tm
+(that they would adjust for the particularly spatial) Tj
+102 Tz
+1 0 0 1 75 201 Tm
+(form of the error. A few such tools, mentioned) Tj
+103 Tz
+1 0 0 1 75 188 Tm
+(above, exist, but most do not. Even fewer are) Tj
+66 Tz
+1 0 0 1 76 174 Tm
+(i) Tj
+103 Tz
+1 0 0 1 78 174 Tm
+(mplemented in production GIS.) Tj
+/OP11Font1 12 Tf
+81 Tz
+1 0 0 1 97 137 Tm
+(REFERENCES) Tj
+/OP11Font0 11 Tf
+88 Tz
+1 0 0 1 76 114 Tm
+(American Society for Photogrammetry and Remote Sensing) Tj
+89 Tz
+1 0 0 1 76 103 Tm
+(\(1989\) Interim accuracy standards for large scale line) Tj
+/OP11Font1 12 Tf
+74 Tz
+1 0 0 1 406 804 Tm
+(The Error) Tj
+/OP11Font0 11 Tf
+96 Tz
+1 0 0 1 449 803 Tm
+(Component in Spatial Data) Tj
+84 Tz
+1 0 0 1 331 773 Tm
+(maps.) Tj
+/OP11Font2 9 Tf
+108 Tz
+1 0 0 1 357 773 Tm
+(Photogrammetric Engineering and Remote Sensing) Tj
+/OP11Font0 11 Tf
+89 Tz
+1 0 0 1 330 762 Tm
+(55: 1038-40) Tj
+88 Tz
+1 0 0 1 330 750 Tm
+(Arbia G \(1989\) Statistical effect of spatial data) Tj
+90 Tz
+1 0 0 1 331 738 Tm
+(transformations: a proposed general framework. In:) Tj
+89 Tz
+1 0 0 1 331 726 Tm
+(Goodchild M F, Gopal S \(eds.\)) Tj
+/OP11Font2 9 Tf
+108 Tz
+1 0 0 1 456 726 Tm
+(Accuracy of Spatial) Tj
+107 Tz
+1 0 0 1 331 715 Tm
+(Databases.) Tj
+/OP11Font0 11 Tf
+91 Tz
+1 0 0 1 376 715 Tm
+(Taylor & Francis, London, pp. 249-60) Tj
+88 Tz
+1 0 0 1 331 699 Tm
+(Beard M K \(1987\) How to survive on a single detailed) Tj
+90 Tz
+1 0 0 1 330 688 Tm
+(database.) Tj
+/OP11Font2 9 Tf
+109 Tz
+1 0 0 1 371 688 Tm
+(Proceedings of) Tj
+114 Tz
+1 0 0 1 431 687 Tm
+(AUTOCART08.) Tj
+/OP11Font0 11 Tf
+89 Tz
+1 0 0 1 504 687 Tm
+(ASPRS/) Tj
+90 Tz
+1 0 0 1 330 676 Tm
+(AGSM, Falls Church, pp. 211-20) Tj
+89 Tz
+1 0 0 1 330 664 Tm
+(Berry B J L, Baker A M \(1968\) Geographic sampling. In:) Tj
+90 Tz
+1 0 0 1 330 653 Tm
+(Berry B J L, Marble D F \(eds.\)) Tj
+/OP11Font2 9 Tf
+108 Tz
+1 0 0 1 456 652 Tm
+(Spatial Analysis.) Tj
+/OP11Font0 11 Tf
+90 Tz
+1 0 0 1 525 652 Tm
+(Prentice) Tj
+1 0 0 1 330 641 Tm
+(Hall, Englewood Cliffs New Jersey, pp. 91-100) Tj
+86 Tz
+1 0 0 1 330 630 Tm
+(Bunge W \(1966\)) Tj
+/OP11Font2 9 Tf
+107 Tz
+1 0 0 1 397 630 Tm
+(Theoretical Geography.) Tj
+/OP11Font0 11 Tf
+93 Tz
+1 0 0 1 493 630 Tm
+(Gleerup,) Tj
+90 Tz
+1 0 0 1 532 629 Tm
+(Lund) Tj
+88 Tz
+1 0 0 1 330 618 Tm
+(Sweden) Tj
+87 Tz
+1 0 0 1 330 607 Tm
+(Bureau of the Budget \(1947\)) Tj
+/OP11Font2 9 Tf
+108 Tz
+1 0 0 1 444 607 Tm
+(National Map Accuracy) Tj
+110 Tz
+1 0 0 1 330 596 Tm
+(Standards. US) Tj
+/OP11Font0 11 Tf
+89 Tz
+1 0 0 1 390 596 Tm
+(Government Printing Office, Washington) Tj
+84 Tz
+1 0 0 1 331 584 Tm
+(DC) Tj
+89 Tz
+1 0 0 1 330 572 Tm
+(Burgess T M, Webster R \(1980\) Optimal interpolation and) Tj
+1 0 0 1 330 560 Tm
+(isarithmic mapping of soil properties. I. The) Tj
+1 0 0 1 330 549 Tm
+(semivariogram) Tj
+88 Tz
+1 0 0 1 392 549 Tm
+(and punctual Kriging.) Tj
+/OP11Font2 9 Tf
+112 Tz
+1 0 0 1 480 549 Tm
+(Journal of Soil) Tj
+99 Tz
+1 0 0 1 330 537 Tm
+(Science 31:) Tj
+/OP11Font0 11 Tf
+86 Tz
+1 0 0 1 376 537 Tm
+(315-31) Tj
+88 Tz
+1 0 0 1 330 525 Tm
+(Burrough P A \(1983\) Multiscale sources of spatial) Tj
+89 Tz
+1 0 0 1 330 514 Tm
+(variation in soil. I. The application of fractal concepts to) Tj
+88 Tz
+1 0 0 1 330 502 Tm
+(nested levels.) Tj
+/OP11Font2 9 Tf
+104 Tz
+1 0 0 1 386 502 Tm
+(Journal of Soil Science 34:) Tj
+/OP11Font0 11 Tf
+89 Tz
+1 0 0 1 492 502 Tm
+(577-97) Tj
+87 Tz
+1 0 0 1 330 491 Tm
+(Burrough P A \(1986a\)) Tj
+/OP11Font2 9 Tf
+109 Tz
+1 0 0 1 420 491 Tm
+(Principles of Geographical) Tj
+107 Tz
+1 0 0 1 330 480 Tm
+(Information Systems for Land Resources Assessment.) Tj
+/OP11Font0 11 Tf
+90 Tz
+1 0 0 1 330 468 Tm
+(Clarendon Press, Oxford) Tj
+88 Tz
+1 0 0 1 330 457 Tm
+(Burrough P A \(1986h\) Five reasons why geographical) Tj
+89 Tz
+1 0 0 1 330 445 Tm
+(information systems are not being used efficiently for land) Tj
+90 Tz
+1 0 0 1 330 433 Tm
+(resources assessment. In: Blakemore M J \(ed.\)) Tj
+/OP11Font2 9 Tf
+111 Tz
+1 0 0 1 330 421 Tm
+(Proceedings of) Tj
+112 Tz
+1 0 0 1 390 421 Tm
+(AUTOCARTO) Tj
+1 0 0 1 455 422 Tm
+(London, Vol.) Tj
+/OP11Font0 11 Tf
+72 Tz
+1 0 0 1 513 421 Tm
+(2.) Tj
+91 Tz
+1 0 0 1 523 421 Tm
+(Royal) Tj
+1 0 0 1 330 410 Tm
+(Institution of Chartered Surveyors, London, pp. 139-48) Tj
+88 Tz
+1 0 0 1 330 398 Tm
+(Burrough P A \(1989\) Fuzzy mathematical models for soil) Tj
+1 0 0 1 330 387 Tm
+(survey and land evaluation.) Tj
+/OP11Font2 9 Tf
+107 Tz
+1 0 0 1 441 387 Tm
+(Journal of Soil Science 40:) Tj
+/OP11Font0 11 Tf
+89 Tz
+1 0 0 1 330 375 Tm
+(477-92) Tj
+88 Tz
+1 0 0 1 330 364 Tm
+(Burrough P A \(1991\) Soil information systems. In:) Tj
+1 0 0 1 331 352 Tm
+(Maguire) Tj
+/OP11Font3 12 Tf
+74 Tz
+1 0 0 1 367 352 Tm
+(D J,) Tj
+/OP11Font0 11 Tf
+89 Tz
+1 0 0 1 386 352 Tm
+(Goodchild M F, Rhind) Tj
+/OP11Font3 12 Tf
+76 Tz
+1 0 0 1 479 352 Tm
+(D W) Tj
+/OP11Font0 11 Tf
+88 Tz
+1 0 0 1 501 352 Tm
+(\(eds.\)) Tj
+/OP11Font2 9 Tf
+108 Tz
+1 0 0 1 331 341 Tm
+(Geographical Information Systems: principles and) Tj
+1 0 0 1 330 329 Tm
+(applications.) Tj
+/OP11Font0 11 Tf
+90 Tz
+1 0 0 1 384 329 Tm
+(Longman, London, pp. 153-69, Vol 2) Tj
+89 Tz
+1 0 0 1 331 314 Tm
+(Chrisman N R \(1982a\) A theory of cartographic error and) Tj
+76 Tz
+1 0 0 1 331 302 Tm
+(its) Tj
+89 Tz
+1 0 0 1 342 302 Tm
+(measurement in digital databases.) Tj
+/OP11Font2 9 Tf
+109 Tz
+1 0 0 1 480 302 Tm
+(Proceedings of) Tj
+114 Tz
+1 0 0 1 330 290 Tm
+(AUTOCART05.) Tj
+/OP11Font0 11 Tf
+91 Tz
+1 0 0 1 403 291 Tm
+(ASPRS, Falls Church, pp. 159-68) Tj
+88 Tz
+1 0 0 1 331 279 Tm
+(Chrisman N R \(1982b\) Beyond accuracy assessment:) Tj
+87 Tz
+1 0 0 1 331 267 Tm
+(correction of misclassification.) Tj
+/OP11Font2 9 Tf
+109 Tz
+1 0 0 1 454 268 Tm
+(Proceedings International) Tj
+107 Tz
+1 0 0 1 331 256 Tm
+(Society of Photogrammetry and Remote Sensing) Tj
+1 0 0 1 331 244 Tm
+(Commission IV,) Tj
+/OP11Font0 11 Tf
+90 Tz
+1 0 0 1 398 244 Tm
+(24-IV, pp. 123-32) Tj
+89 Tz
+1 0 0 1 331 233 Tm
+(Chrisman N R \(1983\) The role of quality information in) Tj
+88 Tz
+1 0 0 1 331 221 Tm
+(the long-term functioning of a GIS.) Tj
+/OP11Font2 9 Tf
+111 Tz
+1 0 0 1 474 222 Tm
+(Proceedings of) Tj
+114 Tz
+1 0 0 1 331 209 Tm
+(AUTOCART06,) Tj
+108 Tz
+1 0 0 1 403 210 Tm
+(Vol.) Tj
+/OP11Font0 11 Tf
+72 Tz
+1 0 0 1 424 210 Tm
+(2.) Tj
+91 Tz
+1 0 0 1 433 210 Tm
+(ASPRS, Falls Church, pp.) Tj
+89 Tz
+1 0 0 1 331 198 Tm
+(303-21) Tj
+1 0 0 1 331 187 Tm
+(Chrisman N R \(1986\) Quality report for Dane County soil) Tj
+1 0 0 1 331 175 Tm
+(survey digital files. In: Moellering H \(ed.\)) Tj
+/OP11Font2 9 Tf
+106 Tz
+1 0 0 1 500 175 Tm
+(Report 7,) Tj
+108 Tz
+1 0 0 1 332 163 Tm
+(National Committee for Digital Cartographic Data) Tj
+1 0 0 1 332 151 Tm
+(Standards, pp.) Tj
+/OP11Font0 11 Tf
+89 Tz
+1 0 0 1 392 151 Tm
+(78-88) Tj
+88 Tz
+1 0 0 1 332 140 Tm
+(Chrisman N R \(1987\) Efficient digitizing through the) Tj
+90 Tz
+1 0 0 1 332 128 Tm
+(combination of appropriate hardware and software for) Tj
+1 0 0 1 332 117 Tm
+(error detection and correction.) Tj
+/OP11Font2 9 Tf
+112 Tz
+1 0 0 1 457 118 Tm
+(International Journal of) Tj
+106 Tz
+1 0 0 1 333 105 Tm
+(Geographical Information Systems 1:) Tj
+/OP11Font0 11 Tf
+92 Tz
+1 0 0 1 481 106 Tm
+(265-77) Tj
+/OP11Font2 9 Tf
+100 Tz
+1 0 0 1 553 66 Tm
+(17) Tj
+111 Tz
+1 0 0 1 563 66 Tm
+(3) Tj
+0 g
+ET
+
+endstream
+endobj
+85 0 obj
+<<
+/Font <<
+/OP11Font0 86 0 R
+/OP11Font1 87 0 R
+/OP11Font2 88 0 R
+/OP11Font3 89 0 R
+>>
+/ProcSet 23 0 R
+/XObject <<
+/thumbnail_background_Page_8 90 0 R
+>>
+>>
+endobj
+86 0 obj
+<<
+/BaseFont /Times-Roman
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font0
+/Subtype /Type1
+/Type /Font
+/Widths [ 0 280 340 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 340 410 500 500 840 785 185 340 340 500 560 250 340 250 290 500 500 500 500 500 500 500 500 500 500 290 290 565 565 565 440 925 720 670 670 725 610 555 720 720 335 390 725 615 880 720 720 560 720 665 555 605 715 715 945 725 725 610 335 275 335 475 500 330 450 500 450 500 450 340 500 500 275 275 500 275 775 500 500 500 500 340 390 285 500 500 720 500 500 450 490 200 490 550 350 500 350 340 500 450 1000 500 500 340 1000 565 340 890 350 610 350 350 340 340 445 445 350 500 1000 340 990 390 340 730 350 450 730 250 340 500 500 500 500 210 500 340 770 280 500 570 340 770 340 410 570 300 300 340 510 460 250 340 300 310 500 750 750 750 445 720 720 720 720 720 720 885 675 615 615 615 615 340 340 340 340 720 720 720 720 720 720 720 565 720 720 720 720 720 720 560 500 450 450 450 450 450 450 670 450 450 450 450 450 280 280 280 280 500 500 500 500 500 500 500 565 500 500 500 500 500 500 500 500 ]
+>>
+endobj
+87 0 obj
+<<
+/BaseFont /Helvetica-Bold
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font1
+/Subtype /Type1
+/Type /Font
+/Widths [ 0 280 340 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 335 485 555 555 890 725 245 340 340 390 585 280 340 280 280 555 555 555 555 555 555 555 555 555 555 340 340 585 585 585 610 975 715 715 715 715 665 615 780 715 280 550 725 610 835 715 775 675 775 725 665 610 710 665 945 665 665 610 330 280 340 590 555 340 555 610 555 610 555 340 610 610 280 280 555 280 890 610 610 610 610 390 560 340 610 555 775 555 555 500 395 275 395 590 350 560 350 285 560 500 1000 560 560 340 1000 665 335 1000 350 610 350 350 275 275 500 500 350 560 1000 340 1000 560 340 940 350 500 615 285 330 555 555 555 555 280 555 335 735 375 560 585 340 735 340 400 590 340 340 340 615 550 285 340 340 370 560 840 840 840 610 725 725 725 725 725 725 1000 725 670 670 670 670 280 280 280 280 730 730 780 780 780 780 780 590 780 725 725 725 725 675 675 610 560 560 560 560 560 560 880 560 560 560 560 560 285 285 285 285 610 610 610 610 610 610 610 590 610 610 610 610 610 560 610 560 ]
+>>
+endobj
+88 0 obj
+<<
+/BaseFont /Times-Italic
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font2
+/Subtype /Type1
+/Type /Font
+/Widths [ 0 280 340 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 340 410 500 500 840 785 185 340 340 500 560 250 340 250 290 500 500 500 500 500 500 500 500 500 500 290 290 565 565 565 440 925 720 670 670 725 610 555 720 720 335 390 725 615 880 720 720 560 720 665 555 605 715 715 945 725 725 610 335 275 335 475 500 330 450 500 450 500 450 340 500 500 275 275 500 275 775 500 500 500 500 340 390 285 500 500 720 500 500 450 490 200 490 550 350 500 350 340 500 450 1000 500 500 340 1000 565 340 890 350 610 350 350 340 340 445 445 350 500 1000 340 990 390 340 730 350 450 730 250 340 500 500 500 500 210 500 340 770 280 500 570 340 770 340 410 570 300 300 340 510 460 250 340 300 310 500 750 750 750 445 720 720 720 720 720 720 885 675 615 615 615 615 340 340 340 340 720 720 720 720 720 720 720 565 720 720 720 720 720 720 560 500 450 450 450 450 450 450 670 450 450 450 450 450 280 280 280 280 500 500 500 500 500 500 500 565 500 500 500 500 500 500 500 500 ]
+>>
+endobj
+89 0 obj
+<<
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font3
+/Subtype /Type1
+/Type /Font
+/Widths [ 0 280 340 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 355 555 555 890 670 225 340 340 390 585 280 340 280 280 555 555 555 555 555 555 555 555 555 555 280 280 585 585 585 555 1015 670 670 720 720 670 610 775 720 280 500 665 555 830 720 780 665 780 720 665 610 715 670 950 665 665 610 275 275 275 470 555 340 555 555 500 555 555 280 555 555 225 225 500 225 835 555 555 555 555 340 500 280 555 500 720 500 500 500 340 260 340 590 350 560 350 225 560 340 1000 560 560 340 1000 665 335 1000 350 610 350 350 230 230 340 340 350 560 1000 340 1000 560 340 940 350 500 615 285 330 555 555 555 555 270 555 335 735 375 560 585 340 735 340 400 590 340 340 340 615 540 280 340 340 370 555 840 840 840 610 670 670 670 670 670 670 1000 720 670 670 670 670 280 280 280 280 730 730 780 780 780 780 780 590 780 725 725 725 725 680 680 610 560 560 560 560 560 560 890 500 560 560 560 560 285 285 285 285 560 560 560 560 560 560 560 590 610 560 560 560 560 500 560 500 ]
+>>
+endobj
+90 0 obj
+<<
+/BitsPerComponent 1
+/ColorSpace /DeviceGray
+/DecodeParms <<
+/Columns 83
+/K -1
+>>
+/Filter /CCITTFaxDecode
+/Height 117
+/ImageMask false
+/Name /thumbnail_background_Page_8
+/Subtype /Image
+/Type /XObject
+/Width 83
+/Length 956
+>>
+stream
+Ú∂Õ‰uT‘ü/õ»ÒƒàFDDYY(DtGB# ÒH⁄0ÑF#âƒGDtb8àÓ"8à…—‰jC6ÑÜÀÁx∫1…„éôCúrá=ì+'DtqãÚtGFhèòDt_#ÊààƒDDDDﬁaÛéé#‘ù»˘tGÃ"Ë⁄#°a∞VGIDDDDDDDFNàËéŒdtmGë‰yQì¢:/Ú>GÃ"Ò:8ÕÃ¬ààéB"¬.àËA8@ÅDDDFTëƒ}E‘ßG L¨*¬‰˘	”#‰r/àAàƒDDDB
+‰ËéàËÕEÚ:#°àààâè©:6ç¢>b.àËéç3H¯AY.Qì£y2:ààâ¢:"ÍNàÊGDtGEÚË⁄#¢<"<DDDDM"<](àà»*#Ê3E‘D ±àÕHÿ»Ã⁄#¢>GDt]™NwB"""1§E—Ñm—– ÜNà˘d|éç£DDDDb"""&Ú:.èe—Éì¢:#‰tm—tGE— ÑCX(àààààà…—>à˘tNàË“#£j""%–àà…‚˘Ú>GIDtD‘DDDEî9^qŒÁ™8L°ÕÇ""""2tyDGG3hé¢$¬YYHd˘Üm‚>}àåDDDù¢t]‘ù—Ïêã°ààâ>GE—Ñ]Ú;.ã¢?'àËéàË¬#£»DDDRààààÕHéå#èëÚ>N¢""#úD|—I——ƒa—Ú:#£çC“HXB4y¥GDt]‚""""#'D4KÂÚËﬁGDtbàê–`ÑDDKÚü#≥»∫:°(DtmVUÑ$v_.èb"$Í"""HFÏ∫ùÙaàƒDà»ÍjEÚ>GDtaDt"]E—vcààà‚""3™#£héå"9ëÛVGG»˘DDDDÕ– B8àå£#‰tS°ã)!Nl:ÅéÑaE‚:ààä&héàÒ#©B.ã¢:<àhDDF"""s8àËéç¢:.àËèHh∆af—PàààåDDDe‚.àË∫#£héà˘ûG2Ò¥sààààààà 2:6ã¢<GDtF2>]Ãé¢"""" ∂G‚#!Ytbàá(S¢#ƒ|R0¢"@ër/Ç!ë‘DDDdàºGE‚˘∏ª.ç¢:#≤<_ààààÏÆC(F—¥]ë—#°àààèùÜ£ˇ
+endstream
+endobj
+91 0 obj
+[ ]
+endobj
+92 0 obj
+[ 93 0 R 94 0 R ]
+endobj
+93 0 obj
+<<
+/Length 0
+>>
+stream
+
+endstream
+endobj
+94 0 obj
+<<
+/Length 12266
+>>
+stream
+BT
+0 g
+/OP11Font0 9 Tf
+0 0 0 rg
+104 Tz
+1 0 0 1 76 816 Tm
+(N R Chrisman) Tj
+/OP11Font1 10 Tf
+98 Tz
+1 0 0 1 75 783 Tm
+(Chrisman N R \(1989\) Modeling error in overlaid) Tj
+100 Tz
+1 0 0 1 75 771 Tm
+(categorical maps. In: Goodchild M F, Gopal S \(eds.\)) Tj
+/OP11Font2 10 Tf
+98 Tz
+1 0 0 1 75 760 Tm
+(Accuracy) Tj
+107 Tz
+1 0 0 1 116 759 Tm
+(of) Tj
+97 Tz
+1 0 0 1 126 760 Tm
+(Spatial Databases.) Tj
+/OP11Font1 10 Tf
+99 Tz
+1 0 0 1 202 759 Tm
+(Taylor & Francis, London,) Tj
+104 Tz
+1 0 0 1 75 748 Tm
+(pp. 21-34) Tj
+98 Tz
+1 0 0 1 75 736 Tm
+(Chrisman N R, Yandell B \(1988\) Effects of point error on) Tj
+100 Tz
+1 0 0 1 75 725 Tm
+(area calculations.) Tj
+/OP11Font2 10 Tf
+96 Tz
+1 0 0 1 149 725 Tm
+(Surveying and Mapping 48:) Tj
+/OP11Font1 10 Tf
+98 Tz
+1 0 0 1 260 724 Tm
+(241-6) Tj
+97 Tz
+1 0 0 1 75 713 Tm
+(Cliff A D, Ord J K \(1981\)) Tj
+/OP11Font2 10 Tf
+1 0 0 1 180 713 Tm
+(Spatial Processes: models and) Tj
+100 Tz
+1 0 0 1 75 702 Tm
+(applications.) Tj
+/OP11Font1 10 Tf
+102 Tz
+1 0 0 1 129 701 Tm
+(Pion, London) Tj
+98 Tz
+1 0 0 1 75 690 Tm
+(Crossilla F \(1986\) Improving the outlier separability in) Tj
+99 Tz
+1 0 0 1 75 678 Tm
+(geodetic networks according to the generalized orthomax) Tj
+100 Tz
+1 0 0 1 75 667 Tm
+(criterion.) Tj
+/OP11Font2 10 Tf
+97 Tz
+1 0 0 1 115 666 Tm
+(Manuscripta Geodaetica 11:) Tj
+/OP11Font1 10 Tf
+98 Tz
+1 0 0 1 229 666 Tm
+(38-47) Tj
+1 0 0 1 75 648 Tm
+(DCDSTF \(1988\) The proposed standard for digital) Tj
+101 Tz
+1 0 0 1 75 637 Tm
+(cartographic data.) Tj
+/OP11Font2 10 Tf
+97 Tz
+1 0 0 1 152 637 Tm
+(The American Cartographer 15:) Tj
+/OP11Font1 10 Tf
+102 Tz
+1 0 0 1 280 636 Tm
+(9-140) Tj
+98 Tz
+1 0 0 1 75 625 Tm
+(Dueker K J \(1979\) Land resource information systems:) Tj
+99 Tz
+1 0 0 1 75 614 Tm
+(spatial and attribute resolution issues.) Tj
+/OP11Font2 10 Tf
+95 Tz
+1 0 0 1 230 613 Tm
+(Proceedings) Tj
+107 Tz
+1 0 0 1 280 613 Tm
+(of) Tj
+1 0 0 1 74 602 Tm
+(AUTOCART04) Tj
+91 Tz
+1 0 0 1 146 602 Tm
+(Vol.) Tj
+/OP11Font1 10 Tf
+80 Tz
+1 0 0 1 166 602 Tm
+(2.) Tj
+99 Tz
+1 0 0 1 176 602 Tm
+(ASPRS, Falls Church, pp.) Tj
+102 Tz
+1 0 0 1 75 591 Tm
+(328-36) Tj
+98 Tz
+1 0 0 1 75 572 Tm
+(Fisher P F \(1991\) Spatial data sources and data problems.) Tj
+97 Tz
+1 0 0 1 75 561 Tm
+(In:) Tj
+100 Tz
+1 0 0 1 90 561 Tm
+(Maguire D J, Goodchild M F, Rhind D W \(eds.\)) Tj
+/OP11Font2 10 Tf
+98 Tz
+1 0 0 1 75 549 Tm
+(Geographical Information Systems: principles and) Tj
+1 0 0 1 75 538 Tm
+(applications.) Tj
+/OP11Font1 10 Tf
+100 Tz
+1 0 0 1 129 537 Tm
+(Longman, London, pp. 175-89, Vol 1) Tj
+98 Tz
+1 0 0 1 75 526 Tm
+(Fitzpatrick-Lins K \(1981\) Comparison of sampling) Tj
+99 Tz
+1 0 0 1 75 514 Tm
+(procedures and data analysis for a land use and land cover) Tj
+96 Tz
+1 0 0 1 75 503 Tm
+(map.) Tj
+/OP11Font2 10 Tf
+97 Tz
+1 0 0 1 98 503 Tm
+(Photogrammetric Engineering and Remote Sensing) Tj
+/OP11Font1 10 Tf
+100 Tz
+1 0 0 1 74 491 Tm
+(47: 343-51) Tj
+97 Tz
+1 0 0 1 75 473 Tm
+(Goodchild M F \(1978\) Statistical aspects of the polygon) Tj
+102 Tz
+1 0 0 1 75 462 Tm
+(overlay problem. In: Dutton G) Tj
+101 Tz
+1 0 0 1 203 462 Tm
+(\(ed.\)) Tj
+/OP11Font2 10 Tf
+98 Tz
+1 0 0 1 225 462 Tm
+(Harvard Papers on) Tj
+1 0 0 1 75 450 Tm
+(Geographic Information Systems, Vol) Tj
+/OP11Font1 10 Tf
+80 Tz
+1 0 0 1 229 450 Tm
+(6.) Tj
+97 Tz
+1 0 0 1 239 450 Tm
+(Addison-Wesley,) Tj
+100 Tz
+1 0 0 1 75 439 Tm
+(Reading Massachusetts) Tj
+96 Tz
+1 0 0 1 75 427 Tm
+(Goodchild M F \(1988\)) Tj
+/OP11Font2 10 Tf
+1 0 0 1 166 427 Tm
+(Spatial) Tj
+98 Tz
+1 0 0 1 195 427 Tm
+(Autocorrelation.) Tj
+/OP11Font1 10 Tf
+99 Tz
+1 0 0 1 264 427 Tm
+(CATMOG) Tj
+100 Tz
+1 0 0 1 75 415 Tm
+(\(Concepts and Techniques in Modern Geography\), Vol.) Tj
+1 0 0 1 75 404 Tm
+(47. GeoBooks, Norwich) Tj
+98 Tz
+1 0 0 1 75 392 Tm
+(Goodchild M F, Dubuc O \(1987\) A model of error for) Tj
+99 Tz
+1 0 0 1 75 380 Tm
+(choropleth maps with applications to geographic) Tj
+72 Tz
+1 0 0 1 75 369 Tm
+(i) Tj
+99 Tz
+1 0 0 1 78 369 Tm
+(nformation systems.) Tj
+/OP11Font2 10 Tf
+97 Tz
+1 0 0 1 162 369 Tm
+(Proceedings) Tj
+119 Tz
+1 0 0 1 212 369 Tm
+(of) Tj
+101 Tz
+1 0 0 1 222 369 Tm
+(AUTOCARTO8.) Tj
+/OP11Font1 10 Tf
+100 Tz
+1 0 0 1 75 357 Tm
+(ASPRS/ACSM, Falls Church, pp. 165-74) Tj
+97 Tz
+1 0 0 1 75 345 Tm
+(Goodchild M F, Gopal S \(eds.\) \(1989\)) Tj
+/OP11Font2 10 Tf
+95 Tz
+1 0 0 1 228 346 Tm
+(Accuracy) Tj
+107 Tz
+1 0 0 1 268 346 Tm
+(of) Tj
+100 Tz
+1 0 0 1 278 346 Tm
+(Spatial) Tj
+99 Tz
+1 0 0 1 75 334 Tm
+(Databases.) Tj
+/OP11Font1 10 Tf
+1 0 0 1 121 334 Tm
+(Taylor & Francis, London) Tj
+96 Tz
+1 0 0 1 75 316 Tm
+(Hayes G E, Romig H G \(1977\)) Tj
+/OP11Font2 10 Tf
+99 Tz
+1 0 0 1 198 316 Tm
+(Modern Quality Control.) Tj
+/OP11Font1 10 Tf
+101 Tz
+1 0 0 1 75 304 Tm
+(Bruce, Encino California) Tj
+97 Tz
+1 0 0 1 75 292 Tm
+(Haywood P E) Tj
+101 Tz
+1 0 0 1 132 293 Tm
+(\(ed.\)) Tj
+89 Tz
+1 0 0 1 155 293 Tm
+(\(1986\)) Tj
+/OP11Font2 10 Tf
+97 Tz
+1 0 0 1 183 293 Tm
+(Final Draft Papers) Tj
+/OP11Font0 12 Tf
+89 Tz
+1 0 0 1 258 293 Tm
+(of) Tj
+/OP11Font2 10 Tf
+1 0 0 1 269 293 Tm
+(the) Tj
+98 Tz
+1 0 0 1 76 281 Tm
+(Working Party to Produce National Standards for the) Tj
+99 Tz
+1 0 0 1 76 269 Tm
+(Transfer) Tj
+107 Tz
+1 0 0 1 112 269 Tm
+(of) Tj
+97 Tz
+1 0 0 1 123 269 Tm
+(Digital Map Data.) Tj
+/OP11Font1 10 Tf
+99 Tz
+1 0 0 1 198 270 Tm
+(Ordnance Survey,) Tj
+102 Tz
+1 0 0 1 75 257 Tm
+(Southampton) Tj
+96 Tz
+1 0 0 1 76 239 Tm
+(Korzybski A \(1948\)) Tj
+/OP11Font2 10 Tf
+1 0 0 1 157 240 Tm
+(Science and Sanity: an introduction) Tj
+89 Tz
+1 0 0 1 298 240 Tm
+(to) Tj
+95 Tz
+1 0 0 1 75 228 Tm
+(non -Aristotelean systems and general semantics,) Tj
+/OP11Font1 10 Tf
+97 Tz
+1 0 0 1 268 229 Tm
+(3rd edn.) Tj
+101 Tz
+1 0 0 1 75 216 Tm
+(The International Non-Aristotelean Library Publishing) Tj
+100 Tz
+1 0 0 1 76 204 Tm
+(Co., Lakeville CT) Tj
+98 Tz
+1 0 0 1 76 193 Tm
+(Kubik K, Lyons K, Merchant D \(1988\) Photogrammetric) Tj
+99 Tz
+1 0 0 1 76 181 Tm
+(work without blunders.) Tj
+/OP11Font2 10 Tf
+98 Tz
+1 0 0 1 173 182 Tm
+(Photogrammetric Engineering and) Tj
+96 Tz
+1 0 0 1 76 170 Tm
+(Remote Sensing) Tj
+/OP11Font1 10 Tf
+100 Tz
+1 0 0 1 142 170 Tm
+(54: 51-4) Tj
+99 Tz
+1 0 0 1 76 151 Tm
+(Langran G, Chrisman N R \(1988\) A framework for) Tj
+1 0 0 1 333 782 Tm
+(temporal geographic information.) Tj
+/OP11Font2 10 Tf
+96 Tz
+1 0 0 1 471 781 Tm
+(Cartographica 25 \(3\):) Tj
+/OP11Font1 10 Tf
+97 Tz
+1 0 0 1 334 771 Tm
+(1-14) Tj
+98 Tz
+1 0 0 1 333 752 Tm
+(Mark D M, Csillag F \(1989\) The nature of boundaries in) Tj
+40 Tz
+1 0 0 1 333 745 Tm
+(,) Tj
+95 Tz
+1 0 0 1 335 741 Tm
+(area-class) Tj
+101 Tz
+1 0 0 1 376 740 Tm
+(maps'.) Tj
+/OP11Font2 10 Tf
+96 Tz
+1 0 0 1 405 740 Tm
+(Cartographica 26 \(1\):) Tj
+/OP11Font1 10 Tf
+98 Tz
+1 0 0 1 493 740 Tm
+(65-78) Tj
+94 Tz
+1 0 0 1 333 729 Tm
+(Mikhail E H \(1976\)) Tj
+/OP11Font2 10 Tf
+99 Tz
+1 0 0 1 412 728 Tm
+(Observations and Least Squares. IEP,) Tj
+/OP11Font1 10 Tf
+95 Tz
+1 0 0 1 333 717 Tm
+(New York) Tj
+1 0 0 1 333 706 Tm
+(Muehrcke P C \(1986\)) Tj
+/OP11Font2 10 Tf
+1 0 0 1 420 705 Tm
+(Map Use,) Tj
+/OP11Font1 10 Tf
+100 Tz
+1 0 0 1 460 705 Tm
+(2nd edn. JP Publications,) Tj
+96 Tz
+1 0 0 1 333 694 Tm
+(Madison Wisconsin) Tj
+94 Tz
+1 0 0 1 333 675 Tm
+(Peucker T K \(1972\)) Tj
+/OP11Font2 10 Tf
+97 Tz
+1 0 0 1 413 674 Tm
+(Computer Cartography,) Tj
+/OP11Font1 10 Tf
+101 Tz
+1 0 0 1 510 674 Tm
+(Resource) Tj
+99 Tz
+1 0 0 1 333 663 Tm
+(Paper 17. Association of American Geographers,) Tj
+97 Tz
+1 0 0 1 333 652 Tm
+(Washington DC) Tj
+94 Tz
+1 0 0 1 332 633 Tm
+(Robinson A H \(1960\)) Tj
+/OP11Font2 10 Tf
+93 Tz
+1 0 0 1 418 633 Tm
+(Elements) Tj
+107 Tz
+1 0 0 1 456 633 Tm
+(of) Tj
+98 Tz
+1 0 0 1 467 632 Tm
+(Cartography,) Tj
+/OP11Font1 10 Tf
+101 Tz
+1 0 0 1 522 632 Tm
+(2nd edn.) Tj
+97 Tz
+1 0 0 1 332 621 Tm
+(Wiley, New York) Tj
+98 Tz
+1 0 0 1 332 610 Tm
+(Robinson A H, Sale R D, Morrison J L, Muehrcke P C) Tj
+93 Tz
+1 0 0 1 332 599 Tm
+(\(1984\)) Tj
+/OP11Font2 10 Tf
+1 0 0 1 360 598 Tm
+(Elements) Tj
+/OP11Font0 12 Tf
+89 Tz
+1 0 0 1 398 598 Tm
+(of) Tj
+/OP11Font2 10 Tf
+98 Tz
+1 0 0 1 409 598 Tm
+(Cartography,) Tj
+/OP11Font1 10 Tf
+99 Tz
+1 0 0 1 464 598 Tm
+(5th edn. Wiley, New) Tj
+96 Tz
+1 0 0 1 332 587 Tm
+(York) Tj
+1 0 0 1 332 575 Tm
+(Rosenfield G, Melley M \(1980\) Applications of statistics to) Tj
+97 Tz
+1 0 0 1 332 564 Tm
+(thematic mapping.) Tj
+/OP11Font2 10 Tf
+99 Tz
+1 0 0 1 409 563 Tm
+(Photogrammetric Engineering and) Tj
+94 Tz
+1 0 0 1 332 552 Tm
+(Remote Sensing 46:) Tj
+/OP11Font1 10 Tf
+98 Tz
+1 0 0 1 411 552 Tm
+(1287-94) Tj
+89 Tz
+1 0 0 1 332 534 Tm
+(Salge) Tj
+97 Tz
+1 0 0 1 355 533 Tm
+(F, Sclafer M N \(1989\) A geographic data model) Tj
+100 Tz
+1 0 0 1 332 522 Tm
+(based on HBDS concepts: the IGN cartographic database) Tj
+98 Tz
+1 0 0 1 332 511 Tm
+(model.) Tj
+/OP11Font2 10 Tf
+1 0 0 1 362 510 Tm
+(Proceedings of) Tj
+101 Tz
+1 0 0 1 422 510 Tm
+(AUTOCARTO9.) Tj
+/OP11Font1 10 Tf
+1 0 0 1 495 510 Tm
+(ACSM/ASPRS,) Tj
+99 Tz
+1 0 0 1 332 499 Tm
+(Falls Church, pp. 110-17) Tj
+92 Tz
+1 0 0 1 332 487 Tm
+(Shyue S W \(1989\)) Tj
+/OP11Font2 10 Tf
+99 Tz
+1 0 0 1 404 487 Tm
+(High Breakdown Point Robust) Tj
+97 Tz
+1 0 0 1 332 476 Tm
+(Estimation for Outlier Detection in Photogrammetry.) Tj
+/OP11Font1 10 Tf
+99 Tz
+1 0 0 1 332 464 Tm
+(Unpublished PhD dissertation, University of Washington) Tj
+98 Tz
+1 0 0 1 332 453 Tm
+(Sinton D \(1978\) The inherent structure of information as a) Tj
+1 0 0 1 332 441 Tm
+(constraint to analysis: mapped thematic data as a case) Tj
+99 Tz
+1 0 0 1 332 429 Tm
+(study. In: Dutton G) Tj
+101 Tz
+1 0 0 1 414 430 Tm
+(\(ed.\)) Tj
+/OP11Font2 10 Tf
+100 Tz
+1 0 0 1 436 429 Tm
+(Harvard Papers on Geographic) Tj
+96 Tz
+1 0 0 1 332 418 Tm
+(Information Systems, Vol.) Tj
+/OP11Font1 10 Tf
+93 Tz
+1 0 0 1 438 418 Tm
+(6.) Tj
+99 Tz
+1 0 0 1 449 418 Tm
+(Addison-Wesley, Reading) Tj
+93 Tz
+1 0 0 1 332 406 Tm
+(MA) Tj
+99 Tz
+1 0 0 1 332 387 Tm
+(Tobler W \(1988\) Resolution, resampling and all that. In:) Tj
+98 Tz
+1 0 0 1 332 376 Tm
+(Mounsey H) Tj
+95 Tz
+1 0 0 1 381 376 Tm
+(\(ed.\)) Tj
+/OP11Font2 10 Tf
+97 Tz
+1 0 0 1 403 376 Tm
+(Building Databases for Global Science.) Tj
+/OP11Font1 10 Tf
+100 Tz
+1 0 0 1 331 364 Tm
+(Taylor & Francis, London, pp. 129-37) Tj
+97 Tz
+1 0 0 1 332 345 Tm
+(Ventura S, Sullivan J G, Chrisman N R \(1986\)) Tj
+1 0 0 1 332 334 Tm
+(Vectorization of Landsat TM land cover classification) Tj
+98 Tz
+1 0 0 1 332 323 Tm
+(data.) Tj
+/OP11Font2 10 Tf
+95 Tz
+1 0 0 1 355 323 Tm
+(Proceedings URISA 1:) Tj
+/OP11Font1 10 Tf
+98 Tz
+1 0 0 1 447 322 Tm
+(129-40) Tj
+97 Tz
+1 0 0 1 332 311 Tm
+(Veregin H \(1989\) A taxonomy of error in spatial) Tj
+99 Tz
+1 0 0 1 332 300 Tm
+(databases.) Tj
+/OP11Font2 10 Tf
+97 Tz
+1 0 0 1 377 299 Tm
+(Technical Paper 89-12.) Tj
+/OP11Font1 10 Tf
+100 Tz
+1 0 0 1 472 300 Tm
+(National Center for) Tj
+99 Tz
+1 0 0 1 332 288 Tm
+(Geographic Information and Analysis University of) Tj
+1 0 0 1 332 276 Tm
+(California, Santa Barbara California) Tj
+97 Tz
+1 0 0 1 332 265 Tm
+(Vonderohe A P, Chrisman N R \(1985\) Tests to establish) Tj
+98 Tz
+1 0 0 1 332 253 Tm
+(the quality of digital cartographic data: some examples) Tj
+100 Tz
+1 0 0 1 332 241 Tm
+(from the Dane County Land Records Project.) Tj
+/OP11Font2 10 Tf
+95 Tz
+1 0 0 1 519 242 Tm
+(Proceedings) Tj
+/OP11Font1 10 Tf
+107 Tz
+1 0 0 1 332 229 Tm
+(of) Tj
+102 Tz
+1 0 0 1 342 230 Tm
+(AUTOCARTOT) Tj
+100 Tz
+1 0 0 1 415 230 Tm
+(ASPRS, Falls Church, pp. 552-9) Tj
+98 Tz
+1 0 0 1 332 211 Tm
+(White M \(1978\) A geometric model for error detection) Tj
+99 Tz
+1 0 0 1 332 199 Tm
+(and correction.) Tj
+/OP11Font2 10 Tf
+1 0 0 1 395 200 Tm
+(Proceedings of) Tj
+103 Tz
+1 0 0 1 456 200 Tm
+(AUTOCART03.) Tj
+/OP11Font1 10 Tf
+99 Tz
+1 0 0 1 529 200 Tm
+(ASPRS,) Tj
+100 Tz
+1 0 0 1 332 188 Tm
+(Falls Church, pp. 439-56) Tj
+99 Tz
+1 0 0 1 332 177 Tm
+(White M \(1984\) Technical requirements and standards for) Tj
+1 0 0 1 332 165 Tm
+(a multipurpose geographic data system.) Tj
+/OP11Font2 10 Tf
+95 Tz
+1 0 0 1 494 165 Tm
+(The American) Tj
+96 Tz
+1 0 0 1 333 153 Tm
+(Cartographer 11:) Tj
+/OP11Font1 10 Tf
+98 Tz
+1 0 0 1 403 153 Tm
+(15-26) Tj
+0 g
+ET
+
+endstream
+endobj
+95 0 obj
+<<
+/Font <<
+/OP11Font0 96 0 R
+/OP11Font1 97 0 R
+/OP11Font2 98 0 R
+>>
+/ProcSet 23 0 R
+/XObject <<
+/thumbnail_background_Page_9 99 0 R
+>>
+>>
+endobj
+96 0 obj
+<<
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font0
+/Subtype /Type1
+/Type /Font
+/Widths [ 0 280 340 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 280 355 555 555 890 670 225 340 340 390 585 280 340 280 280 555 555 555 555 555 555 555 555 555 555 280 280 585 585 585 555 1015 670 670 720 720 670 610 775 720 280 500 665 555 830 720 780 665 780 720 665 610 715 670 950 665 665 610 275 275 275 470 555 340 555 555 500 555 555 280 555 555 225 225 500 225 835 555 555 555 555 340 500 280 555 500 720 500 500 500 340 260 340 590 350 560 350 225 560 340 1000 560 560 340 1000 665 335 1000 350 610 350 350 230 230 340 340 350 560 1000 340 1000 560 340 940 350 500 615 285 330 555 555 555 555 270 555 335 735 375 560 585 340 735 340 400 590 340 340 340 615 540 280 340 340 370 555 840 840 840 610 670 670 670 670 670 670 1000 720 670 670 670 670 280 280 280 280 730 730 780 780 780 780 780 590 780 725 725 725 725 680 680 610 560 560 560 560 560 560 890 500 560 560 560 560 285 285 285 285 560 560 560 560 560 560 560 590 610 560 560 560 560 500 560 500 ]
+>>
+endobj
+97 0 obj
+<<
+/BaseFont /Times-Roman
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font1
+/Subtype /Type1
+/Type /Font
+/Widths [ 0 280 340 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 340 410 500 500 840 785 185 340 340 500 560 250 340 250 290 500 500 500 500 500 500 500 500 500 500 290 290 565 565 565 440 925 720 670 670 725 610 555 720 720 335 390 725 615 880 720 720 560 720 665 555 605 715 715 945 725 725 610 335 275 335 475 500 330 450 500 450 500 450 340 500 500 275 275 500 275 775 500 500 500 500 340 390 285 500 500 720 500 500 450 490 200 490 550 350 500 350 340 500 450 1000 500 500 340 1000 565 340 890 350 610 350 350 340 340 445 445 350 500 1000 340 990 390 340 730 350 450 730 250 340 500 500 500 500 210 500 340 770 280 500 570 340 770 340 410 570 300 300 340 510 460 250 340 300 310 500 750 750 750 445 720 720 720 720 720 720 885 675 615 615 615 615 340 340 340 340 720 720 720 720 720 720 720 565 720 720 720 720 720 720 560 500 450 450 450 450 450 450 670 450 450 450 450 450 280 280 280 280 500 500 500 500 500 500 500 565 500 500 500 500 500 500 500 500 ]
+>>
+endobj
+98 0 obj
+<<
+/BaseFont /Times-Italic
+/Encoding /WinAnsiEncoding
+/FirstChar 0
+/LastChar 255
+/Name /OP11Font2
+/Subtype /Type1
+/Type /Font
+/Widths [ 0 280 340 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 250 340 410 500 500 840 785 185 340 340 500 560 250 340 250 290 500 500 500 500 500 500 500 500 500 500 290 290 565 565 565 440 925 720 670 670 725 610 555 720 720 335 390 725 615 880 720 720 560 720 665 555 605 715 715 945 725 725 610 335 275 335 475 500 330 450 500 450 500 450 340 500 500 275 275 500 275 775 500 500 500 500 340 390 285 500 500 720 500 500 450 490 200 490 550 350 500 350 340 500 450 1000 500 500 340 1000 565 340 890 350 610 350 350 340 340 445 445 350 500 1000 340 990 390 340 730 350 450 730 250 340 500 500 500 500 210 500 340 770 280 500 570 340 770 340 410 570 300 300 340 510 460 250 340 300 310 500 750 750 750 445 720 720 720 720 720 720 885 675 615 615 615 615 340 340 340 340 720 720 720 720 720 720 720 565 720 720 720 720 720 720 560 500 450 450 450 450 450 450 670 450 450 450 450 450 280 280 280 280 500 500 500 500 500 500 500 565 500 500 500 500 500 500 500 500 ]
+>>
+endobj
+99 0 obj
+<<
+/BitsPerComponent 1
+/ColorSpace /DeviceGray
+/DecodeParms <<
+/Columns 83
+/K -1
+>>
+/Filter /CCITTFaxDecode
+/Height 117
+/ImageMask false
+/Name /thumbnail_background_Page_9
+/Subtype /Image
+/Type /XObject
+/Width 83
+/Length 831
+>>
+stream
+»j%‘†éà¸DrB#£Ë⁄#¢Ë∫#¢å∫.ã£Rààààààå£#¢:6ç≥¸Ds41R/úDw(E–àÜ¢!":/ t]Ú:.èDtGB#(ADEDDﬁGàË⁄#‰xé¢""""2B.3hèë—åé¢ààô«ÑqE‘aàååDtGfÃ∆1î":.àËéç¢:<égÛ‚#£5ƒRH ±Ç""S¢>]ÒêÛéã¢<]£DDd4"Uƒxˆy¨„òsπNP‰‹° ,î":/ë„⁄.ã¢Fg⁄àåD‚3FÑGFÛ˘u:! Ã§.àË⁄8å"Í"]ààà 	O"˘‰Nà˘#Ê—àèDDDDDhDdÑGF":1ë—»b"" ≈'F‚Ë‚#©B#¢9DxèóIBb"aààåI|⁄#£∫/òDta‘êã¢˘tGF3‚#°ààààõDt_0∏àHˆ{#®àà…éã≤ËºGE—G—ûaÚÒààààäFDFPàË¬<åe—t"<R–î"Ëœ.à˘ÑGE‘DDDDDgD}àæGE—úqQA*hFHE—#¢:/Dt]·é‚-àòDta—¥mEÛ
+"""""#'G‘DD‚â'ë—tGE‚ËÚî#q‚xDDDb""fã£ËπëŸ.§<‹]—Ñ]B%–àà–@ä§DD—DDgT]„∫#Êy¥GDtGdt_/DDDDDDDd57—ÛE$E—Ñaé!àààì‰tGGDzH»ÏèëÒƒéÖ¢Í-é":ààù2:0ãÊBöÛºèB""13DÍjByüÀ£äP±âDtmGtGD~"$tBêà…∫#¢:=ëÒàààöf—G≥¥aDDDDd4_#ëQ:Â—t]GŸ^TÂLêå"<GDx⁄#¢¯ààåDDDD¢1IéàËæmD|èò@ä¬ú(¥""""1 y|éàÒ7D|é¢"""#:":/üGëB0»Ëé¢"""#ˇíd≠«¸
+endstream
+endobj
+xref
+0 100
+0000000000 65535 f 
+0000000015 00000 n 
+0000000132 00000 n 
+0000002411 00000 n 
+0000002548 00000 n 
+0000002685 00000 n 
+0000002822 00000 n 
+0000002959 00000 n 
+0000003096 00000 n 
+0000003233 00000 n 
+0000003370 00000 n 
+0000003508 00000 n 
+0000003646 00000 n 
+0000003784 00000 n 
+0000003834 00000 n 
+0000003854 00000 n 
+0000003888 00000 n 
+0000003938 00000 n 
+0000010057 00000 n 
+0000010230 00000 n 
+0000011406 00000 n 
+0000012587 00000 n 
+0000013774 00000 n 
+0000014956 00000 n 
+0000015011 00000 n 
+0000016095 00000 n 
+0000016115 00000 n 
+0000016149 00000 n 
+0000016199 00000 n 
+0000023968 00000 n 
+0000024105 00000 n 
+0000025292 00000 n 
+0000026473 00000 n 
+0000027760 00000 n 
+0000027780 00000 n 
+0000027814 00000 n 
+0000027864 00000 n 
+0000035748 00000 n 
+0000035885 00000 n 
+0000037066 00000 n 
+0000038253 00000 n 
+0000039611 00000 n 
+0000039631 00000 n 
+0000039665 00000 n 
+0000039715 00000 n 
+0000047729 00000 n 
+0000047866 00000 n 
+0000049053 00000 n 
+0000050234 00000 n 
+0000051604 00000 n 
+0000051624 00000 n 
+0000051658 00000 n 
+0000051708 00000 n 
+0000059913 00000 n 
+0000060050 00000 n 
+0000061231 00000 n 
+0000062414 00000 n 
+0000063826 00000 n 
+0000063846 00000 n 
+0000063880 00000 n 
+0000063930 00000 n 
+0000072448 00000 n 
+0000072585 00000 n 
+0000073766 00000 n 
+0000074947 00000 n 
+0000076298 00000 n 
+0000076318 00000 n 
+0000076352 00000 n 
+0000076402 00000 n 
+0000084756 00000 n 
+0000084893 00000 n 
+0000086074 00000 n 
+0000087261 00000 n 
+0000088643 00000 n 
+0000088663 00000 n 
+0000088697 00000 n 
+0000088747 00000 n 
+0000096561 00000 n 
+0000096698 00000 n 
+0000097885 00000 n 
+0000099066 00000 n 
+0000100404 00000 n 
+0000100424 00000 n 
+0000100458 00000 n 
+0000100508 00000 n 
+0000111051 00000 n 
+0000111224 00000 n 
+0000112405 00000 n 
+0000113592 00000 n 
+0000114774 00000 n 
+0000115957 00000 n 
+0000117175 00000 n 
+0000117195 00000 n 
+0000117229 00000 n 
+0000117279 00000 n 
+0000129599 00000 n 
+0000129754 00000 n 
+0000130937 00000 n 
+0000132118 00000 n 
+0000133300 00000 n 
+trailer
+<<
+/Size 100
+/Root 13 0 R
+/Info 2 0 R
+>>
+startxref
+134393
+%%EOF

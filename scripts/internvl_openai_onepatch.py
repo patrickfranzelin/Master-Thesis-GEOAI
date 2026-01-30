@@ -10,24 +10,13 @@ import os
 
 # Setup
 client = OpenAI(api_key="EMPTY", base_url="https://7ygcmpo7igft4k-7860.proxy.runpod.net/v1")
-folder_path = Path(r"D:\git\Master-Thesis-GEOAI\gdb_results")
+folder_path = Path(r"D:\git\Master-Thesis-GEOAI\data\gdb_results")
 output_folder = folder_path / "results"
 output_folder.mkdir(exist_ok=True)
 
 
 def add_grid_overlay(img, step=50):
-    """Add prominent white grid with cyan labels (thinner lines)."""
-    h, w, _ = img.shape
-    overlay = img.copy()
-    for x in range(0, w, step):
-        cv2.line(overlay, (x, 0), (x, h), (255, 255, 255), 1)  # Changed: 2 → 1 (thinner)
-        cv2.putText(overlay, str(x), (x + 3, 18), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
-    for y in range(0, h, step):
-        cv2.line(overlay, (0, y), (w, y), (255, 255, 255), 1)  # Changed: 2 → 1 (thinner)
-        cv2.putText(overlay, str(y), (5, y + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
-    return overlay
-
-
+    return img
 
 def parse_json_safe(raw):
     """Extract JSON even from malformed output."""
@@ -63,9 +52,7 @@ for img_path in image_files:
         cv2.imwrite(str(grid_path), img_grid)
         img_b64 = base64.b64encode(grid_path.read_bytes()).decode("utf-8")
 
-        prompt = """Precise inspector. See WHITE GRID (50px steps, cyan labels).
-
-        Building visible.
+        prompt = """You are a precise pixel locator. Analyze the aerial image with the grid
 
         Output exactly 6 GRID-snapped coordinates:
         - 3 randomly distributed INSIDE THE ROOF (roofs/buildings)
@@ -73,14 +60,13 @@ for img_path in image_files:
 
         JSON ONLY:
         {
-          "inside": [[x1,y1],[x2,y2],[x3,y3],[x4,y4]],  // INSIDE POLYGON
+          "inside": [[x1,y1],[x2,y2],[x3,y3],[x4,y4]],  // INSIDE BUILDING
           "outside": [[x5,y5],[x6,y6],[x7,y7],[x8,y8]]  // OUTSIDE BUILDING
         }
 
         Rules:
         - Each coord = 2 integers [x,y]
-        - GRID intersections ONLY: 0,50,100,150,...
-        - ALWAYS JSON (ignore "no buildings")"""
+        - ALWAYS JSON """
 
         resp = client.chat.completions.create(
             model="internvl8b",

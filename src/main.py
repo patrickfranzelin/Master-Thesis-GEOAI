@@ -24,12 +24,11 @@ output_dir.mkdir(exist_ok=True)
 gdf = load_gdb_polygons(gdb_path, layer_name, 50)
 
 for idx, row in gdf.iterrows():
-
-    img, _, _ = extract_patch_from_gdb(
+    img = extract_patch_from_gdb(
         row.geometry,
+        gdf,  # 👈 wichtig
         gdf.crs,
-        tif_path,
-        buffer_m=20
+        tif_path
     )
 
     img = add_center_star(img)
