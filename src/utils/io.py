@@ -11,8 +11,6 @@ def save_json(obj, path: str) -> None:
     with open(path, "w", encoding="utf-8") as f:
         json.dump(obj, f, ensure_ascii=False, indent=2)
 
-
-
 def save_points_to_gpkg(out_path, inside_global, outside_global, poly_id, crs):
     """Save MLLM inside/outside points as GeoPackage."""
     gdf_points = gpd.GeoDataFrame({

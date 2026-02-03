@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 from typing import Tuple
+from shapely.geometry import Polygon, MultiPolygon
+
 
 def add_grid_overlay(img, step=50):
     """Add prominent white grid with cyan labels (thinner lines)."""
@@ -41,5 +43,25 @@ def add_center_star(img, size=25, color=(0, 0, 255)):
         color,
         2
     )
+    return overlay
+
+
+
+
+def add_polygon_overlay(img, polygon, color=(0,255,0), thickness=2):
+
+    overlay = img.copy()
+
+    def draw(p):
+        pts = np.array(list(p.exterior.coords), dtype=np.int32)
+        cv2.polylines(overlay, [pts], True, color, thickness)
+
+    if isinstance(polygon, Polygon):
+        draw(polygon)
+
+    elif isinstance(polygon, MultiPolygon):
+        for p in polygon.geoms:
+            draw(p)
+
     return overlay
 

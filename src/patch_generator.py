@@ -1,148 +1,116 @@
 import cv2
 import rasterio as rio
 import numpy as np
-from rasterio.windows import from_bounds
-from shapely.ops import transform, unary_union
-from pyproj import Transformer
 import geopandas as gpd
 
+from shapely.ops import unary_union, transform
+from rasterio.windows import from_bounds
+from pyproj import Transformer
 
-# ---------------------------------------------------------
-# Grow touching / almost-touching buildings
-# ---------------------------------------------------------
+# -----------------------------------------------------
+# Load + preprocess building footprints (RUN ONCE)
+# -----------------------------------------------------
 
-def grow_building(seed_geom, gdf, gdf_crs, utm_crs, tol=1.5):
+def load_gdb_polygons(gdb_path, layer, min_area=20, merge_dist=0):
+    gdf = gpd.read_file(gdb_path, layer=layer)
 
-    gdf_utm = gdf.to_crs(utm_crs)
-    seed = gpd.GeoSeries([seed_geom], crs=gdf_crs).to_crs(utm_crs).iloc[0]
+    print(f"Loaded {len(gdf)} raw polygons")
 
-    visited = set()
-    stack = [seed]
-    parts = []
+    utm = gdf.estimate_utm_crs()
+    gdf = gdf.to_crs(utm)
 
-    while stack:
-        geom = stack.pop()
+    gdf = gdf[gdf.area > min_area]
+    print(f"After area filter: {len(gdf)}")
 
-        hits = gdf_utm[
-            (gdf_utm.geometry.intersects(geom)) |
-            (gdf_utm.geometry.distance(geom) < tol)
-        ]
+    # Only merge buildings closer than merge_dist meters
+    merged = unary_union(gdf.geometry.buffer(merge_dist))
 
-        for idx, row in hits.iterrows():
-            if idx not in visited:
-                visited.add(idx)
-                parts.append(row.geometry)
-                stack.append(row.geometry)
+    if merged.geom_type == "Polygon":
+        geoms = [merged]
+    else:
+        geoms = list(merged.geoms)
 
-    if len(parts) == 0:
-        return seed
+    gdf = gpd.GeoDataFrame(geometry=geoms, crs=utm)
 
-    return unary_union(parts)
+    print(f"After dissolve: {len(gdf)} building objects")
+
+    return gdf
 
 
-# ---------------------------------------------------------
-# Main extraction
-# ---------------------------------------------------------
 
-def extract_patch_from_gdb(seed_geom, gdf, gdf_crs, tif_path, out_size=512):
+# -----------------------------------------------------
+# Patch extraction
+# -----------------------------------------------------
 
-    with rio.open(tif_path) as src:
+def extract_patch(geom, utm_crs, raster_path, out_size=512):
 
-        # -------------------------------------------------
-        # 1) Auto UTM from centroid
-        # -------------------------------------------------
-        to_wgs = Transformer.from_crs(gdf_crs, "EPSG:4326", always_xy=True).transform
-        lon, lat = transform(to_wgs, seed_geom).centroid.coords[0]
+    with rio.open(raster_path) as src:
 
-        zone = int((lon + 180) / 6) + 1
-        utm = f"EPSG:{32600+zone if lat>=0 else 32700+zone}"
+        # -------------------------------
+        # Geometry → raster CRS
+        # -------------------------------
 
-        # -------------------------------------------------
-        # 2) Conditional grow
-        # -------------------------------------------------
-        gdf_utm = gdf.to_crs(utm)
-        seed_utm = gpd.GeoSeries([seed_geom], crs=gdf_crs).to_crs(utm).iloc[0]
+        to_raster = Transformer.from_crs(utm_crs, src.crs, always_xy=True).transform
+        geom_raster = transform(to_raster, geom)
 
-        neighbors = gdf_utm[
-            (gdf_utm.geometry.intersects(seed_utm)) |
-            (gdf_utm.geometry.distance(seed_utm) < 1.5)
-        ]
+        # -------------------------------
+        # Back to UTM for metric sizing
+        # -------------------------------
 
-        if len(neighbors) > 1:
-            geom = grow_building(seed_geom, gdf, gdf_crs, utm)
-        else:
-            geom = seed_geom
+        to_utm = Transformer.from_crs(src.crs, utm_crs, always_xy=True).transform
+        geom_m = transform(to_utm, geom_raster)
 
-        # -------------------------------------------------
-        # 3) Project merged geometry to raster CRS
-        # -------------------------------------------------
-        if gdf_crs != src.crs:
-            to_raster = Transformer.from_crs(gdf_crs, src.crs, always_xy=True).transform
-            geom = transform(to_raster, geom)
+        minx, miny, maxx, maxy = geom_m.bounds
+        size = max(maxx - minx, maxy - miny)
 
-        # -------------------------------------------------
-        # 4) Metric geometry
-        # -------------------------------------------------
-        to_utm = Transformer.from_crs(src.crs, utm, always_xy=True).transform
-        to_src = Transformer.from_crs(utm, src.crs, always_xy=True).transform
+        margin = 8
+        radius = np.clip(size / 2 + margin, 6, 50)
 
-        geom_utm = transform(to_utm, geom)
+        box_m = geom_m.centroid.buffer(radius).envelope
 
-        if geom_utm.is_empty:
-            geom_utm = seed_utm
+        box = transform(
+            Transformer.from_crs(utm_crs, src.crs, always_xy=True).transform,
+            box_m
+        )
 
-        # -------------------------------------------------
-        # 5) Adaptive buffer
-        # -------------------------------------------------
-        minx, miny, maxx, maxy = geom_utm.bounds
+        # -------------------------------
+        # Raster crop
+        # -------------------------------
 
-        if not np.all(np.isfinite([minx, miny, maxx, maxy])):
-            buffer_m = 30
-        else:
-            building_size = max(maxx-minx, maxy-miny)
-
-            if not np.isfinite(building_size) or building_size <= 0:
-                buffer_m = 30
-            else:
-                buffer_m = float(np.clip(building_size * 0.6, 10, 150))
-
-        geom_buf = transform(to_src, geom_utm.buffer(buffer_m))
-
-        # -------------------------------------------------
-        # 6) Crop raster
-        # -------------------------------------------------
-        win = from_bounds(*geom_buf.bounds, src.transform)
+        win = from_bounds(*box.bounds, src.transform)
         win = win.round_offsets().round_lengths()
 
-        data = src.read([1,2,3], window=win, boundless=True, masked=True)
-        img = np.moveaxis(data.filled(0), 0, -1)
+        data = src.read([1, 2, 3], window=win, boundless=True, fill_value=128)
+        img = np.moveaxis(data, 0, -1)
 
-        # -------------------------------------------------
-        # 7) Square pad (no distortion)
-        # -------------------------------------------------
+        # -------------------------------
+        # Convert polygon → pixel coords
+        # -------------------------------
+
+        inv = ~src.window_transform(win)
+
+        def to_px(x, y):
+            return inv * (x, y)
+
+        geom_px = transform(lambda x, y: to_px(x, y), geom_raster)
+
+        # -------------------------------
+        # Square pad + resize
+        # -------------------------------
+
         h, w, _ = img.shape
         s = max(h, w)
+
         canvas = np.full((s, s, 3), 128, np.uint8)
+        canvas[(s-h)//2:(s-h)//2+h, (s-w)//2:(s-w)//2+w] = img
 
-        y0 = (s-h)//2
-        x0 = (s-w)//2
-        canvas[y0:y0+h, x0:x0+w] = img
+        scale = out_size / s
 
-        img = cv2.resize(canvas, (out_size, out_size), interpolation=cv2.INTER_AREA)
+        canvas = cv2.resize(canvas, (out_size, out_size), interpolation=cv2.INTER_AREA)
 
-        # normalize
-        if img.max() > 0:
-            p2,p98 = np.percentile(img,(2,98))
-            img = np.clip((img-p2)/(p98-p2)*255,0,255).astype(np.uint8)
+        # scale polygon too
+        geom_px = transform(lambda x, y: (x + (s-w)//2, y + (s-h)//2), geom_px)
+        geom_px = transform(lambda x, y: (x * scale, y * scale), geom_px)
 
-        return img
+        return canvas, geom_px
 
-
-# ---------------------------------------------------------
-# Loader
-# ---------------------------------------------------------
-
-def load_gdb_polygons(gdb_path, layer, limit=20):
-    gdf = gpd.read_file(gdb_path, layer=layer).head(limit)
-    print(f"✅ {len(gdf)} polys from {layer}, CRS={gdf.crs}")
-    return gdf

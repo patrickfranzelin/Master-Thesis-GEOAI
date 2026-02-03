@@ -7,8 +7,9 @@ import cv2
 import numpy as np  # Add for shape fix
 
 # ================= CONFIG =================
+import os
 
-RUNPOD_ID = "8sdtceohlinnqe"   # your pod
+RUNPOD_ID = os.environ["RUNPOD_ID"]
 MODEL_NAME = "qwen3vl8b"
 
 client = OpenAI(
@@ -16,8 +17,8 @@ client = OpenAI(
     base_url=f"https://{RUNPOD_ID}-7860.proxy.runpod.net/v1"
 )
 
-folder_path = Path(r"D:\git\Master-Thesis-GEOAI\data\gdb_results")
-output_folder = folder_path / "results"
+folder_path = Path(r"C:\git\Master-Thesis-GEOAI\outputs\gdb_results")
+output_folder = Path(r"C:\git\Master-Thesis-GEOAI\outputs\test_qwen8b_pointplacement")
 output_folder.mkdir(exist_ok=True)
 
 # =========================================
@@ -75,29 +76,37 @@ for img_path in image_files:
         img_b64 = encode_image(img_path)
         img_w, img_h = img.shape[1], img.shape[0]  # Fixed: numpy array has .shape
 
-        prompt = f"""
-You are a precise pixel locator for geospatial building boundary verification.
+        prompt = """
+        You are a precise pixel locator.
 
-Return ONLY valid JSON. No other text.
+        The BLUE STAR marks the TARGET HOUSE and is located at the CENTER of the image.
 
-Identify the main building roof (largest rectangular structure).
+        Analyze the aerial image with the grid.
 
-Give:
-• exactly 3 points INSIDE the main building roof pixels
-• exactly 3 points clearly OUTSIDE (street, grass, adjacent land)
+        Your task is to output exactly 6 GRID-SNAPPED pixel coordinates relative to the image:
 
-Rules:
-- Coordinates: integer pixels only (x=column 0-{img_w-1} left-to-right, y=row 0-{img_h-1} top-to-bottom)
-- Distributed evenly across the object (not clustered)
-- Avoid edges/boundaries - true interior/exterior
-- Full image size: {img_w} x {img_h} pixels
+        - 3 coordinates INSIDE THE ROOF of the TARGET HOUSE (the house with the blue star)
+        - 3 coordinates clearly OUTSIDE THAT SAME HOUSE (grass, road, yard, etc — NOT any other building)
 
-Format exactly:
-{{
- "inside": [[x1,y1],[x2,y2],[x3,y3]],
- "outside": [[x1,y1],[x2,y2],[x3,y3]]
-}}
-"""
+        IMPORTANT:
+        - The target house is the one marked by the BLUE STAR in the center.
+        - INSIDE points must lie on the roof of THIS house only.
+        - OUTSIDE points must be outside THIS house (not on any building).
+        - Ignore all other buildings.
+
+        Return JSON ONLY:
+
+        {
+          "inside": [[x1,y1],[x2,y2],[x3,y3]],
+          "outside": [[x4,y4],[x5,y5],[x6,y6]]
+        }
+
+        Rules:
+        - Each coordinate must be two integers [x,y]
+        - Use grid intersections or clear grid-aligned positions
+        - Do NOT add explanations
+        - Do NOT add text outside JSON
+        """
 
         response = client.chat.completions.create(
             model=MODEL_NAME,
