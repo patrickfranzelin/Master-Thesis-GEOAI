@@ -18,10 +18,13 @@ QA_PROMPT = """
 You see an aerial image patch.
 
 GREEN polygon = building footprint.
-BLUE star = polygon center.
 
-Your job is to give me a description whats wrong with the polygon.
+House_present = false if no roof exists inside or touching the polygon
+
+Error_description= Your job is to give me a description whats AND where is somthing wrong with the polygon.
+
 {
+  "house_present": true | false,
   "error_description": string,
 }
 
@@ -37,12 +40,10 @@ def _parse_json_safe(raw):
             return json.loads(cleaned)
         except:
             return {
-                #"house_present": False,
+                "house_present": False,
                 "error_description": "PARSE_ERROR",
-                #"confidence": 0.0
+                #"whole_house_in_patch": False
             }
-
-
 
 
 def _encode_image(path: Path):
