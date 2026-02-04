@@ -19,6 +19,6 @@ def load_buildings(limit=None):
     gdf = gpd.read_postgis(sql, engine, geom_col="geom")
 
     print(f"Loaded {len(gdf)} buildings with TIFF")
+    print("Buildings CRS:", gdf.crs)
 
-    utm = gdf.estimate_utm_crs()
-    return gdf.to_crs(utm)
+    return gdf

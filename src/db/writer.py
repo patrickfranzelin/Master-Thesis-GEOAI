@@ -11,6 +11,7 @@ def write_mlqa(result: dict):
     sql = text("""
     INSERT INTO src.building_mlqa (
         building_id,
+        patch_path,
         house_present,
         error_description,
         inside_pts,
@@ -18,12 +19,14 @@ def write_mlqa(result: dict):
     )
     VALUES (
         :building_id,
+        :patch_path,
         :house_present,
         :error_description,
         :inside_pts,
         :outside_pts
     )
     ON CONFLICT (building_id) DO UPDATE SET
+        patch_path = EXCLUDED.patch_path,
         house_present = EXCLUDED.house_present,
         error_description = EXCLUDED.error_description,
         inside_pts = EXCLUDED.inside_pts,
@@ -31,9 +34,11 @@ def write_mlqa(result: dict):
         analyzed_at = now();
     """)
 
+
     with engine.begin() as conn:
         conn.execute(sql, {
             "building_id": result["building_id"],
+            "patch_path": result["patch_path"],
             "house_present": result["house_present"],
             "error_description": result["error_description"],
             "inside_pts": json.dumps(result["inside_pts"]),

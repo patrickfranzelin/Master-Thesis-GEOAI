@@ -1,86 +1,126 @@
-import os
-
-from shapely.geometry import box
-
-os.environ["PROJ_LIB"] = r"C:\Users\franz\miniconda3\envs\geoai-qa\Library\share\proj"
-RUNPOD_ID = os.environ["RUNPOD_ID"]
-PG_CONN = os.environ["PG_CONN"]
-
 from pathlib import Path
 import cv2
+import geopandas as gpd
+from sqlalchemy import create_engine
+import os
 
-from src.db_loader import load_buildings
-from src.patch_generator import extract_patch
-from src.image_utils import add_center_star, add_grid_overlay
+from src.db.loader import load_buildings
+from src.patches.extractor import extract_patch
+from src.utils.rendering import (
+    add_center_star,
+    add_grid_overlay,
+    add_polygon_overlay,
+    draw_points,
+)
 from src.mlqa.mlqa_client import analyze_patch
-from src.image_utils import add_polygon_overlay
-from src.mlqa.mlqa_writer import write_mlqa
 from src.mlqa.point_client import analyze_points
+from src.db.writer import write_mlqa
 
 
-
+# --------------------------------------------------
+# Paths
+# --------------------------------------------------
 
 output_dir = Path("../outputs/db_results")
-output_dir.mkdir(exist_ok=True)
-points_dir = output_dir / "points"
-points_dir.mkdir(exist_ok=True)
 
-# --------------------------------------------------
-# Load buildings from Postgres
-# --------------------------------------------------
-AOI_BBOX = (
-    2680000,  # xmin
-    1200000,  # ymin
-    2682000,  # xmax
-    1202000   # ymax
-)
-aoi_geom = box(*AOI_BBOX)
-gdf = load_buildings(limit=500)  # remove limit later
-gdf = gdf[gdf.intersects(aoi_geom)]
-print(f"Buildings after AOI filter: {len(gdf)}")
-
-
-# --------------------------------------------------
-# Extract patches
-# --------------------------------------------------
-
-results = []
-
+raw_dir = output_dir / "raw"
 clean_dir = output_dir / "clean"
 debug_dir = output_dir / "debug"
+points_dir = output_dir / "points"
 
-clean_dir.mkdir(exist_ok=True)
-debug_dir.mkdir(exist_ok=True)
+for d in [raw_dir, clean_dir, debug_dir, points_dir]:
+    d.mkdir(parents=True, exist_ok=True)
 
-for idx, row in gdf.iterrows():
+
+# --------------------------------------------------
+# Load AOI from PostGIS (NOT ArcGIS)
+# --------------------------------------------------
+
+engine = create_engine(os.environ["PG_CONN"])
+
+AOI_ID = 3
+
+aoi_gdf = gpd.read_postgis(
+    f"SELECT geom FROM src.aoi WHERE aoi_id = {AOI_ID}",
+    engine,
+    geom_col="geom",
+)
+
+if len(aoi_gdf) == 0:
+    raise RuntimeError(f"AOI {AOI_ID} not found")
+
+aoi_geom = aoi_gdf.geometry.iloc[0]
+
+
+
+# --------------------------------------------------
+# Load buildings intersecting AOI (SERVER SIDE)
+# --------------------------------------------------
+
+gdf = gpd.read_postgis(
+    f"""
+    SELECT id, geom, tiff_path
+    FROM src.buildings
+    WHERE tiff_path IS NOT NULL
+      AND ST_Intersects(
+            geom,
+            (SELECT geom FROM src.aoi WHERE aoi_id = {AOI_ID})
+          )
+    """,
+    engine,
+    geom_col="geom",
+)
+
+
+print(f"Buildings inside AOI: {len(gdf)}")
+
+if len(gdf) == 0:
+    raise RuntimeError("AOI contains zero buildings.")
+
+# --------------------------------------------------
+# Main loop
+# --------------------------------------------------
+
+for _, row in gdf.iterrows():
 
     img, poly_px = extract_patch(row.geom, gdf.crs, row.tiff_path)
 
-    # -----------------------------
-    # CLEAN PATCH (polygon only)
-    # -----------------------------
+    # --------------------------------------------------
+    # Convert ONCE to OpenCV BGR
+    # --------------------------------------------------
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+
+    # ==================================================
+    # RAW PATCH
+    # ==================================================
+
+    raw_path = raw_dir / f"bld_{row.id:07d}_raw.png"
+    cv2.imwrite(str(raw_path), img)
+
+    # ==================================================
+    # CLEAN PATCH
+    # ==================================================
 
     clean_img = add_polygon_overlay(img.copy(), poly_px)
-
     clean_path = clean_dir / f"bld_{row.id:07d}_clean.png"
-    cv2.imwrite(str(clean_path), cv2.cvtColor(clean_img, cv2.COLOR_RGB2BGR))
+    cv2.imwrite(str(clean_path), clean_img)
 
-    # -----------------------------
-    # DEBUG PATCH (polygon + star + grid)
-    # -----------------------------
+    # ==================================================
+    # DEBUG PATCH
+    # ==================================================
 
     debug_img = add_polygon_overlay(img.copy(), poly_px)
     debug_img = add_center_star(debug_img)
     debug_img = add_grid_overlay(debug_img)
 
     debug_path = debug_dir / f"bld_{row.id:07d}_debug.png"
-    cv2.imwrite(str(debug_path), cv2.cvtColor(debug_img, cv2.COLOR_RGB2BGR))
+    cv2.imwrite(str(debug_path), debug_img)
 
-    print(f"Saved {clean_path.name} + debug")
+    print(f"Saved raw + clean + debug for {row.id}")
 
-    # -----------------------------
-    # MLQA (clean image)
-    # -----------------------------
+    # ==================================================
+    # MLQA — RAW ONLY
+    # ==================================================
 
     qa = analyze_patch(clean_path)
     print("QA:", qa)
@@ -88,52 +128,38 @@ for idx, row in gdf.iterrows():
     inside_pts = []
     outside_pts = []
 
+    # ==================================================
+    # POINT QA
+    # ==================================================
+
     if qa["house_present"]:
 
-        points = analyze_points(debug_path)
-        print("Points:", points)
+        pts = analyze_points(debug_path)
+        inside_pts = pts.get("inside", [])
+        outside_pts = pts.get("outside", [])
 
-        inside_pts = points.get("inside", [])
-        outside_pts = points.get("outside", [])
-
-        # -----------------------------
-        # Draw points + save overlay
-        # -----------------------------
-
-        overlay = debug_img.copy()
-
-        h, w = overlay.shape[:2]
-
-        for pt in inside_pts:
-            if isinstance(pt, list) and len(pt) == 2:
-                x, y = int(pt[0]), int(pt[1])
-                if 0 <= x < w and 0 <= y < h:
-                    cv2.circle(overlay, (x, y), 12, (0, 255, 0), -1)
-
-        for pt in outside_pts:
-            if isinstance(pt, list) and len(pt) == 2:
-                x, y = int(pt[0]), int(pt[1])
-                if 0 <= x < w and 0 <= y < h:
-                    cv2.circle(overlay, (x, y), 12, (0, 0, 255), -1)
+        overlay = draw_points(debug_img.copy(), inside_pts, outside_pts)
 
         points_path = points_dir / f"bld_{row.id:07d}_points.png"
         cv2.imwrite(str(points_path), overlay)
 
         print(f"Saved points overlay: {points_path.name}")
 
+    # ==================================================
+    # WRITE DATABASE
+    # ==================================================
+
     record = {
         "building_id": int(row.id),
+        "patch_path": str(raw_path),
         "house_present": qa["house_present"],
         "error_description": qa["error_description"],
         "inside_pts": inside_pts,
-        "outside_pts": outside_pts
+        "outside_pts": outside_pts,
     }
 
     write_mlqa(record)
 
 
 
-
 print("\nDONE")
-
-
