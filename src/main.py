@@ -1,6 +1,7 @@
 from pathlib import Path
 import cv2
 import geopandas as gpd
+import numpy as np
 from sqlalchemy import create_engine
 import os
 
@@ -15,6 +16,9 @@ from src.utils.rendering import (
 from src.mlqa.mlqa_client import analyze_patch
 from src.mlqa.point_client import analyze_points
 from src.db.writer import write_mlqa
+from src.sam.sam_client import run_sam
+from src.utils.geometry import polygon_to_sam_bbox
+
 
 
 # --------------------------------------------------
@@ -144,6 +148,52 @@ for _, row in gdf.iterrows():
         cv2.imwrite(str(points_path), overlay)
 
         print(f"Saved points overlay: {points_path.name}")
+
+        # ==================================================
+        # SAM REFINEMENT (after points) — POINTS ONLY
+        # ==================================================
+
+        if len(inside_pts) >= 1:
+
+            sam_dir = output_dir / "sam"
+            sam_dir.mkdir(exist_ok=True)
+
+            # ---------------------------------------------
+            # Debug visualization (points only)
+            # ---------------------------------------------
+
+            sam_input = img.copy()
+
+            for x, y in inside_pts:
+                cv2.circle(sam_input, (int(x), int(y)), 6, (0, 255, 0), -1)
+
+            for x, y in outside_pts:
+                cv2.circle(sam_input, (int(x), int(y)), 6, (0, 0, 255), -1)
+
+            cv2.imwrite(str(sam_dir / f"bld_{row.id:07d}_sam_input.png"), sam_input)
+
+            # ---------------------------------------------
+            # RUN SAM (raw image + point prompts)
+            # ---------------------------------------------
+
+            mask, sam_poly = run_sam(
+                raw_path,
+                inside_pts,
+                outside_pts,
+            )
+
+            if mask is not None:
+
+                cv2.imwrite(str(sam_dir / f"bld_{row.id:07d}_mask.png"), mask)
+
+                if sam_poly is not None:
+                    overlay = img.copy()
+                    pts = np.array(sam_poly.exterior.coords).astype("int32")
+                    cv2.polylines(overlay, [pts], True, (0, 255, 0), 2)
+
+                    cv2.imwrite(str(sam_dir / f"bld_{row.id:07d}_sam.png"), overlay)
+
+                print("SAM refined:", row.id)
 
     # ==================================================
     # WRITE DATABASE
