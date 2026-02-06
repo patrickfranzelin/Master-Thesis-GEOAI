@@ -18,16 +18,20 @@ You are a precise pixel locator.
 
 BLUE STAR marks the TARGET HOUSE at image center.
 
+- All inside points must lie on visible roof pixels, not just center.
+- Distribute inside points across roof area.
+
 Return exactly:
 
 {
-  "inside": [[x,y],[x,y],[x,y]],
+  "inside": [[x,y],[x,y]],
   "outside": [[x,y],[x,y],[x,y]]
 }
 
 Rules:
-- 3 points on THIS roof
+- 2 points distributed across THIS roof (not same location)
 - 3 points clearly outside THIS roof
+
 - integers only
 - JSON ONLY
 """

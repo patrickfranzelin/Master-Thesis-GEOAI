@@ -14,7 +14,38 @@ client = OpenAI(
 )
 
 
-QA_PROMPT = """
+LOW_CONTRAST_QA_PROMPT = """
+Aerial ortho patch from Sahel/Africa. GREEN polygon = building footprint from dataset. 
+CENTER STAR marks patch center. Grid helps orientation.
+
+TASK: Detect if ANY man‑made structure exists INSIDE/TOUCHING GREEN polygon.
+
+✅ HOUSE EXAMPLES (even if mud/earth‑colored, irregular, courtyard‑style):
+- Corrugated iron roofs (shiny rectangles)  
+- Mud brick compounds (earth‑tone rectangles, internal walls)
+- Flat roofs blending with dirt but rectangular/geometric 
+- Small protrusions/extensions = part of house
+
+❌ NO HOUSE:
+- Pure vegetation/grass inside polygon 
+- Only sandy ground, paths, shadows
+
+Rules:
+- house_present=true if ANY roof/structure inside polygon (even partial, faint, earth‑colored)
+- house_present=false ONLY if polygon clearly empty (vegetation/sand only)
+
+Error_description: SPECIFIC location + problem. Examples:
+- "No structure inside, only grass"
+- "Green polygon offset east, misses mud compound" 
+- "Polygon too small, cuts NW corner of iron roof"
+
+Strict JSON:
+{
+  "house_present": true/false,
+  "error_description": "exact description"
+}
+"""
+OLD_QA_PROMPT = """
 You see an aerial image patch.
 
 GREEN polygon = building footprint.
@@ -23,12 +54,36 @@ House_present = false if no roof exists inside or touching the polygon
 
 Error_description= Your job is to give me a description whats AND where is somthing wrong with the polygon.
 
+full_house_present = Schau ob das polygon mehr als die hälfte des Hauses umschließt
 {
   "house_present": true | false,
   "error_description": string,
+  "full_house_present": true | false,"
 }
-
 """
+QA_PROMPT = """
+You see an aerial image patch.
+
+GREEN polygon = building footprint.
+
+Definitions:
+- "house_present": true if any roof or man-made structure is inside or touching the polygon.
+- "full_house_present": true if the polygon covers nearly all of the house footprint (area). 
+  If the polygon cuts off large parts of the roof or only covers a small corner, set it to false.
+
+Return ONLY a single JSON object with this exact schema, no extra text:
+
+{
+  "house_present": true or false,
+  "full_house_present": true or false
+  "error_description": None
+}
+"""
+
+
+
+
+
 
 def _parse_json_safe(raw):
 

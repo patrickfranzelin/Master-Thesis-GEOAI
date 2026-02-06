@@ -7,6 +7,7 @@ import os
 
 from src.db.loader import load_buildings
 from src.patches.extractor import extract_patch
+from src.utils.geometry import polygon_to_sam_bbox
 from src.utils.rendering import (
     add_center_star,
     add_grid_overlay,
@@ -16,9 +17,9 @@ from src.utils.rendering import (
 from src.mlqa.mlqa_client import analyze_patch
 from src.mlqa.point_client import analyze_points
 from src.db.writer import write_mlqa
-from src.sam.sam_client import run_sam
-from src.utils.geometry import polygon_to_sam_bbox
-
+from src.patches.create_patch_output import create_patch_outputs
+from src.mlqa.mlqa_stage import run_qa
+from src.sam.sam_stage import run_sam_stage
 
 
 # --------------------------------------------------
@@ -26,11 +27,17 @@ from src.utils.geometry import polygon_to_sam_bbox
 # --------------------------------------------------
 
 output_dir = Path("../outputs/db_results")
-
+sam_dir = output_dir / "sam"
+sam_dir.mkdir(exist_ok=True)
 raw_dir = output_dir / "raw"
 clean_dir = output_dir / "clean"
 debug_dir = output_dir / "debug"
 points_dir = output_dir / "points"
+out_dirs = {
+    "raw": raw_dir,
+    "clean": clean_dir,
+    "debug": debug_dir,
+}
 
 for d in [raw_dir, clean_dir, debug_dir, points_dir]:
     d.mkdir(parents=True, exist_ok=True)
@@ -42,7 +49,7 @@ for d in [raw_dir, clean_dir, debug_dir, points_dir]:
 
 engine = create_engine(os.environ["PG_CONN"])
 
-AOI_ID = 3
+AOI_ID = 1
 
 aoi_gdf = gpd.read_postgis(
     f"SELECT geom FROM src.aoi WHERE aoi_id = {AOI_ID}",
@@ -87,118 +94,84 @@ if len(gdf) == 0:
 
 for _, row in gdf.iterrows():
 
-    img, poly_px = extract_patch(row.geom, gdf.crs, row.tiff_path)
+    print(f"\nProcessing building {row.id}")
 
-    # --------------------------------------------------
-    # Convert ONCE to OpenCV BGR
-    # --------------------------------------------------
+    # ---------------------------------------------
+    # Extract patch
+    # ---------------------------------------------
+    img, poly_px = extract_patch(row.geom, gdf.crs, row.tiff_path)
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
-    # ==================================================
-    # RAW PATCH
-    # ==================================================
-
-    raw_path = raw_dir / f"bld_{row.id:07d}_raw.png"
-    cv2.imwrite(str(raw_path), img)
-
-    # ==================================================
-    # CLEAN PATCH
-    # ==================================================
-
-    clean_img = add_polygon_overlay(img.copy(), poly_px)
-    clean_path = clean_dir / f"bld_{row.id:07d}_clean.png"
-    cv2.imwrite(str(clean_path), clean_img)
-
-    # ==================================================
-    # DEBUG PATCH
-    # ==================================================
-
-    debug_img = add_polygon_overlay(img.copy(), poly_px)
-    debug_img = add_center_star(debug_img)
-    debug_img = add_grid_overlay(debug_img)
-
-    debug_path = debug_dir / f"bld_{row.id:07d}_debug.png"
-    cv2.imwrite(str(debug_path), debug_img)
-
+    # ---------------------------------------------
+    # Patch outputs
+    # ---------------------------------------------
+    raw_path, clean_path, debug_path = create_patch_outputs(
+        img,
+        poly_px,
+        out_dirs,
+        row.id,
+    )
     print(f"Saved raw + clean + debug for {row.id}")
 
-    # ==================================================
-    # MLQA — RAW ONLY
-    # ==================================================
+    # ---------------------------------------------
+    # MLQA + point QA
+    # ---------------------------------------------
+    dbg = cv2.imread(str(debug_path))
 
-    qa = analyze_patch(clean_path)
-    print("QA:", qa)
+    bbox = polygon_to_sam_bbox(poly_px)
 
-    inside_pts = []
-    outside_pts = []
+    if bbox is not None:
+        x1, y1, x2, y2 = bbox[0]
+        cv2.rectangle(dbg, (x1, y1), (x2, y2), (255, 0, 0), 2)
 
-    # ==================================================
-    # POINT QA
-    # ==================================================
+    cv2.imwrite(str(debug_path), dbg)
+
+    qa, inside_pts, outside_pts = run_qa(clean_path, debug_path)
+
+    # ---------------------------------------------
+    # Optional debug: draw points
+    # ---------------------------------------------
+    if inside_pts or outside_pts:
+        overlay = draw_points(cv2.imread(str(debug_path)), inside_pts, outside_pts)
+        cv2.imwrite(str(points_dir / f"bld_{row.id:07d}_points.png"), overlay)
+        print(f"Saved points overlay: bld_{row.id:07d}_points.png")
+
+    # ---------------------------------------------
+    # SAM refinement (with escalation)
+    # ---------------------------------------------
 
     if qa["house_present"]:
 
-        pts = analyze_points(debug_path)
-        inside_pts = pts.get("inside", [])
-        outside_pts = pts.get("outside", [])
+        sam_img = img
+        sam_poly = poly_px
 
-        overlay = draw_points(debug_img.copy(), inside_pts, outside_pts)
+        # escalation: footprint clipped house
+        if not qa.get("full_house_present", True):
+            print("Partial house detected — escalating SAM patch")
 
-        points_path = points_dir / f"bld_{row.id:07d}_points.png"
-        cv2.imwrite(str(points_path), overlay)
-
-        print(f"Saved points overlay: {points_path.name}")
-
-        # ==================================================
-        # SAM REFINEMENT (after points) — POINTS ONLY
-        # ==================================================
-
-        if len(inside_pts) >= 1:
-
-            sam_dir = output_dir / "sam"
-            sam_dir.mkdir(exist_ok=True)
-
-            # ---------------------------------------------
-            # Debug visualization (points only)
-            # ---------------------------------------------
-
-            sam_input = img.copy()
-
-            for x, y in inside_pts:
-                cv2.circle(sam_input, (int(x), int(y)), 6, (0, 255, 0), -1)
-
-            for x, y in outside_pts:
-                cv2.circle(sam_input, (int(x), int(y)), 6, (0, 0, 255), -1)
-
-            cv2.imwrite(str(sam_dir / f"bld_{row.id:07d}_sam_input.png"), sam_input)
-
-            # ---------------------------------------------
-            # RUN SAM (raw image + point prompts)
-            # ---------------------------------------------
-
-            mask, sam_poly = run_sam(
-                raw_path,
-                inside_pts,
-                outside_pts,
+            sam_img, sam_poly = extract_patch(
+                row.geom,
+                gdf.crs,
+                row.tiff_path,
+                context=4  # BIGGER PATCH
             )
 
-            if mask is not None:
+            sam_img = cv2.cvtColor(sam_img, cv2.COLOR_RGB2BGR)
 
-                cv2.imwrite(str(sam_dir / f"bld_{row.id:07d}_mask.png"), mask)
+        run_sam_stage(
+            sam_img,
+            raw_path,
+            sam_poly,
+            inside_pts,
+            outside_pts,
+            sam_dir,
+            row.id,
+            big=not qa.get("full_house_present", True)
+        )
 
-                if sam_poly is not None:
-                    overlay = img.copy()
-                    pts = np.array(sam_poly.exterior.coords).astype("int32")
-                    cv2.polylines(overlay, [pts], True, (0, 255, 0), 2)
-
-                    cv2.imwrite(str(sam_dir / f"bld_{row.id:07d}_sam.png"), overlay)
-
-                print("SAM refined:", row.id)
-
-    # ==================================================
-    # WRITE DATABASE
-    # ==================================================
-
+    # ---------------------------------------------
+    # Write DB
+    # ---------------------------------------------
     record = {
         "building_id": int(row.id),
         "patch_path": str(raw_path),
@@ -209,7 +182,5 @@ for _, row in gdf.iterrows():
     }
 
     write_mlqa(record)
-
-
 
 print("\nDONE")

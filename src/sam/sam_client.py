@@ -25,6 +25,7 @@ def run_sam(
     image_path: Path,
     inside_pts,
     outside_pts,
+    bbox=None,
     morph_kernel=7,
 ):
 
@@ -37,21 +38,22 @@ def run_sam(
     # Combine points + labels
     # ---------------------------------------------
 
-    points = inside_pts + outside_pts
-    labels = [1]*len(inside_pts) + [0]*len(outside_pts)
+    points = [inside_pts + outside_pts]
+    labels = [[1] * len(inside_pts) + [0] * len(outside_pts)]
 
     # ---------------------------------------------
-    # Run SAM (NO BBOX)
+    # Run SAM
     # ---------------------------------------------
 
     result = MODEL.predict(
         source=img,
         points=points,
         labels=labels,
+        bboxes=bbox,
         verbose=False,
     )
 
-    if result[0].masks is None:
+    if result[0].masks is None or len(result[0].masks.data) == 0:
         return None, None
 
     mask = result[0].masks.data[0].cpu().numpy()
@@ -85,5 +87,7 @@ def run_sam(
     poly = Polygon(cnt.squeeze()).simplify(2.0, preserve_topology=True)
 
     return mask, poly
+
+
 
 
