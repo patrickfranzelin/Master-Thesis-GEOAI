@@ -2,4 +2,8 @@ outputs/
 data/
 .venv/
 .git/
+_oldoutputs/
 scripts/SetUpRunpodDou.txt
+*.pyc
+models/sam3_weights
+.idea/
