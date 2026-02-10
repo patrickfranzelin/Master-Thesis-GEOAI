@@ -8,7 +8,7 @@ from rasterio.windows import from_bounds
 from pyproj import Transformer
 
 
-def extract_patch(geom, geom_crs, raster_path, out_size=512, context = 3):
+def extract_patch(geom, geom_crs, raster_path, out_size=512, context=3):
 
     with rio.open(raster_path) as src:
 
