@@ -20,6 +20,8 @@ class PartialHousePipeline(Pipeline):
         
         # 2. Create discovery image with polygon overlay and save to disk
         # MLQA needs to see the enlarged context, not the original clean image
+        # NOTE: Directory structure relies on ctx.sam_dir.parent convention
+        # Future improvement: centralize path management in PipelineContext
         discovery_img = img_big.copy()
         discovery_img = add_polygon_overlay(discovery_img, poly_px_big)
         
