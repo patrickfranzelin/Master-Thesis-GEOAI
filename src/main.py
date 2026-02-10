@@ -16,10 +16,11 @@ from src.utils.rendering import (
 )
 from src.mlqa.mlqa_client import analyze_patch
 from src.mlqa.point_client import analyze_points
+from src.mlqa.discovery_client import discover_all_houses
 from src.db.writer import write_mlqa
 from src.patches.create_patch_output import create_patch_outputs
 from src.mlqa.mlqa_stage import run_qa
-from src.sam.sam_stage import run_sam_stage
+from src.sam.sam_stage import run_sam_stage, run_sam_discovery
 
 
 # --------------------------------------------------
@@ -137,26 +138,31 @@ for _, row in gdf.iterrows():
         print(f"Saved points overlay: bld_{row.id:07d}_points.png")
 
     # ---------------------------------------------
-    # SAM refinement (with escalation)
+    # SAM refinement (with workflow separation)
     # ---------------------------------------------
 
     if qa["house_present"]:
 
-        sam_img = img
-        sam_poly = poly_px
-
-        # escalation: footprint clipped house
-        if not qa.get("full_house_present", True):
-            print("Partial house detected — escalating SAM patch")
-
+        full_house = qa.get("full_house_present", True)
+        
+        if full_house:
+            print(f"Building {row.id}: Full house detected - standard SAM workflow")
+            # Use standard patch for full houses
+            sam_img = img
+            sam_poly = poly_px
+            sam_mode = "standard"
+            
+        else:
+            print(f"Building {row.id}: Partial house detected - escalated SAM workflow")
+            # Extract larger patch for partial houses
             sam_img, sam_poly = extract_patch(
                 row.geom,
                 gdf.crs,
                 row.tiff_path,
-                context=4  # BIGGER PATCH
+                context=5  # BIGGER PATCH for partial houses
             )
-
             sam_img = cv2.cvtColor(sam_img, cv2.COLOR_RGB2BGR)
+            sam_mode = "escalated"
 
         run_sam_stage(
             sam_img,
@@ -166,21 +172,73 @@ for _, row in gdf.iterrows():
             outside_pts,
             sam_dir,
             row.id,
-            big=not qa.get("full_house_present", True)
+            mode=sam_mode
         )
 
     # ---------------------------------------------
-    # Write DB
+    # Prepare database record based on workflow
     # ---------------------------------------------
-    record = {
-        "building_id": int(row.id),
-        "patch_path": str(raw_path),
-        "house_present": qa["house_present"],
-        "error_description": qa["error_description"],
-        "inside_pts": inside_pts,
-        "outside_pts": outside_pts,
-    }
+    
+    if not qa["house_present"]:
+        # DISCOVERY MODE: No house in original polygon
+        print(f"Building {row.id}: No house in polygon - running DISCOVERY mode")
+        
+        # Use MLQA to discover all buildings in the patch
+        discovery_result = discover_all_houses(clean_path)
+        
+        buildings_found = discovery_result.get("buildings_found", [])
+        negative_pts = discovery_result.get("negative_points", [])
+        total = discovery_result.get("total_buildings", 0)
+        
+        print(f"  Discovery MLQA found {total} buildings in patch")
+        
+        if total > 0:
+            # Run SAM in discovery mode to segment all found buildings
+            discovered_polygons = run_sam_discovery(
+                img,
+                raw_path,
+                buildings_found,
+                negative_pts,
+                sam_dir,
+                row.id
+            )
+            
+            # Store discovery results
+            record = {
+                "building_id": int(row.id),
+                "patch_path": str(raw_path),
+                "house_present": False,
+                "full_house_present": None,
+                "error_description": f"Discovery mode: found {len(discovered_polygons)} buildings",
+                "inside_pts": [],
+                "outside_pts": negative_pts,
+            }
+        else:
+            print(f"  No buildings found in patch")
+            record = {
+                "building_id": int(row.id),
+                "patch_path": str(raw_path),
+                "house_present": False,
+                "full_house_present": None,
+                "error_description": "No buildings found in patch",
+                "inside_pts": [],
+                "outside_pts": [],
+            }
+    else:
+        # STANDARD/ESCALATED MODE: House present in polygon
+        record = {
+            "building_id": int(row.id),
+            "patch_path": str(raw_path),
+            "house_present": qa["house_present"],
+            "full_house_present": qa.get("full_house_present"),
+            "error_description": qa["error_description"],
+            "inside_pts": inside_pts,
+            "outside_pts": outside_pts,
+        }
 
+    # ---------------------------------------------
+    # Write DB (all workflows)
+    # ---------------------------------------------
     write_mlqa(record)
 
 print("\nDONE")

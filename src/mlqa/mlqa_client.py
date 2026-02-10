@@ -96,8 +96,8 @@ def _parse_json_safe(raw):
         except:
             return {
                 "house_present": False,
+                "full_house_present": False,
                 "error_description": "PARSE_ERROR",
-                #"whole_house_in_patch": False
             }
 
 
