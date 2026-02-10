@@ -1,0 +1,98 @@
+═══════════════════════════════════════════════════════════════════════════════
+                     PIPELINE ARCHITECTURE - VISUAL OVERVIEW
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         1. PATCH EXTRACTION                                 │
+│                                                                             │
+│   • Extract image patch from orthophoto                                    │
+│   • Convert polygon from geographic to pixel coordinates                   │
+│   • Create raw, clean, and debug outputs                                   │
+└──────────────────────────────────┬──────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         2. DECISION STAGE                                   │
+│                                                                             │
+│   ┌──────────────────────────────────────────────────────────┐            │
+│   │  mlqa_decide(clean_patch)                                │            │
+│   │  └─> HouseDecision:                                      │            │
+│   │      • house_present: bool                               │            │
+│   │      • full_house: bool | None                           │            │
+│   │      • reason: str | None                                │            │
+│   └──────────────────────────────────────────────────────────┘            │
+│                                                                             │
+│   Single source of truth for MLLM decision                                 │
+└──────────────────────────────────┬──────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         3. ROUTING STAGE                                    │
+│                                                                             │
+│   ┌──────────────────────────────────────────────────────────┐            │
+│   │  route_pipeline(decision)                                │            │
+│   │                                                           │            │
+│   │  if not decision.house_present:                          │            │
+│   │      return "DISCOVERY"                                  │            │
+│   │  if decision.full_house:                                 │            │
+│   │      return "FULL"                                       │            │
+│   │  return "PARTIAL"                                        │            │
+│   └──────────────────────────────────────────────────────────┘            │
+│                                                                             │
+│   Maps decision to appropriate pipeline                                    │
+└──────────────┬───────────────────┬──────────────────┬───────────────────────┘
+               │                   │                  │
+       ┌───────▼────────┐  ┌───────▼────────┐  ┌────▼──────────┐
+       │  "FULL"        │  │  "PARTIAL"     │  │  "DISCOVERY"  │
+       └───────┬────────┘  └───────┬────────┘  └────┬──────────┘
+               │                   │                  │
+               ▼                   ▼                  ▼
+┌──────────────────────┐ ┌──────────────────────┐ ┌──────────────────────┐
+│  🟢 FULL HOUSE       │ │  🟡 PARTIAL HOUSE    │ │  🔵 DISCOVERY        │
+│     PIPELINE         │ │     PIPELINE         │ │     PIPELINE         │
+├──────────────────────┤ ├──────────────────────┤ ├──────────────────────┤
+│ Goal:                │ │ Goal:                │ │ Goal:                │
+│ Refine good          │ │ Recover complete     │ │ Find all houses      │
+│ footprint            │ │ house from bad       │ │ when polygon wrong   │
+│                      │ │ polygon              │ │                      │
+│ Characteristics:     │ │ Characteristics:     │ │ Characteristics:     │
+│ • Normal patch       │ │ • BIGGER patch       │ │ • No anchor polygon  │
+│ • MLQA points        │ │   (context=5)        │ │ • Multi-building     │
+│ • Tight bbox         │ │ • Escalated SAM      │ │   detection          │
+│ • Standard SAM       │ │ • Bbox-focused       │ │ • Simplified MLQA    │
+│ • Iterative refine   │ │ • Optional points    │ │ • Discovery SAM      │
+│                      │ │                      │ │                      │
+│ Use case:            │ │ Use case:            │ │ Use case:            │
+│ Complete building    │ │ Polygon cuts off     │ │ No house in polygon, │
+│ in correct position  │ │ parts of house       │ │ search entire patch  │
+│                      │ │                      │ │                      │
+│ Function:            │ │ Function:            │ │ Function:            │
+│ full_house_pipeline()│ │ partial_house_      │ │ discovery_pipeline() │
+│                      │ │     pipeline()       │ │                      │
+└──────────┬───────────┘ └──────────┬───────────┘ └──────────┬───────────┘
+           │                        │                         │
+           │                        │                         │
+           └────────────────────────┴─────────────────────────┘
+                                    │
+                                    ▼
+           ┌────────────────────────────────────────────────┐
+           │           4. DATABASE WRITE                    │
+           │                                                │
+           │   • Store building_id, patch_path              │
+           │   • Store house_present, full_house_present    │
+           │   • Store error_description                    │
+           │   • Store inside_pts, outside_pts              │
+           └────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+
+KEY BENEFITS:
+
+✓ Clean separation of concerns (decision, routing, execution)
+✓ Easy to extend (add new pipeline = add new branch)
+✓ Debuggable (each pipeline independent)
+✓ Matches human reasoning (is house? is complete? what action?)
+✓ Testable (validate logic without dependencies)
+✓ 8b model optimized (simplified discovery prompt)
+
+═══════════════════════════════════════════════════════════════════════════════
