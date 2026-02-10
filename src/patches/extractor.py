@@ -8,7 +8,7 @@ from rasterio.windows import from_bounds
 from pyproj import Transformer
 
 
-def extract_patch(geom, geom_crs, raster_path, out_size=512, context = 2):
+def extract_patch(geom, geom_crs, raster_path, out_size=512, context = 3):
 
     with rio.open(raster_path) as src:
 
@@ -22,7 +22,7 @@ def extract_patch(geom, geom_crs, raster_path, out_size=512, context = 2):
         cx = (minx + maxx) / 2
         cy = (miny + maxy) / 2
 
-        #context = 2 # was 1.2
+        # context factor increased from 2 to 3 to better capture full houses even with inaccurate polygons
 
         size = max(maxx - minx, maxy - miny) * context
 

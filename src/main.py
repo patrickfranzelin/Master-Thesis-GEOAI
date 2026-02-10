@@ -153,7 +153,7 @@ for _, row in gdf.iterrows():
                 row.geom,
                 gdf.crs,
                 row.tiff_path,
-                context=4  # BIGGER PATCH
+                context=5  # BIGGER PATCH - increased from 4 to 5 to maintain ratio with new default
             )
 
             sam_img = cv2.cvtColor(sam_img, cv2.COLOR_RGB2BGR)
