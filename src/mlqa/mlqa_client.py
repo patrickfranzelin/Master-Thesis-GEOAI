@@ -80,11 +80,6 @@ Return ONLY a single JSON object with this exact schema, no extra text:
 }
 """
 
-
-
-
-
-
 def _parse_json_safe(raw):
 
     try:

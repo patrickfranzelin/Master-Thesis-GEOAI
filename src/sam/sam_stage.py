@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from src.sam.sam_client import run_sam
+from src.sam.engine import segment_with_points
 from src.utils.geometry import polygon_to_sam_bbox
 
 
@@ -56,7 +56,12 @@ def run_sam_stage(img, raw_path, poly_px, inside, outside, out_dir, bid, max_ite
 
         print(f"SAM iteration {i+1}")
 
-        mask, poly = run_sam(raw_path, inside, outside, bbox=bbox)
+        mask, poly = segment_with_points(
+            image_path=raw_path,
+            inside_pts=inside,
+            outside_pts=outside,
+            bbox=bbox,
+        )
 
         if mask is None:
             print("SAM failed")
