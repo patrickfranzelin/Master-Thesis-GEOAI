@@ -150,6 +150,9 @@ for _, row in gdf.iterrows():
     # Write MLQA results for all pipelines (fixes Bug 4)
     # ---------------------------------------------
     
+    # NOTE: ctx.discovery_path is only set by PartialHousePipeline
+    # For FullHousePipeline, it will be None and fall back to clean_path
+    # This is correct: full houses use original patch, partial houses use discovery patch
     write_mlqa({
         "building_id": row.id,
         "patch_path": str(ctx.discovery_path or clean_path),

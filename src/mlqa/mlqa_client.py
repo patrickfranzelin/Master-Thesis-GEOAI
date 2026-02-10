@@ -92,6 +92,9 @@ def _parse_json_safe(raw):
     Raises MLQAParseError if parsing fails completely.
     This ensures parse failures abort the pipeline instead of 
     creating false negatives.
+    
+    Note: Error message includes truncated raw response for debugging.
+    In production, consider limiting or sanitizing this data.
     """
     try:
         return json.loads(raw)
@@ -101,6 +104,7 @@ def _parse_json_safe(raw):
             return json.loads(cleaned)
         except json.JSONDecodeError:
             # Parse failure is a critical error - don't return false data
+            # Truncate raw response to first 200 chars to avoid exposing excessive data
             raise MLQAParseError(
                 f"Failed to parse MLQA response as JSON. Raw response: {raw[:200]}"
             )
