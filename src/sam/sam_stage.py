@@ -120,3 +120,85 @@ def run_sam_stage(img, raw_path, poly_px, inside, outside, out_dir, bid, max_ite
     return poly
 
 
+def run_sam_discovery(img, raw_path, buildings_data, negative_pts, out_dir, bid):
+    """
+    Run SAM in discovery mode to detect multiple buildings.
+    
+    Args:
+        img: Input image
+        raw_path: Path to raw image
+        buildings_data: List of building dicts from MLQA discovery
+        negative_pts: Shared negative points
+        out_dir: Output directory
+        bid: Building ID
+        
+    Returns:
+        List of detected polygons
+    """
+    from src.sam.sam_client import run_sam_multi_building
+    
+    print(f"  SAM mode: discovery - detecting {len(buildings_data)} potential buildings")
+    
+    if len(buildings_data) == 0:
+        print("  No buildings to process in discovery mode")
+        return []
+    
+    # Run SAM for each building
+    results = run_sam_multi_building(raw_path, buildings_data, negative_pts)
+    
+    # ---------------------------------------------
+    # Debug visualization - show all detections
+    # ---------------------------------------------
+    
+    overlay = img.copy()
+    valid_polygons = []
+    
+    for idx, (mask, poly) in enumerate(results):
+        if poly is not None:
+            # Draw each building in different color
+            color_map = [
+                (0, 255, 0),    # Green
+                (255, 0, 0),    # Blue
+                (0, 165, 255),  # Orange
+                (255, 0, 255),  # Magenta
+                (255, 255, 0),  # Cyan
+                (0, 255, 255),  # Yellow
+            ]
+            color = color_map[idx % len(color_map)]
+            
+            pts = np.array(poly.exterior.coords).astype("int32")
+            cv2.polylines(overlay, [pts], True, color, 2)
+            
+            # Add building number
+            centroid = poly.centroid
+            cv2.putText(
+                overlay, 
+                f"B{idx+1}", 
+                (int(centroid.x), int(centroid.y)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.6,
+                color,
+                2
+            )
+            
+            valid_polygons.append(poly)
+    
+    # Draw all points used
+    debug_img = img.copy()
+    for building in buildings_data:
+        inside = building.get("inside_points", [])
+        for x, y in inside:
+            cv2.circle(debug_img, (int(x), int(y)), 5, (0, 255, 0), -1)
+    
+    for x, y in negative_pts:
+        cv2.circle(debug_img, (int(x), int(y)), 5, (0, 0, 255), -1)
+    
+    # Save visualizations
+    cv2.imwrite(str(out_dir / f"bld_{bid:07d}_discovery_overlay.png"), overlay)
+    cv2.imwrite(str(out_dir / f"bld_{bid:07d}_discovery_points.png"), debug_img)
+    
+    print(f"  Discovery mode: found {len(valid_polygons)} buildings")
+    
+    return valid_polygons
+
+

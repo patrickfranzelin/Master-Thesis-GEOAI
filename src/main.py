@@ -16,10 +16,11 @@ from src.utils.rendering import (
 )
 from src.mlqa.mlqa_client import analyze_patch
 from src.mlqa.point_client import analyze_points
+from src.mlqa.discovery_client import discover_all_houses
 from src.db.writer import write_mlqa
 from src.patches.create_patch_output import create_patch_outputs
 from src.mlqa.mlqa_stage import run_qa
-from src.sam.sam_stage import run_sam_stage
+from src.sam.sam_stage import run_sam_stage, run_sam_discovery
 
 
 # --------------------------------------------------
@@ -174,8 +175,64 @@ for _, row in gdf.iterrows():
             mode=sam_mode
         )
 
+    else:
+        # ---------------------------------------------
+        # DISCOVERY MODE: No house in original polygon
+        # Use MLQA to find ALL buildings in patch
+        # ---------------------------------------------
+        print(f"Building {row.id}: No house in polygon - running DISCOVERY mode")
+        
+        # Use MLQA to discover all buildings in the patch
+        discovery_result = discover_all_houses(clean_path)
+        
+        buildings_found = discovery_result.get("buildings_found", [])
+        negative_pts = discovery_result.get("negative_points", [])
+        total = discovery_result.get("total_buildings", 0)
+        
+        print(f"  Discovery MLQA found {total} buildings in patch")
+        
+        if total > 0:
+            # Run SAM in discovery mode to segment all found buildings
+            discovered_polygons = run_sam_discovery(
+                img,
+                raw_path,
+                buildings_found,
+                negative_pts,
+                sam_dir,
+                row.id
+            )
+            
+            # Store discovery results
+            record = {
+                "building_id": int(row.id),
+                "patch_path": str(raw_path),
+                "house_present": False,
+                "full_house_present": None,
+                "error_description": f"Discovery mode: found {len(discovered_polygons)} buildings",
+                "inside_pts": [],  # Not applicable in discovery mode
+                "outside_pts": negative_pts,
+                "discovery_mode": True,
+                "buildings_discovered": len(discovered_polygons),
+            }
+        else:
+            print(f"  No buildings found in patch")
+            record = {
+                "building_id": int(row.id),
+                "patch_path": str(raw_path),
+                "house_present": False,
+                "full_house_present": None,
+                "error_description": "No buildings found in patch",
+                "inside_pts": [],
+                "outside_pts": [],
+                "discovery_mode": True,
+                "buildings_discovered": 0,
+            }
+        
+        write_mlqa(record)
+        continue  # Skip normal write_mlqa below
+
     # ---------------------------------------------
-    # Write DB
+    # Write DB (for house_present=True cases)
     # ---------------------------------------------
     record = {
         "building_id": int(row.id),
