@@ -175,11 +175,12 @@ for _, row in gdf.iterrows():
             mode=sam_mode
         )
 
-    else:
-        # ---------------------------------------------
+    # ---------------------------------------------
+    # Prepare database record based on workflow
+    # ---------------------------------------------
+    
+    if not qa["house_present"]:
         # DISCOVERY MODE: No house in original polygon
-        # Use MLQA to find ALL buildings in patch
-        # ---------------------------------------------
         print(f"Building {row.id}: No house in polygon - running DISCOVERY mode")
         
         # Use MLQA to discover all buildings in the patch
@@ -209,10 +210,8 @@ for _, row in gdf.iterrows():
                 "house_present": False,
                 "full_house_present": None,
                 "error_description": f"Discovery mode: found {len(discovered_polygons)} buildings",
-                "inside_pts": [],  # Not applicable in discovery mode
+                "inside_pts": [],
                 "outside_pts": negative_pts,
-                "discovery_mode": True,
-                "buildings_discovered": len(discovered_polygons),
             }
         else:
             print(f"  No buildings found in patch")
@@ -224,26 +223,22 @@ for _, row in gdf.iterrows():
                 "error_description": "No buildings found in patch",
                 "inside_pts": [],
                 "outside_pts": [],
-                "discovery_mode": True,
-                "buildings_discovered": 0,
             }
-        
-        write_mlqa(record)
-        continue  # Skip normal write_mlqa below
+    else:
+        # STANDARD/ESCALATED MODE: House present in polygon
+        record = {
+            "building_id": int(row.id),
+            "patch_path": str(raw_path),
+            "house_present": qa["house_present"],
+            "full_house_present": qa.get("full_house_present"),
+            "error_description": qa["error_description"],
+            "inside_pts": inside_pts,
+            "outside_pts": outside_pts,
+        }
 
     # ---------------------------------------------
-    # Write DB (for house_present=True cases)
+    # Write DB (all workflows)
     # ---------------------------------------------
-    record = {
-        "building_id": int(row.id),
-        "patch_path": str(raw_path),
-        "house_present": qa["house_present"],
-        "full_house_present": qa.get("full_house_present"),
-        "error_description": qa["error_description"],
-        "inside_pts": inside_pts,
-        "outside_pts": outside_pts,
-    }
-
     write_mlqa(record)
 
 print("\nDONE")

@@ -155,14 +155,14 @@ def run_sam_discovery(img, raw_path, buildings_data, negative_pts, out_dir, bid)
     
     for idx, (mask, poly) in enumerate(results):
         if poly is not None:
-            # Draw each building in different color
+            # Draw each building in different color (BGR format for OpenCV)
             color_map = [
-                (0, 255, 0),    # Green
-                (255, 0, 0),    # Blue
-                (0, 165, 255),  # Orange
-                (255, 0, 255),  # Magenta
-                (255, 255, 0),  # Cyan
-                (0, 255, 255),  # Yellow
+                (0, 255, 0),    # Green (BGR)
+                (255, 0, 0),    # Blue (BGR)
+                (0, 165, 255),  # Orange (BGR)
+                (255, 0, 255),  # Magenta (BGR)
+                (0, 255, 255),  # Yellow (BGR)
+                (255, 255, 0),  # Cyan (BGR)
             ]
             color = color_map[idx % len(color_map)]
             

@@ -121,7 +121,8 @@ def run_sam_multi_building(
             continue
         
         # Combine this building's inside points with shared negative points
-        points = [inside + negative_pts]
+        # Both inside and negative_pts are lists of [x,y] coordinate pairs
+        points = [inside + negative_pts]  # SAM expects [[point1, point2, ...]]
         labels = [[1] * len(inside) + [0] * len(negative_pts)]
         
         # Run SAM for this building

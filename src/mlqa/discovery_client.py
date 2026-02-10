@@ -66,11 +66,11 @@ def _encode_image(path: Path):
 def _parse_json_safe(raw):
     try:
         return json.loads(raw)
-    except:
+    except json.JSONDecodeError:
         cleaned = re.sub(r"```json|```", "", raw).strip()
         try:
             return json.loads(cleaned)
-        except:
+        except Exception:
             return {
                 "buildings_found": [],
                 "negative_points": [],
