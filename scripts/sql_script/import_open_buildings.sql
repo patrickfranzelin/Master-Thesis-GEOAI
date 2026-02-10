@@ -33,7 +33,7 @@ CREATE TABLE src._staging_open_buildings (
 -- -----------------------------------------
 -- IMPORTANT: this is a psql command, not pure SQL
 
-\copy src._staging_open_buildings FROM 'C:\temp\38d_buildings.csv' CSV HEADER;
+\copy src._staging_open_buildings FROM 'C:\temp\11d_buildings.csv' CSV HEADER;
 
 -- -----------------------------------------
 -- 3. Insert into main buildings table
