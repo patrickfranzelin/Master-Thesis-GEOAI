@@ -50,22 +50,6 @@ Strict JSON:
   "error_description": "exact description"
 }
 """
-OLD_QA_PROMPT = """
-You see an aerial image patch.
-
-GREEN polygon = building footprint.
-
-House_present = false if no roof exists inside or touching the polygon
-
-Error_description= Your job is to give me a description whats AND where is somthing wrong with the polygon.
-
-full_house_present = Schau ob das polygon mehr als die hälfte des Hauses umschließt
-{
-  "house_present": true | false,
-  "error_description": string,
-  "full_house_present": true | false,"
-}
-"""
 QA_PROMPT = """
 You see an aerial image patch.
 
