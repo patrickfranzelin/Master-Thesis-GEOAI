@@ -3,7 +3,6 @@ Decision module: MLLM makes the core decision about house presence and completen
 """
 from dataclasses import dataclass
 from pathlib import Path
-from src.mlqa.mlqa_client import analyze_patch
 
 
 @dataclass
@@ -31,6 +30,9 @@ def mlqa_decide(clean_patch: Path) -> HouseDecision:
     Returns:
         HouseDecision object with MLLM analysis results
     """
+    # Import here to avoid circular dependencies and allow testing without openai
+    from src.mlqa.mlqa_client import analyze_patch
+    
     qa = analyze_patch(clean_patch)
     
     return HouseDecision(
