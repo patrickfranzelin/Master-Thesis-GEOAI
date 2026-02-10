@@ -18,44 +18,30 @@ client = OpenAI(
 )
 
 DISCOVERY_PROMPT = """
-You are analyzing an aerial image patch to find ALL buildings/houses.
+You are analyzing an aerial image to find buildings.
 
-The GREEN polygon from the dataset is INCORRECT - it doesn't contain a house.
-BUT there might be OTHER buildings in this patch.
+The GREEN polygon doesn't contain a house, but there might be OTHER buildings in this image.
 
-TASK: Find ALL buildings/houses visible in this image patch, even if small or partial.
+TASK: Count how many buildings/houses you can see. For EACH building, place 2-3 points on its roof.
 
-For EACH building you find:
-1. Place 2-3 points INSIDE the roof area (distributed, not clustered)
-2. Mark its approximate location
-
-Return JSON with list of buildings:
+Return JSON ONLY:
 
 {
-  "buildings_found": [
-    {
-      "building_id": 1,
-      "description": "rectangular metal roof, center-left",
-      "inside_points": [[x1,y1], [x2,y2], [x3,y3]],
-      "confidence": "high|medium|low"
-    },
-    {
-      "building_id": 2,
-      "description": "mud compound, top-right corner",
-      "inside_points": [[x1,y1], [x2,y2]],
-      "confidence": "high|medium|low"
-    }
-  ],
-  "negative_points": [[x1,y1], [x2,y2], [x3,y3], [x4,y4]],
-  "total_buildings": 2
+  "total_buildings": 0,
+  "building1_points": [[x,y], [x,y]],
+  "building2_points": [[x,y], [x,y]],
+  "building3_points": [[x,y], [x,y]],
+  "negative_points": [[x,y], [x,y], [x,y]]
 }
 
 Rules:
-- Look EVERYWHERE in the image, not just near the green polygon
-- Include partial buildings at edges if roof is visible
-- negative_points = 4-6 points clearly NOT on any roof (vegetation, paths, shadows)
-- If NO buildings found at all, return empty buildings_found list
-- Integers only, no decimals
+- total_buildings = count of buildings you see (0 to 3)
+- For each building: place 2-3 roof points in building1_points, building2_points, building3_points
+- If you see 0 buildings, only include total_buildings and negative_points
+- If you see 1 building, include total_buildings, building1_points, and negative_points
+- negative_points = 3-4 points clearly NOT on any roof (grass, road, shadows)
+- Use integers only, no decimals
+- Return ONLY JSON, no explanations
 """
 
 
@@ -64,13 +50,17 @@ def _encode_image(path: Path):
 
 
 def _parse_json_safe(raw):
+    """
+    Parse the simplified discovery JSON format.
+    Converts building1_points, building2_points, etc. to buildings_found list.
+    """
     try:
-        return json.loads(raw)
+        data = json.loads(raw)
     except json.JSONDecodeError:
         # Try removing markdown code blocks
         cleaned = re.sub(r"```json|```", "", raw).strip()
         try:
-            return json.loads(cleaned)
+            data = json.loads(cleaned)
         except json.JSONDecodeError:
             # Return empty result if JSON parsing completely fails
             return {
@@ -78,6 +68,27 @@ def _parse_json_safe(raw):
                 "negative_points": [],
                 "total_buildings": 0
             }
+    
+    # Convert simplified format to standard format
+    total = data.get("total_buildings", 0)
+    negative_pts = data.get("negative_points", [])
+    
+    buildings_found = []
+    for i in range(1, 4):  # Support up to 3 buildings
+        key = f"building{i}_points"
+        if key in data and data[key]:
+            buildings_found.append({
+                "building_id": i,
+                "inside_points": data[key],
+                "description": f"building_{i}",
+                "confidence": "medium"
+            })
+    
+    return {
+        "buildings_found": buildings_found,
+        "negative_points": negative_pts,
+        "total_buildings": total
+    }
 
 
 def discover_all_houses(image_path: Path):

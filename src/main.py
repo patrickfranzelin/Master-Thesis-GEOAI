@@ -5,22 +5,18 @@ import numpy as np
 from sqlalchemy import create_engine
 import os
 
-from src.db.loader import load_buildings
 from src.patches.extractor import extract_patch
 from src.utils.geometry import polygon_to_sam_bbox
-from src.utils.rendering import (
-    add_center_star,
-    add_grid_overlay,
-    add_polygon_overlay,
-    draw_points,
-)
-from src.mlqa.mlqa_client import analyze_patch
-from src.mlqa.point_client import analyze_points
-from src.mlqa.discovery_client import discover_all_houses
+from src.utils.rendering import draw_points
 from src.db.writer import write_mlqa
 from src.patches.create_patch_output import create_patch_outputs
-from src.mlqa.mlqa_stage import run_qa
-from src.sam.sam_stage import run_sam_stage, run_sam_discovery
+
+# New architecture imports
+from src.pipeline.decision import mlqa_decide
+from src.pipeline.routing import route_pipeline
+from src.pipeline.full_house_pipeline import full_house_pipeline
+from src.pipeline.partial_house_pipeline import partial_house_pipeline
+from src.pipeline.discovery_pipeline import discovery_pipeline
 
 
 # --------------------------------------------------
@@ -115,95 +111,90 @@ for _, row in gdf.iterrows():
     print(f"Saved raw + clean + debug for {row.id}")
 
     # ---------------------------------------------
-    # MLQA + point QA
+    # Add bbox to debug image
     # ---------------------------------------------
     dbg = cv2.imread(str(debug_path))
-
     bbox = polygon_to_sam_bbox(poly_px)
-
     if bbox is not None:
         x1, y1, x2, y2 = bbox[0]
         cv2.rectangle(dbg, (x1, y1), (x2, y2), (255, 0, 0), 2)
-
     cv2.imwrite(str(debug_path), dbg)
 
-    qa, inside_pts, outside_pts = run_qa(clean_path, debug_path)
-
     # ---------------------------------------------
-    # Optional debug: draw points
+    # DECISION STAGE: MLLM decides
     # ---------------------------------------------
-    if inside_pts or outside_pts:
-        overlay = draw_points(cv2.imread(str(debug_path)), inside_pts, outside_pts)
-        cv2.imwrite(str(points_dir / f"bld_{row.id:07d}_points.png"), overlay)
-        print(f"Saved points overlay: bld_{row.id:07d}_points.png")
-
+    decision = mlqa_decide(clean_path)
+    
     # ---------------------------------------------
-    # SAM refinement (with workflow separation)
+    # ROUTING: Determine which pipeline to execute
     # ---------------------------------------------
-
-    if qa["house_present"]:
-
-        full_house = qa.get("full_house_present", True)
-        
-        if full_house:
-            print(f"Building {row.id}: Full house detected - standard SAM workflow")
-            # Use standard patch for full houses
-            sam_img = img
-            sam_poly = poly_px
-            sam_mode = "standard"
-            
-        else:
-            print(f"Building {row.id}: Partial house detected - escalated SAM workflow")
-            # Extract larger patch for partial houses
-            sam_img, sam_poly = extract_patch(
-                row.geom,
-                gdf.crs,
-                row.tiff_path,
-                context=5  # BIGGER PATCH for partial houses
-            )
-            sam_img = cv2.cvtColor(sam_img, cv2.COLOR_RGB2BGR)
-            sam_mode = "escalated"
-
-        run_sam_stage(
-            sam_img,
-            raw_path,
-            sam_poly,
-            inside_pts,
-            outside_pts,
-            sam_dir,
-            row.id,
-            mode=sam_mode
-        )
-
+    pipeline = route_pipeline(decision)
+    
+    print(f"  → Decision: house_present={decision.house_present}, full_house={decision.full_house}")
+    print(f"  → Routing to: {pipeline} pipeline")
+    
     # ---------------------------------------------
-    # Prepare database record based on workflow
+    # PIPELINE EXECUTION: Branch into three pipelines
     # ---------------------------------------------
     
-    if not qa["house_present"]:
-        # DISCOVERY MODE: No house in original polygon
-        print(f"Building {row.id}: No house in polygon - running DISCOVERY mode")
+    # Prepare paths for pipelines
+    paths = {
+        'clean': clean_path,
+        'debug': debug_path,
+        'raw': raw_path,
+        'sam': sam_dir,
+    }
+    
+    if pipeline == "FULL":
+        # 🟢 FULL HOUSE PIPELINE
+        qa, inside_pts, outside_pts = full_house_pipeline(img, poly_px, paths, row.id)
         
-        # Use MLQA to discover all buildings in the patch
-        discovery_result = discover_all_houses(clean_path)
+        # Optional debug: draw points
+        if inside_pts or outside_pts:
+            overlay = draw_points(cv2.imread(str(debug_path)), inside_pts, outside_pts)
+            cv2.imwrite(str(points_dir / f"bld_{row.id:07d}_points.png"), overlay)
         
-        buildings_found = discovery_result.get("buildings_found", [])
-        negative_pts = discovery_result.get("negative_points", [])
-        total = discovery_result.get("total_buildings", 0)
+        # Prepare database record
+        record = {
+            "building_id": int(row.id),
+            "patch_path": str(raw_path),
+            "house_present": decision.house_present,
+            "full_house_present": decision.full_house,
+            "error_description": decision.reason,
+            "inside_pts": inside_pts,
+            "outside_pts": outside_pts,
+        }
+    
+    elif pipeline == "PARTIAL":
+        # 🟡 PARTIAL HOUSE PIPELINE
+        qa, inside_pts, outside_pts, img_big, poly_big = partial_house_pipeline(
+            row, gdf, paths, row.id
+        )
         
-        print(f"  Discovery MLQA found {total} buildings in patch")
+        # Optional debug: draw points
+        if inside_pts or outside_pts:
+            overlay = draw_points(cv2.imread(str(debug_path)), inside_pts, outside_pts)
+            cv2.imwrite(str(points_dir / f"bld_{row.id:07d}_points.png"), overlay)
         
-        if total > 0:
-            # Run SAM in discovery mode to segment all found buildings
-            discovered_polygons = run_sam_discovery(
-                img,
-                raw_path,
-                buildings_found,
-                negative_pts,
-                sam_dir,
-                row.id
-            )
-            
-            # Store discovery results
+        # Prepare database record
+        record = {
+            "building_id": int(row.id),
+            "patch_path": str(raw_path),
+            "house_present": decision.house_present,
+            "full_house_present": decision.full_house,
+            "error_description": decision.reason,
+            "inside_pts": inside_pts,
+            "outside_pts": outside_pts,
+        }
+    
+    elif pipeline == "DISCOVERY":
+        # 🔵 DISCOVERY PIPELINE
+        buildings_found, negative_pts, discovered_polygons = discovery_pipeline(
+            img, paths, row.id
+        )
+        
+        # Prepare database record
+        if len(discovered_polygons) > 0:
             record = {
                 "building_id": int(row.id),
                 "patch_path": str(raw_path),
@@ -214,7 +205,6 @@ for _, row in gdf.iterrows():
                 "outside_pts": negative_pts,
             }
         else:
-            print(f"  No buildings found in patch")
             record = {
                 "building_id": int(row.id),
                 "patch_path": str(raw_path),
@@ -224,20 +214,9 @@ for _, row in gdf.iterrows():
                 "inside_pts": [],
                 "outside_pts": [],
             }
-    else:
-        # STANDARD/ESCALATED MODE: House present in polygon
-        record = {
-            "building_id": int(row.id),
-            "patch_path": str(raw_path),
-            "house_present": qa["house_present"],
-            "full_house_present": qa.get("full_house_present"),
-            "error_description": qa["error_description"],
-            "inside_pts": inside_pts,
-            "outside_pts": outside_pts,
-        }
 
     # ---------------------------------------------
-    # Write DB (all workflows)
+    # Write DB (all pipelines)
     # ---------------------------------------------
     write_mlqa(record)
 
