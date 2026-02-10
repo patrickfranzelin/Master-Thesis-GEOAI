@@ -139,10 +139,6 @@ def run_sam_discovery(img, raw_path, buildings_data, negative_pts, out_dir, bid)
     
     print(f"  SAM mode: discovery - detecting {len(buildings_data)} potential buildings")
     
-    if len(buildings_data) == 0:
-        print("  No buildings to process in discovery mode")
-        return []
-    
     # Run SAM for each building
     results = run_sam_multi_building(raw_path, buildings_data, negative_pts)
     

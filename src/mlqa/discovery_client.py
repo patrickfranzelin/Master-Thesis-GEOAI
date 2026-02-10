@@ -67,10 +67,12 @@ def _parse_json_safe(raw):
     try:
         return json.loads(raw)
     except json.JSONDecodeError:
+        # Try removing markdown code blocks
         cleaned = re.sub(r"```json|```", "", raw).strip()
         try:
             return json.loads(cleaned)
-        except Exception:
+        except json.JSONDecodeError:
+            # Return empty result if JSON parsing completely fails
             return {
                 "buildings_found": [],
                 "negative_points": [],

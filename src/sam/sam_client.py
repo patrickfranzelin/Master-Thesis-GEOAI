@@ -118,6 +118,8 @@ def run_sam_multi_building(
         inside = building.get("inside_points", [])
         
         if len(inside) == 0:
+            # Append (None, None) to maintain index alignment with buildings_data
+            results.append((None, None))
             continue
         
         # Combine this building's inside points with shared negative points
