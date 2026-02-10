@@ -137,26 +137,31 @@ for _, row in gdf.iterrows():
         print(f"Saved points overlay: bld_{row.id:07d}_points.png")
 
     # ---------------------------------------------
-    # SAM refinement (with escalation)
+    # SAM refinement (with workflow separation)
     # ---------------------------------------------
 
     if qa["house_present"]:
 
-        sam_img = img
-        sam_poly = poly_px
-
-        # escalation: footprint clipped house
-        if not qa.get("full_house_present", True):
-            print("Partial house detected — escalating SAM patch")
-
+        full_house = qa.get("full_house_present", True)
+        
+        if full_house:
+            print(f"Building {row.id}: Full house detected - standard SAM workflow")
+            # Use standard patch for full houses
+            sam_img = img
+            sam_poly = poly_px
+            sam_mode = "standard"
+            
+        else:
+            print(f"Building {row.id}: Partial house detected - escalated SAM workflow")
+            # Extract larger patch for partial houses
             sam_img, sam_poly = extract_patch(
                 row.geom,
                 gdf.crs,
                 row.tiff_path,
-                context=5  # BIGGER PATCH - increased from 4 to 5 to maintain ratio with new default
+                context=5  # BIGGER PATCH for partial houses
             )
-
             sam_img = cv2.cvtColor(sam_img, cv2.COLOR_RGB2BGR)
+            sam_mode = "escalated"
 
         run_sam_stage(
             sam_img,
@@ -166,7 +171,7 @@ for _, row in gdf.iterrows():
             outside_pts,
             sam_dir,
             row.id,
-            big=not qa.get("full_house_present", True)
+            mode=sam_mode
         )
 
     # ---------------------------------------------
@@ -176,6 +181,7 @@ for _, row in gdf.iterrows():
         "building_id": int(row.id),
         "patch_path": str(raw_path),
         "house_present": qa["house_present"],
+        "full_house_present": qa.get("full_house_present"),
         "error_description": qa["error_description"],
         "inside_pts": inside_pts,
         "outside_pts": outside_pts,

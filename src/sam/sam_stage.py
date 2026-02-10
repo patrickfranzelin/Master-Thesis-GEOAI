@@ -4,17 +4,41 @@ from src.sam.sam_client import run_sam
 from src.utils.geometry import polygon_to_sam_bbox
 
 
-def run_sam_stage(img, raw_path, poly_px, inside, outside, out_dir, bid, max_iters=3, big=False):
+def run_sam_stage(img, raw_path, poly_px, inside, outside, out_dir, bid, max_iters=3, mode="standard"):
+    """
+    Run SAM refinement stage.
+    
+    Args:
+        img: Input image
+        raw_path: Path to raw image
+        poly_px: Polygon in pixel coordinates
+        inside: List of positive points
+        outside: List of negative points
+        out_dir: Output directory
+        bid: Building ID
+        max_iters: Maximum SAM iterations
+        mode: "standard" for full houses, "escalated" for partial houses
+    """
 
-    if big:
+    is_escalated = (mode == "escalated")
+    
+    if is_escalated:
+        # For partial houses, reset points and use larger bbox
+        print(f"  SAM mode: escalated (partial house) - using larger bbox, resetting MLQA points")
         inside = []
         outside = []
+        bbox_scale = 0.8
+    else:
+        # For full houses, use standard bbox and MLQA points
+        print(f"  SAM mode: standard (full house) - using MLQA points")
+        bbox_scale = 0.2
 
-    if len(inside) == 0 and not big:
+    if len(inside) == 0 and not is_escalated:
         print("SAM skipped (no inside points)")
         return None
+        
     # initial bbox from footprint
-    bbox_init = polygon_to_sam_bbox(poly_px, scale=0.8 if big else 0.2)
+    bbox_init = polygon_to_sam_bbox(poly_px, scale=bbox_scale)
     bbox = bbox_init.copy() if bbox_init else None
 
     # always add bbox center as positive anchor

@@ -13,6 +13,7 @@ def write_mlqa(result: dict):
         building_id,
         patch_path,
         house_present,
+        full_house_present,
         error_description,
         inside_pts,
         outside_pts
@@ -21,6 +22,7 @@ def write_mlqa(result: dict):
         :building_id,
         :patch_path,
         :house_present,
+        :full_house_present,
         :error_description,
         :inside_pts,
         :outside_pts
@@ -28,6 +30,7 @@ def write_mlqa(result: dict):
     ON CONFLICT (building_id) DO UPDATE SET
         patch_path = EXCLUDED.patch_path,
         house_present = EXCLUDED.house_present,
+        full_house_present = EXCLUDED.full_house_present,
         error_description = EXCLUDED.error_description,
         inside_pts = EXCLUDED.inside_pts,
         outside_pts = EXCLUDED.outside_pts,
@@ -40,6 +43,7 @@ def write_mlqa(result: dict):
             "building_id": result["building_id"],
             "patch_path": result["patch_path"],
             "house_present": result["house_present"],
+            "full_house_present": result.get("full_house_present"),
             "error_description": result["error_description"],
             "inside_pts": json.dumps(result["inside_pts"]),
             "outside_pts": json.dumps(result["outside_pts"]),
