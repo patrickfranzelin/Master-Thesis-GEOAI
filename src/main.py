@@ -6,6 +6,7 @@ import os
 
 from src.core.context import PipelineContext
 from src.mlqa.decision import decide
+from src.mlqa.mlqa_client import MLQAParseError
 from src.pipelines.router import route
 from src.patches.extractor import extract_patch
 from src.patches.create_patch_output import create_patch_outputs
@@ -92,7 +93,22 @@ for _, row in gdf.iterrows():
     # MLQA decision
     # ---------------------------------------------
 
-    decision = decide(clean_path)
+    try:
+        decision = decide(clean_path)
+    except MLQAParseError as e:
+        # Parse error should abort, not create false negative
+        print(f"  ⚠️  MLQA parse error for building {row.id}: {e}")
+        write_mlqa({
+            "building_id": row.id,
+            "patch_path": str(clean_path),
+            "house_present": None,  # Indicate uncertainty
+            "full_house_present": None,
+            "error_description": f"MLQA_PARSE_ERROR: {str(e)}",
+            "inside_pts": [],
+            "outside_pts": [],
+        })
+        continue
+
     pipeline = route(decision)
 
     ctx = PipelineContext(
@@ -115,6 +131,7 @@ for _, row in gdf.iterrows():
     if pipeline is None:
         write_mlqa({
             "building_id": row.id,
+            "patch_path": str(clean_path),
             "house_present": False,
             "full_house_present": None,
             "error_description": decision.error,
@@ -124,9 +141,32 @@ for _, row in gdf.iterrows():
         continue
 
     # ---------------------------------------------
-    # Execute pipeline
+    # Execute pipeline and capture results (fixes Bug 3)
     # ---------------------------------------------
 
-    pipeline.execute(ctx)
+    result = pipeline.execute(ctx)
+    
+    # ---------------------------------------------
+    # Write MLQA results for all pipelines (fixes Bug 4)
+    # ---------------------------------------------
+    
+    write_mlqa({
+        "building_id": row.id,
+        "patch_path": str(ctx.discovery_path) if ctx.discovery_path else str(clean_path),
+        "house_present": decision.house_present,
+        "full_house_present": decision.full_house,
+        "error_description": decision.error,
+        "inside_pts": result.inside_pts,
+        "outside_pts": result.outside_pts,
+    })
+    
+    # Log SAM results
+    if result.sam_polygons:
+        if isinstance(result.sam_polygons, list):
+            print(f"  ✓ {result.pipeline_name}: {len(result.sam_polygons)} building(s) segmented")
+        else:
+            print(f"  ✓ {result.pipeline_name}: 1 building segmented")
+    else:
+        print(f"  ✓ {result.pipeline_name}: No SAM segmentation")
 
 print("\nDONE")
