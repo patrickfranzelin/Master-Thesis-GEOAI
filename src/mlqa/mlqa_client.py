@@ -14,6 +14,11 @@ client = OpenAI(
 )
 
 
+class MLQAParseError(Exception):
+    """Raised when MLQA response cannot be parsed as valid JSON."""
+    pass
+
+
 LOW_CONTRAST_QA_PROMPT = """
 Aerial ortho patch from Sahel/Africa. GREEN polygon = building footprint from dataset. 
 CENTER STAR marks patch center. Grid helps orientation.
@@ -81,19 +86,24 @@ Return ONLY a single JSON object with this exact schema, no extra text:
 """
 
 def _parse_json_safe(raw):
-
+    """
+    Parse MLQA response JSON.
+    
+    Raises MLQAParseError if parsing fails completely.
+    This ensures parse failures abort the pipeline instead of 
+    creating false negatives.
+    """
     try:
         return json.loads(raw)
-    except:
+    except json.JSONDecodeError:
         cleaned = re.sub(r"```json|```", "", raw).strip()
         try:
             return json.loads(cleaned)
-        except:
-            return {
-                "house_present": False,
-                "full_house_present": False,
-                "error_description": "PARSE_ERROR",
-            }
+        except json.JSONDecodeError:
+            # Parse failure is a critical error - don't return false data
+            raise MLQAParseError(
+                f"Failed to parse MLQA response as JSON. Raw response: {raw[:200]}"
+            )
 
 
 def _encode_image(path: Path):

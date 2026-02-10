@@ -7,6 +7,19 @@ PG_CONN = os.environ["PG_CONN"]
 engine = create_engine(PG_CONN)
 
 def write_mlqa(result: dict):
+    """
+    Write MLQA analysis results to database.
+    
+    Args:
+        result: Dictionary containing:
+            - building_id: int
+            - patch_path: str (optional, can be None)
+            - house_present: bool or None (None indicates parse error/uncertainty)
+            - full_house_present: bool or None
+            - error_description: str or None
+            - inside_pts: list
+            - outside_pts: list
+    """
 
     sql = text("""
     INSERT INTO src.building_mlqa (
@@ -41,10 +54,10 @@ def write_mlqa(result: dict):
     with engine.begin() as conn:
         conn.execute(sql, {
             "building_id": result["building_id"],
-            "patch_path": result["patch_path"],
+            "patch_path": result.get("patch_path"),
             "house_present": result["house_present"],
             "full_house_present": result.get("full_house_present"),
-            "error_description": result["error_description"],
-            "inside_pts": json.dumps(result["inside_pts"]),
-            "outside_pts": json.dumps(result["outside_pts"]),
+            "error_description": result.get("error_description"),
+            "inside_pts": json.dumps(result.get("inside_pts", [])),
+            "outside_pts": json.dumps(result.get("outside_pts", [])),
         })

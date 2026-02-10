@@ -1,6 +1,7 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 import numpy as np
+from typing import Optional
 
 @dataclass
 class PipelineContext:
@@ -14,3 +15,6 @@ class PipelineContext:
     geom: object
     crs: object
     tiff_path: Path
+    # For discovery mode: enlarged patch for better context
+    discovery_path: Optional[Path] = None
+    discovery_img: Optional[np.ndarray] = None
