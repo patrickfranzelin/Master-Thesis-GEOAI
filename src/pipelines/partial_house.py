@@ -2,7 +2,7 @@ from src.pipelines.base import Pipeline, PipelineResult
 from src.patches.extractor import extract_patch
 from src.mlqa.discovery_client import discover_all_houses
 from src.sam.sam_client import run_sam_multi_building
-from src.patches.create_patch_output import create_patch_outputs
+from src.utils.rendering import add_polygon_overlay
 import cv2
 
 class PartialHousePipeline(Pipeline):
@@ -20,15 +20,7 @@ class PartialHousePipeline(Pipeline):
         
         # 2. Create discovery image with polygon overlay and save to disk
         # MLQA needs to see the enlarged context, not the original clean image
-        out_dirs = {
-            "raw": ctx.sam_dir.parent / "raw",
-            "clean": ctx.sam_dir.parent / "clean",
-            "debug": ctx.sam_dir.parent / "debug",
-        }
-        
-        # Create discovery image with polygon overlay on enlarged patch
         discovery_img = img_big.copy()
-        from src.utils.rendering import add_polygon_overlay
         discovery_img = add_polygon_overlay(discovery_img, poly_px_big)
         
         # Save discovery image

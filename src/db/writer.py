@@ -14,7 +14,7 @@ def write_mlqa(result: dict):
         result: Dictionary containing:
             - building_id: int
             - patch_path: str (optional, can be None)
-            - house_present: bool
+            - house_present: bool or None (None indicates parse error/uncertainty)
             - full_house_present: bool or None
             - error_description: str or None
             - inside_pts: list

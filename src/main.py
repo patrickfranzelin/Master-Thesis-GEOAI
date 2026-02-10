@@ -152,7 +152,7 @@ for _, row in gdf.iterrows():
     
     write_mlqa({
         "building_id": row.id,
-        "patch_path": str(ctx.discovery_path) if ctx.discovery_path else str(clean_path),
+        "patch_path": str(ctx.discovery_path or clean_path),
         "house_present": decision.house_present,
         "full_house_present": decision.full_house,
         "error_description": decision.error,
