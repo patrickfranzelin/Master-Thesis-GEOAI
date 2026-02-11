@@ -1,22 +1,42 @@
-from segment_anything import SamPredictor, sam_model_registry
+# src/sam/model_.py
+
 import torch
 import cv2
 import numpy as np
 from shapely.geometry import Polygon
 from pathlib import Path
-
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-CHECKPOINT_PATH = PROJECT_ROOT / "models" / "sam2_weights" / "sam_building_decoder_finetuned.pth"
+from segment_anything import sam_model_registry, SamPredictor
 
 DEVICE = "cuda"
 
-# Load fine-tuned SAM2
-sam = sam_model_registry["vit_b"](checkpoint=str(CHECKPOINT_PATH))
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+# Base SAM checkpoint
+BASE_CHECKPOINT = PROJECT_ROOT / "models" / "sam3_weights" / "sam_vit_b_01ec64.pth"
+
+# Fine-tuned decoder weights
+DECODER_CHECKPOINT = PROJECT_ROOT / "models" / "sam2_weights" / "sam_building_decoder_finetuned.pth"
+
+# --------------------------------------------------
+# Load Base Model
+# --------------------------------------------------
+
+sam = sam_model_registry["vit_b"](checkpoint=str(BASE_CHECKPOINT))
 sam.to(DEVICE)
 sam.eval()
 
+# Load fine-tuned decoder
+decoder_weights = torch.load(DECODER_CHECKPOINT, map_location=DEVICE)
+sam.mask_decoder.load_state_dict(decoder_weights)
+
 predictor = SamPredictor(sam)
 
+print("✅ SAM2 fine-tuned decoder loaded")
+
+
+# --------------------------------------------------
+# Public API
+# --------------------------------------------------
 
 def segment_with_points(
     image_path: Path,
@@ -32,20 +52,13 @@ def segment_with_points(
     outside_pts = outside_pts or []
 
     image = cv2.imread(str(image_path))
-    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    predictor.set_image(image_rgb)
+    predictor.set_image(image)
 
-    # Prepare prompts
     points = np.array(inside_pts + outside_pts)
-    labels = np.array(
-        [1] * len(inside_pts) + [0] * len(outside_pts)
-    )
-
-    if bbox is not None:
-        box = np.array(bbox[0])
-    else:
-        box = None
+    labels = np.array([1] * len(inside_pts) + [0] * len(outside_pts))
+    box = np.array(bbox) if bbox is not None else None
 
     masks, scores, _ = predictor.predict(
         point_coords=points,
@@ -54,13 +67,18 @@ def segment_with_points(
         multimask_output=False,
     )
 
-    mask = (masks[0].astype(np.uint8) * 255)
+    if masks is None or len(masks) == 0:
+        return None, None
+
+    mask = (masks[0] * 255).astype(np.uint8)
 
     # Morph cleanup
     k = np.ones((morph_kernel, morph_kernel), np.uint8)
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, k)
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, k)
+    _, mask = cv2.threshold(mask, 127, 255, cv2.THRESH_BINARY)
 
+    # Mask → polygon
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     if not contours:
