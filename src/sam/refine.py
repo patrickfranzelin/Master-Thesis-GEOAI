@@ -19,6 +19,8 @@ def run_sam_stage(img, raw_path, poly_px, inside, outside, out_dir, bid, max_ite
         max_iters: Maximum SAM iterations
         mode: "standard" for full houses, "escalated" for partial houses
     """
+    original_inside = inside.copy()
+    original_outside = outside.copy()
 
     is_escalated = (mode == "escalated")
     
@@ -97,11 +99,13 @@ def run_sam_stage(img, raw_path, poly_px, inside, outside, out_dir, bid, max_ite
 
     sam_input = img.copy()
 
-    for x, y in inside:
-        cv2.circle(sam_input, (int(x), int(y)), 5, (0, 255, 0), -1)
+    # Draw ONLY original MLLM inside points (green)
+    for x, y in original_inside:
+        cv2.circle(sam_input, (int(x), int(y)), 6, (0, 255, 0), -1)
 
-    for x, y in outside:
-        cv2.circle(sam_input, (int(x), int(y)), 5, (0, 0, 255), -1)
+    # Draw ONLY original MLLM outside points (red)
+    for x, y in original_outside:
+        cv2.circle(sam_input, (int(x), int(y)), 6, (0, 0, 255), -1)
 
     # original bbox (BLUE)
     if bbox_init is not None:

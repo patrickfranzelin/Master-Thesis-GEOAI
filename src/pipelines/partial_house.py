@@ -1,7 +1,7 @@
 from src.pipelines.base import Pipeline, PipelineResult
 from src.patches.extractor import extract_patch
 from src.mlqa.discovery_client import discover_all_houses
-from src.sam.multi import segment_multiple_buildings
+from src.sam.multi import run_sam_multi_building
 import cv2
 
 
@@ -10,7 +10,7 @@ class PartialHousePipeline(Pipeline):
 
     def execute(self, ctx):
 
-        # 1️⃣ Extract enlarged patch
+        # Extract enlarged patch
         img_big, _ = extract_patch(
             ctx.geom,
             ctx.crs,
@@ -19,7 +19,7 @@ class PartialHousePipeline(Pipeline):
         )
         img_big = cv2.cvtColor(img_big, cv2.COLOR_RGB2BGR)
 
-        # 2️⃣ Save enlarged raw image
+        # Save enlarged raw image
         discovery_raw_path = (
             ctx.sam_dir.parent
             / "raw"
@@ -32,7 +32,7 @@ class PartialHousePipeline(Pipeline):
         ctx.discovery_path = discovery_raw_path
         ctx.discovery_img = img_big
 
-        # 3️⃣ Run discovery (MLQA enumeration)
+        #  Run discovery (MLQA enumeration)
         result = discover_all_houses(discovery_raw_path)
 
         buildings = result.get("buildings", [])
@@ -51,8 +51,8 @@ class PartialHousePipeline(Pipeline):
                 },
             )
 
-        # 4️⃣ Run SAM multi-building
-        sam_results = segment_multiple_buildings(
+        #  Run SAM multi-building
+        sam_results = run_sam_multi_building(
             image_path=discovery_raw_path,
             buildings_data=buildings,
             negative_pts=outside_pts,
