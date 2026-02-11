@@ -6,7 +6,7 @@ from shapely.geometry import Polygon
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-CHECKPOINT_PATH = PROJECT_ROOT / "models" / "sam2_weights" / "sam_vit_b_finetuned.pth"
+CHECKPOINT_PATH = PROJECT_ROOT / "models" / "sam2_weights" / "sam_building_decoder_finetuned.pth"
 
 DEVICE = "cuda"
 

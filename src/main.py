@@ -11,7 +11,7 @@ from src.pipelines.router import route
 from src.patches.extractor import extract_patch
 from src.patches.create_patch_output import create_patch_outputs
 from src.db.writer import write_mlqa
-
+from src.db.writer import write_detected_houses
 
 # --------------------------------------------------
 # Paths
@@ -143,9 +143,29 @@ for _, row in gdf.iterrows():
     # ---------------------------------------------
     # Execute pipeline and capture results (fixes Bug 3)
     # ---------------------------------------------
-
     result = pipeline.execute(ctx)
-    
+
+    # Normalize result.sam_polygons into list
+    if result.sam_polygons:
+        if isinstance(result.sam_polygons, list):
+            polys = result.sam_polygons
+        else:
+            polys = [result.sam_polygons]
+
+        # Determine detection type
+        if decision.full_house is True:
+            dtype = "full"
+        elif decision.full_house is False:
+            dtype = "partial"
+        else:
+            dtype = "discovery"
+
+        write_detected_houses(
+            building_id=row.id,
+            polygons=polys,
+            detection_type=dtype,
+        )
+
     # ---------------------------------------------
     # Write MLQA results for all pipelines (fixes Bug 4)
     # ---------------------------------------------

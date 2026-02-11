@@ -61,3 +61,44 @@ def write_mlqa(result: dict):
             "inside_pts": json.dumps(result.get("inside_pts", [])),
             "outside_pts": json.dumps(result.get("outside_pts", [])),
         })
+
+
+def write_detected_houses(
+        building_id: int,
+        polygons,
+        detection_type: str,
+):
+    """
+    Insert SAM-detected polygons into src.detected_house.
+
+    Args:
+        building_id: origin dataset building
+        polygons: list of shapely Polygon objects
+        detection_type: 'full', 'partial', or 'discovery'
+    """
+
+    if not polygons:
+        return
+
+    sql = text("""
+               INSERT INTO src.detected_house (building_id,
+                                               detection_type,
+                                               area,
+                                               geom)
+               VALUES (:building_id,
+                       :detection_type,
+                       :area,
+                       ST_SetSRID(ST_GeomFromText(:wkt), 4326))
+               """)
+
+    with engine.begin() as conn:
+        for poly in polygons:
+            if poly is None:
+                continue
+
+            conn.execute(sql, {
+                "building_id": building_id,
+                "detection_type": detection_type,
+                "area": poly.area,
+                "wkt": poly.wkt,
+            })

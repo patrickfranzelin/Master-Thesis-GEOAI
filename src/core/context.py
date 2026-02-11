@@ -18,3 +18,4 @@ class PipelineContext:
     # For discovery mode: enlarged patch for better context
     discovery_path: Optional[Path] = None
     discovery_img: Optional[np.ndarray] = None
+
