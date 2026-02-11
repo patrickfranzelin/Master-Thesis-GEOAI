@@ -17,13 +17,12 @@ client = OpenAI(
 )
 
 DISCOVERY_PROMPT = """
-Find ALL buildings visible in this aerial image patch.
+You are a precise pixel locator.
+Find buildings visible in this aerial image patch.
 
-For each building:
-- Place 2-3 points clearly inside the roof area.
+For buildings: Place points clearly inside the roof area.
 
-Also provide:
-- 4-6 negative points clearly NOT on any building.
+Also provide: negative points clearly NOT on any building.
 
 Return ONLY JSON in this format:
 
@@ -33,14 +32,7 @@ Return ONLY JSON in this format:
   ],
   "negative_points": [[x1,y1],[x2,y2]]
 }
-
-Rules:
-- Look everywhere
-- Include partial buildings
-- Integers only
-- No explanations
 """
-
 
 def _encode_image(path: Path):
     return base64.b64encode(path.read_bytes()).decode("utf-8")
@@ -81,6 +73,10 @@ def discover_all_houses(image_path: Path):
     )
 
     raw = response.choices[0].message.content
+    print("\n--- MLLM RAW RESPONSE ---")
+    print(raw)
+    print("-------------------------\n")
+
     result = _parse_json_safe(raw)
 
     if "buildings" not in result:

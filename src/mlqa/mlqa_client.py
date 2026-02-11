@@ -123,5 +123,8 @@ def analyze_patch(image_path: Path):
     )
 
     raw = response.choices[0].message.content
+    print("\n--- MLLM RAW RESPONSE ---")
+    print(raw)
+    print("-------------------------\n")
 
     return _parse_json_safe(raw)

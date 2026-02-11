@@ -129,6 +129,10 @@ for img_path in image_files:
         )
 
         raw = response.choices[0].message.content
+        print("\n--- MLLM RAW RESPONSE ---")
+        print(raw)
+        print("-------------------------\n")
+
         parsed = parse_json_safe(raw)
 
         inside = parsed.get("inside", [])

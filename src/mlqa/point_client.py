@@ -18,6 +18,7 @@ You are a precise pixel locator.
 
 BLUE STAR marks the TARGET HOUSE at image center.
 
+Place 2 points on the roof and 3 somewhere else
 - All inside points must lie on visible roof pixels, not just center.
 - Distribute inside points across roof area.
 
@@ -73,4 +74,13 @@ def analyze_points(image_path: Path):
         ]
     )
 
-    return _parse(r.choices[0].message.content)
+    raw = r.choices[0].message.content
+
+    print("\n--- POINT MLLM RAW ---")
+    print(raw)
+    print("----------------------")
+
+    parsed = _parse(raw)
+
+    return parsed
+
