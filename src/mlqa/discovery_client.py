@@ -1,13 +1,12 @@
-"""
-Discovery mode MLQA client for detecting all houses in a patch.
-Used when house_present=False to find other buildings that might exist.
-"""
+# src/mlqa/discovery_client.py
+
 import base64
 import json
 import re
 from pathlib import Path
 from openai import OpenAI
 import os
+
 
 RUNPOD_ID = os.environ["RUNPOD_ID"]
 MODEL_NAME = "qwen3vl8b"
@@ -18,44 +17,28 @@ client = OpenAI(
 )
 
 DISCOVERY_PROMPT = """
-You are analyzing an aerial image patch to find ALL buildings/houses.
+Find ALL buildings visible in this aerial image patch.
 
-The GREEN polygon from the dataset is INCORRECT - it doesn't contain a house.
-BUT there might be OTHER buildings in this patch.
+For each building:
+- Place 2-3 points clearly inside the roof area.
 
-TASK: Find ALL buildings/houses visible in this image patch, even if small or partial.
+Also provide:
+- 4-6 negative points clearly NOT on any building.
 
-For EACH building you find:
-1. Place 2-3 points INSIDE the roof area (distributed, not clustered)
-2. Mark its approximate location
-
-Return JSON with list of buildings:
+Return ONLY JSON in this format:
 
 {
-  "buildings_found": [
-    {
-      "building_id": 1,
-      "description": "rectangular metal roof, center-left",
-      "inside_points": [[x1,y1], [x2,y2], [x3,y3]],
-      "confidence": "high|medium|low"
-    },
-    {
-      "building_id": 2,
-      "description": "mud compound, top-right corner",
-      "inside_points": [[x1,y1], [x2,y2]],
-      "confidence": "high|medium|low"
-    }
+  "buildings": [
+    {"inside_points": [[x1,y1],[x2,y2]]}
   ],
-  "negative_points": [[x1,y1], [x2,y2], [x3,y3], [x4,y4]],
-  "total_buildings": 2
+  "negative_points": [[x1,y1],[x2,y2]]
 }
 
 Rules:
-- Look EVERYWHERE in the image, not just near the green polygon
-- Include partial buildings at edges if roof is visible
-- negative_points = 4-6 points clearly NOT on any roof (vegetation, paths, shadows)
-- If NO buildings found at all, return empty buildings_found list
-- Integers only, no decimals
+- Look everywhere
+- Include partial buildings
+- Integers only
+- No explanations
 """
 
 
@@ -66,37 +49,21 @@ def _encode_image(path: Path):
 def _parse_json_safe(raw):
     try:
         return json.loads(raw)
-    except json.JSONDecodeError:
-        # Try removing markdown code blocks
+    except:
         cleaned = re.sub(r"```json|```", "", raw).strip()
         try:
             return json.loads(cleaned)
-        except json.JSONDecodeError:
-            # Return empty result if JSON parsing completely fails
-            return {
-                "buildings_found": [],
-                "negative_points": [],
-                "total_buildings": 0
-            }
+        except:
+            return {"buildings": [], "negative_points": []}
 
 
 def discover_all_houses(image_path: Path):
-    """
-    Discover all buildings in the patch using MLQA.
-    
-    Returns:
-        dict with:
-            - buildings_found: list of building dicts with points
-            - negative_points: points clearly off all buildings
-            - total_buildings: count
-    """
-    
     img_b64 = _encode_image(image_path)
 
     response = client.chat.completions.create(
         model=MODEL_NAME,
         temperature=0.1,
-        max_tokens=1024,  # More tokens for multiple buildings
+        max_tokens=512,
         messages=[
             {
                 "role": "user",
@@ -115,13 +82,11 @@ def discover_all_houses(image_path: Path):
 
     raw = response.choices[0].message.content
     result = _parse_json_safe(raw)
-    
-    # Ensure structure is valid
-    if "buildings_found" not in result:
-        result["buildings_found"] = []
+
+    if "buildings" not in result:
+        result["buildings"] = []
+
     if "negative_points" not in result:
         result["negative_points"] = []
-    if "total_buildings" not in result:
-        result["total_buildings"] = len(result["buildings_found"])
-    
+
     return result

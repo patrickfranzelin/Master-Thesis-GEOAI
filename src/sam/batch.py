@@ -1,11 +1,8 @@
-# src/sam/multi.py
-
-from pathlib import Path
 from src.sam.model import segment_with_points
 
 
-def segment_multiple_buildings(
-    image_path: Path,
+def run_sam_multi_building(
+    image_path,
     buildings_data,
     negative_pts,
     morph_kernel=7,
@@ -14,9 +11,6 @@ def segment_multiple_buildings(
 
     for building in buildings_data:
         inside = building.get("inside_points", [])
-        if not inside:
-            results.append((None, None))
-            continue
 
         mask, poly = segment_with_points(
             image_path=image_path,

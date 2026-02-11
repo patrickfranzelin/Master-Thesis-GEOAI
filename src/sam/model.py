@@ -1,4 +1,4 @@
-# src/sam/engine.py
+# src/sam/model.py
 
 from ultralytics import SAM
 import cv2

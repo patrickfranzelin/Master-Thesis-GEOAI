@@ -1,6 +1,6 @@
 from src.pipelines.base import Pipeline, PipelineResult
 from src.mlqa.point_client import analyze_points
-from src.sam.sam_stage import run_sam_stage
+from src.sam.refine  import run_sam_stage
 
 class FullHousePipeline(Pipeline):
     name = "FULL"
