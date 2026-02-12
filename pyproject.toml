@@ -1,13 +1,51 @@
 [project]
 name = "master-thesis-geoai"
 version = "0.1.0"
-description = "Add your description here"
+description = "AI-assisted building footprint correction pipeline using SAM and VLM"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
+
 dependencies = [
-    "buildingregulariser>=0.2.4",
-    "geopandas>=1.1.2",
-    "notebook>=7.5.3",
-    "rasterio>=1.4.4",
-    "shapely>=2.1.2",
+    # Core ML / Vision
+    "torch",
+    "ultralytics>=8.4",
+    "segment-anything",
+    "opencv-python",
+
+    # Geo stack
+    "geopandas",
+    "rasterio",
+    "shapely",
+    "pyproj",
+    "fiona",
+    "pyogrio",
+    "geoalchemy2",
+
+    # Database
+    "sqlalchemy",
+    "psycopg2-binary",
+
+    # LLM
+    "openai",
+
+    # Utilities
+    "numpy",
+    "pandas",
+    "pyyaml",
+    "requests",
+    "tqdm"
 ]
+
+[tool.uv]
+dev-dependencies = [
+    "ipython",
+    "jupyterlab",
+    "matplotlib",
+    "pytest",
+    "black",
+    "ruff"
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
