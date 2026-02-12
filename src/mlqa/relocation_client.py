@@ -1,4 +1,4 @@
-# src/mlqa/discovery_client.py
+# src/mlqa/relocation_client.py
 
 import base64
 import json
@@ -6,7 +6,6 @@ import re
 from pathlib import Path
 from openai import OpenAI
 import os
-
 
 RUNPOD_ID = os.environ["RUNPOD_ID"]
 MODEL_NAME = "qwen3vl8b"
@@ -16,29 +15,29 @@ client = OpenAI(
     base_url=f"https://{RUNPOD_ID}-7860.proxy.runpod.net/v1"
 )
 
-DISCOVERY_PROMPT = """
+RELOCATION_PROMPT = """
 You are a precise pixel locator.
-Find buildings visible in this aerial image patch.
 
-For buildings: Place points clearly inside the roof area.
+The GREEN polygon is an incorrect building footprint.
 
-Also provide: negative points clearly NOT on any building.
+Find the main roof structure closest to this polygon.
 
-Return ONLY JSON in this format:
+Place points inside that roof
+Place points outside that roof
+
+Return JSON only:
 
 {
-  "buildings": [
-    {"inside_points": [[x1,y1],[x2,y2]]}
-  ],
-  "negative_points": [[x1,y1],[x2,y2]]
+  "inside": [[x,y],[x,y]],
+  "outside": [[x,y],[x,y]]
 }
+
 """
 
-def _encode_image(path: Path):
+def _encode(path: Path):
     return base64.b64encode(path.read_bytes()).decode("utf-8")
 
-
-def _parse_json_safe(raw):
+def _parse(raw):
     try:
         return json.loads(raw)
     except:
@@ -46,21 +45,20 @@ def _parse_json_safe(raw):
         try:
             return json.loads(cleaned)
         except:
-            return {"buildings": [], "negative_points": []}
+            return {"inside": [], "outside": []}
 
-
-def discover_all_houses(image_path: Path):
-    img_b64 = _encode_image(image_path)
+def relocate_building(image_path: Path):
+    img_b64 = _encode(image_path)
 
     response = client.chat.completions.create(
         model=MODEL_NAME,
         temperature=0.1,
-        max_tokens=512,
+        max_tokens=300,
         messages=[
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": DISCOVERY_PROMPT},
+                    {"type": "text", "text": RELOCATION_PROMPT},
                     {
                         "type": "image_url",
                         "image_url": {
@@ -73,16 +71,9 @@ def discover_all_houses(image_path: Path):
     )
 
     raw = response.choices[0].message.content
-    print("\n--- MLLM RAW RESPONSE ---")
+
+    print("\n--- RELOCATION RAW ---")
     print(raw)
-    print("-------------------------\n")
+    print("----------------------\n")
 
-    result = _parse_json_safe(raw)
-
-    if "buildings" not in result:
-        result["buildings"] = []
-
-    if "negative_points" not in result:
-        result["negative_points"] = []
-
-    return result
+    return _parse(raw)
