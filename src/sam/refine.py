@@ -54,26 +54,53 @@ def run_sam_stage(img, raw_path, poly_px, inside, outside, out_dir, bid, max_ite
     mask = None
     poly = None
 
-    for i in range(max_iters):
+    for iter_idx in range(max_iters):
 
-        print(f"SAM iteration {i+1}")
+        print(f"SAM iteration {iter_idx + 1}")
 
-        mask, poly = segment_with_points(
+        masks, polys = segment_with_points(
             image_path=raw_path,
             inside_pts=inside,
             outside_pts=outside,
             bbox=bbox,
             morph_kernel=5,
+            debug=False,
         )
 
-        if mask is None:
+        if not polys:
             print("SAM failed")
             break
 
-        # -----------------------------------
-        # tighten bbox from mask
-        # -----------------------------------
+        print(f"Found {len(polys)} polygons")
 
+        # -------------------------------------------------
+        # 🔎 DEBUG: plot all polygons
+        # -------------------------------------------------
+        overlay_all = img.copy()
+
+        for idx, poly_candidate in enumerate(polys):
+            pts = np.array(poly_candidate.exterior.coords).astype("int32")
+            color = (0, 255 - idx * 80, idx * 80)
+            cv2.polylines(overlay_all, [pts], True, color, 2)
+
+        cv2.imwrite(
+            str(out_dir / f"bld_{bid:07d}_all_masks_iter{iter_idx + 1}.png"),
+            overlay_all
+        )
+
+        # -------------------------------------------------
+        # TEMPORARY: choose first mask for tightening
+        # (only for debugging — we will replace later)
+        # -------------------------------------------------
+        if len(masks) > 0 and len(polys) > 0:
+            mask = masks[0]
+            poly = polys[0]
+        else:
+            break
+
+        # -------------------------------------------------
+        # tighten bbox from selected mask
+        # -------------------------------------------------
         ys, xs = np.where(mask > 0)
 
         if len(xs) > 0:
@@ -84,7 +111,6 @@ def run_sam_stage(img, raw_path, poly_px, inside, outside, out_dir, bid, max_ite
                 int(ys.max()),
             ]]
 
-            # add new center point
             cx = int((bbox[0][0] + bbox[0][2]) / 2)
             cy = int((bbox[0][1] + bbox[0][3]) / 2)
             inside.append([cx, cy])
