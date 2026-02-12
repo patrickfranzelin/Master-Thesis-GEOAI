@@ -63,6 +63,7 @@ def run_sam_stage(img, raw_path, poly_px, inside, outside, out_dir, bid, max_ite
             inside_pts=inside,
             outside_pts=outside,
             bbox=bbox,
+            morph_kernel=5,
         )
 
         if mask is None:
