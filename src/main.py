@@ -79,7 +79,7 @@ for _, row in gdf.iterrows():
     # Patch extraction
     # ---------------------------------------------
 
-    img, poly_px = extract_patch(row.geom, gdf.crs, row.tiff_path, context=1.5)
+    img, poly_px = extract_patch(row.geom, gdf.crs, row.tiff_path, context=1.6)
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
     raw_path, clean_path, debug_path = create_patch_outputs(

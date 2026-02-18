@@ -17,7 +17,7 @@ def segment_with_points(
     inside_pts,
     outside_pts=None,
     bbox=None,
-    morph_kernel=5,
+    morph_kernel=8,
     debug=False,
 ):
     if not inside_pts:
