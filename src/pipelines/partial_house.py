@@ -17,16 +17,16 @@ class PartialHousePipeline(Pipeline):
             ctx.geom,
             ctx.crs,
             ctx.tiff_path,
-            context=3.0,
+            context=4.0,
         )
 
         img_big = cv2.cvtColor(img_big, cv2.COLOR_RGB2BGR)
 
-        # Get relocation points
-        # save enlarged patch temporarily
+        # Save enlarged patch
         temp_big_path = ctx.sam_dir / f"bld_{ctx.building_id:07d}_partial_context.png"
         cv2.imwrite(str(temp_big_path), img_big)
 
+        # Get relocation points
         relocation_pts = relocate_building(temp_big_path)
 
         inside = relocation_pts.get("inside", [])
@@ -41,23 +41,26 @@ class PartialHousePipeline(Pipeline):
                 metadata={"stage": "discovery_failed"}
             )
 
-        # Run discovery stage (renamed multi)
-        buildings_data = [
-            {"inside_points": inside}
-        ]
-
+        # Run automatic mask detection
         candidates = run_sam_detect_all(
             img=img_big,
             out_dir=ctx.sam_dir,
             bid=ctx.building_id,
         )
 
-        # pick first candidate for now
-        best_poly = candidates[0] if candidates else None
+        if not candidates:
+            return PipelineResult(
+                pipeline_name=self.name,
+                sam_polygons=None,
+                inside_pts=inside,
+                outside_pts=outside,
+                metadata={"stage": "no_masks_found"}
+            )
 
+        # 🔥 RETURN ALL POLYGONS
         return PipelineResult(
             pipeline_name=self.name,
-            sam_polygons=best_poly,
+            sam_polygons=candidates,   # <- THIS IS THE FIX
             inside_pts=inside,
             outside_pts=outside,
             metadata={"stage": "discovery_only"}

@@ -11,11 +11,10 @@ from src.sam.model_ import sam
 mask_generator = SamAutomaticMaskGenerator(
     sam,
     points_per_side=32,
-    pred_iou_thresh=0.88,
-    stability_score_thresh=0.92,
-    min_mask_region_area=800,
+    pred_iou_thresh=0.5,
+    stability_score_thresh=0.7,
+    min_mask_region_area=400,
 )
-
 
 def run_sam_detect_all(
     img,
@@ -48,24 +47,33 @@ def run_sam_detect_all(
         if not contours:
             continue
 
-        cnt = max(contours, key=cv2.contourArea)
-        area = cv2.contourArea(cnt)
+        for cnt in contours:
 
-        # basic filtering
-        if area < 1500:
-            continue
+            area = cv2.contourArea(cnt)
 
-        poly = Polygon(cnt.squeeze()).simplify(2.0, preserve_topology=True)
-        roof_polys.append(poly)
+            if area < 1500:
+                continue
 
-        pts = np.array(poly.exterior.coords).astype("int32")
-        cv2.polylines(overlay, [pts], True, (0, 255, 0), 2)
+            if cnt.shape[0] < 3:
+                continue
+
+            poly = Polygon(cnt.squeeze()).simplify(
+                2.0,
+                preserve_topology=True
+            )
+
+            roof_polys.append(poly)
+
+            # 🔥 draw immediately
+            pts = np.array(poly.exterior.coords).astype("int32")
+            cv2.polylines(overlay, [pts], True, (0, 255, 0), 2)
 
     # Save overlay of selected masks
     cv2.imwrite(
         str(out_dir / f"bld_{bid:07d}_detect_all_overlay.png"),
         overlay,
     )
+    print("Total masks from SAM:", len(masks))
 
     return roof_polys
 

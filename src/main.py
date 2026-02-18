@@ -37,7 +37,7 @@ out_dirs = {
 # --------------------------------------------------
 
 engine = create_engine(os.environ["PG_CONN"])
-AOI_ID = 1
+AOI_ID = 3
 
 aoi_gdf = gpd.read_postgis(
     f"SELECT geom FROM src.aoi WHERE aoi_id = {AOI_ID}",
@@ -79,7 +79,7 @@ for _, row in gdf.iterrows():
     # Patch extraction
     # ---------------------------------------------
 
-    img, poly_px = extract_patch(row.geom, gdf.crs, row.tiff_path, context=1.6)
+    img, poly_px = extract_patch(row.geom, gdf.crs, row.tiff_path, context=2)
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
     raw_path, clean_path, debug_path = create_patch_outputs(
@@ -97,7 +97,7 @@ for _, row in gdf.iterrows():
         decision = decide(clean_path)
     except MLQAParseError as e:
         # Parse error should abort, not create false negative
-        print(f"  ⚠️  MLQA parse error for building {row.id}: {e}")
+        print(f" MLQA parse error for building {row.id}: {e}")
         write_mlqa({
             "building_id": row.id,
             "patch_path": str(clean_path),

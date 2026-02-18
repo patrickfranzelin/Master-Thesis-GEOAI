@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from src.sam.model import segment_with_points
+from src.sam.model_ import segment_with_points
 from src.utils.geometry import polygon_to_sam_bbox
 
 

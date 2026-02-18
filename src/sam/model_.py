@@ -44,6 +44,9 @@ def segment_with_points(
     outside_pts=None,
     bbox=None,
     morph_kernel=7,
+    debug=False,
+    multimask_output=False,
+    mode=None,
 ):
 
     if not inside_pts:
@@ -64,31 +67,54 @@ def segment_with_points(
         point_coords=points,
         point_labels=labels,
         box=box,
-        multimask_output=False,
+        multimask_output=multimask_output,
     )
 
     if masks is None or len(masks) == 0:
         return None, None
 
-    mask = (masks[0] * 255).astype(np.uint8)
+    all_masks = []
+    all_polys = []
 
-    # Morph cleanup
-    k = np.ones((morph_kernel, morph_kernel), np.uint8)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, k)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, k)
-    _, mask = cv2.threshold(mask, 127, 255, cv2.THRESH_BINARY)
+    for mask_raw in masks:
 
-    # Mask → polygon
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        mask = (mask_raw * 255).astype(np.uint8)
+#---------------------------------------------------------------------------------------IMPORTANT
+        k_close = np.ones((7, 7), np.uint8)  # was 15
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, k_close)
 
-    if not contours:
-        return mask, None
+        mask = cv2.medianBlur(mask, 5)  # was 9
 
-    cnt = max(contours, key=cv2.contourArea)
+        k_open = np.ones((3, 3), np.uint8)  # was 5
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, k_open)
 
-    if cnt.shape[0] < 3:
-        return mask, None
+        _, mask = cv2.threshold(mask, 127, 255, cv2.THRESH_BINARY)
 
-    poly = Polygon(cnt.squeeze()).simplify(2.0, preserve_topology=True)
+        contours, _ = cv2.findContours(
+            mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
 
-    return mask, poly
+        for cnt in contours:
+
+            area = cv2.contourArea(cnt)
+
+            if area < 1000:
+                continue
+
+            if cnt.shape[0] < 3:
+                continue
+
+            poly = Polygon(cnt.squeeze()).simplify(
+                2.0,
+                preserve_topology=True
+            )
+
+            all_masks.append(mask)
+            all_polys.append(poly)
+
+    if not all_polys:
+        return None, None
+
+    return all_masks, all_polys
+
+
