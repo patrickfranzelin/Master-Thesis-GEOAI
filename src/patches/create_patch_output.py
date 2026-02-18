@@ -18,7 +18,7 @@ def create_patch_outputs(img, poly_px, out_dirs, bid):
     # debug = ONLY center + grid
     debug = img.copy()
     debug = add_center_star(debug)
-    debug = add_grid_overlay(debug)
+    #debug = add_grid_overlay(debug)
     cv2.imwrite(str(debug_path), debug)
 
     return raw_path, clean_path, debug_path
