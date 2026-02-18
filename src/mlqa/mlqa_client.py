@@ -15,106 +15,106 @@ client = OpenAI(
 
 
 class MLQAParseError(Exception):
-    """Raised when MLQA response cannot be parsed as valid JSON."""
     pass
 
 
-LOW_CONTRAST_QA_PROMPT = """
-Aerial ortho patch from Sahel/Africa. GREEN polygon = building footprint from dataset. 
-CENTER STAR marks patch center. Grid helps orientation.
+PRESENCE_SYSTEM = """
+You are an expert geospatial analyst specializing in aerial imagery.
+Your task is to detect man-made roof structures within specified polygon boundaries.
+Output ONLY valid JSON. No markdown, no explanations.
+"""
 
-TASK: Detect if ANY man‑made structure exists INSIDE/TOUCHING GREEN polygon.
+PRESENCE_USER = """
+Input: An aerial image patch containing a GREEN polygon outlining a specific area.
 
-✅ HOUSE EXAMPLES (even if mud/earth‑colored, irregular, courtyard‑style):
-- Corrugated iron roofs (shiny rectangles)  
-- Mud brick compounds (earth‑tone rectangles, internal walls)
-- Flat roofs blending with dirt but rectangular/geometric 
-- Small protrusions/extensions = part of house
+Instructions:
+1. Inspect the area strictly INSIDE the green polygon boundaries.
+2. Look for visual patterns typical of man-made roofs (e.g., rusted metal sheets, shingles, concrete slabs, or uniform geometric textures).
+3. Ignore surrounding grass, water, or vegetation unless it is part of a structure.
 
-❌ NO HOUSE:
-- Pure vegetation/grass inside polygon 
-- Only sandy ground, paths, shadows
+Question: Is there clear visual evidence of a roof or man-made structure contained within the green polygon?
 
-Rules:
-- house_present=true if ANY roof/structure inside polygon (even partial, faint, earth‑colored)
-- house_present=false ONLY if polygon clearly empty (vegetation/sand only)
-
-Error_description: SPECIFIC location + problem. Examples:
-- "No structure inside, only grass"
-- "Green polygon offset east, misses mud compound" 
-- "Polygon too small, cuts NW corner of iron roof"
-
-Strict JSON:
+Expected Output Format:
 {
-  "house_present": true/false,
-  "error_description": "exact description"
+  "house_present": true
+}
+OR
+{
+  "house_present": false
 }
 """
-QA_PROMPT = """
-You see an aerial image patch.
 
-GREEN polygon = building footprint.
 
-Definitions:
-- "house_present": true if any roof or man-made structure is inside or touching the polygon.
-- "full_house_present": true if the polygon covers nearly all of the house footprint (area). 
-  If the polygon cuts off large parts of the roof or only covers a small corner, set it to false.
+COVERAGE_SYSTEM = """
+You are an expert geospatial analyst specializing in building footprint coverage.
+Your task is to evaluate if a polygon captures the main body of a visible roof and if the whole building is visible in the patch.
+Output ONLY valid JSON,
+"""
 
-Return ONLY a single JSON object with this exact schema, no extra text:
+COVERAGE_USER = """
+Input: An aerial image patch with a GREEN polygon representing a building footprint.
 
+Instructions:
+Evaluate if the green polygon accurately captures the MAIN body of the visible roof.
+
+Criteria for TRUE:
+- The green polygon covers the majority (>50%) of the visible roof area.
+- The roof structure is complete within the image.
+
+Criteria for FALSE:
+- A significant portion of the building lies outside the green polygon.
+- The image cuts off the building.
+
+Expected Output Format:
 {
-  "house_present": true or false,
-  "full_house_present": true or false
-  "error_description": None
+  "full_house_present": true
+}
+OR
+{
+  "full_house_present": false
 }
 """
+
+
 
 def _parse_json_safe(raw):
-    """
-    Parse MLQA response JSON.
-    
-    Raises MLQAParseError if parsing fails completely.
-    This ensures parse failures abort the pipeline instead of 
-    creating false negatives.
-    """
+    """Robustly parse JSON, handling markdown code blocks."""
     try:
         return json.loads(raw)
     except json.JSONDecodeError:
+        # Remove markdown code blocks if present
         cleaned = re.sub(r"```json|```", "", raw).strip()
+        # Remove any trailing commas before closing braces (common LLM error)
+        cleaned = re.sub(r',\s*}', '}', cleaned)
         try:
             return json.loads(cleaned)
         except json.JSONDecodeError:
-            # Parse failure is a critical error - don't return false data
             raise MLQAParseError(
-                f"Failed to parse MLQA response as JSON. Raw response: {raw[:200]}"
+                f"Failed to parse MLQA response as JSON. Raw: {raw[:200]}"
             )
-
 
 def _encode_image(path: Path):
     return base64.b64encode(path.read_bytes()).decode("utf-8")
 
 
-# ---------------------------------------------------
-# Public API
-# ---------------------------------------------------
-
-def analyze_patch(image_path: Path):
-
-    img_b64 = _encode_image(image_path)
-
+def _ask(system_prompt: str, user_prompt: str, image_b64: str):
     response = client.chat.completions.create(
         model=MODEL_NAME,
-        temperature=0.1,
-        max_tokens=512,
+        temperature=0,
+        max_tokens=256,
         messages=[
+            {
+                "role": "system",
+                "content": system_prompt
+            },
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": QA_PROMPT},
+                    {"type": "text", "text": user_prompt},
                     {
                         "type": "image_url",
                         "image_url": {
-                            "url": f"data:image/png;base64,{img_b64}"
+                            "url": f"data:image/png;base64,{image_b64}"
                         }
                     }
                 ]
@@ -128,3 +128,29 @@ def analyze_patch(image_path: Path):
     print("-------------------------\n")
 
     return _parse_json_safe(raw)
+
+
+# ---------------------------------------------------
+# Public API
+# ---------------------------------------------------
+
+def analyze_patch(image_path: Path):
+    img_b64 = _encode_image(image_path)
+
+    # Step 1: Presence check
+    presence = _ask(PRESENCE_SYSTEM, PRESENCE_USER, img_b64)
+
+    if not presence.get("house_present", False):
+        return {
+            "house_present": False,
+            "full_house_present": False
+        }
+
+    # Step 2: Coverage check
+    coverage = _ask(COVERAGE_SYSTEM, COVERAGE_USER, img_b64)
+
+    return {
+        "house_present": True,
+        "full_house_present": coverage.get("full_house_present", False)
+    }
+

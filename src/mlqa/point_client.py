@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 from openai import OpenAI
 import os
+import cv2
 
 RUNPOD_ID = os.environ["RUNPOD_ID"]
 MODEL_NAME = "qwen3vl8b"
@@ -14,27 +15,27 @@ client = OpenAI(
 )
 
 POINT_PROMPT = """
-You are a precise pixel locator.
+You are a precise spatial locator.
 
-BLUE STAR marks the TARGET HOUSE at image center.
+A BLUE STAR marks the center of the TARGET HOUSE.
 
-Place 2 points on the roof and 3 somewhere else
-- All inside points must lie on visible roof pixels, not just center.
-- Distribute inside points across roof area.
+Task:
+1. Identify the roof of the house marked by the star.
+2. Select 2 points ON the roof (spread apart).
+3. Select 2 points OFF the roof (on ground or water).
 
-Return exactly:
+Important:
+- Coordinate system: 
+  - (0,0) = top-left corner
+  - (1000,1000) = bottom-right corner
+- Points must lie clearly on visible roof pixels.
+
+Return ONLY valid JSON:
 
 {
   "inside": [[x,y],[x,y]],
-  "outside": [[x,y],[x,y],[x,y]]
+  "outside": [[x,y],[x,y]]
 }
-
-Rules:
-- 2 points distributed across THIS roof (not same location)
-- 3 points clearly outside THIS roof
-
-- integers only
-- JSON ONLY
 """
 
 def _encode(path: Path):
@@ -50,13 +51,27 @@ def _parse(raw):
         except:
             return {"inside": [], "outside": []}
 
+
+def _denormalize(points, width, height):
+    """Convert 0–1000 coordinates to actual pixel coords."""
+    real = []
+    for x, y in points:
+        px = int((x / 1000) * width)
+        py = int((y / 1000) * height)
+        real.append([px, py])
+    return real
+
+
 def analyze_points(image_path: Path):
+
+    img = cv2.imread(str(image_path))
+    height, width = img.shape[:2]
 
     img_b64 = _encode(image_path)
 
     r = client.chat.completions.create(
         model=MODEL_NAME,
-        temperature=0.1,
+        temperature=0,
         max_tokens=512,
         messages=[
             {
@@ -82,5 +97,13 @@ def analyze_points(image_path: Path):
 
     parsed = _parse(raw)
 
-    return parsed
+    inside_norm = parsed.get("inside", [])
+    outside_norm = parsed.get("outside", [])
 
+    inside = _denormalize(inside_norm, width, height)
+    outside = _denormalize(outside_norm, width, height)
+
+    return {
+        "inside": inside,
+        "outside": outside
+    }
