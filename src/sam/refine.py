@@ -7,7 +7,7 @@ from src.utils.geometry import polygon_to_sam_bbox
 def run_sam_stage(img, raw_path, poly_px, inside, outside, out_dir, bid, max_iters=3, mode="standard"):
     """
     Run SAM refinement stage.
-    
+
     Args:
         img: Input image
         raw_path: Path to raw image
@@ -21,24 +21,8 @@ def run_sam_stage(img, raw_path, poly_px, inside, outside, out_dir, bid, max_ite
     """
     original_inside = inside.copy()
     original_outside = outside.copy()
+    bbox_scale = 0.35
 
-    is_escalated = (mode == "escalated")
-    
-    if is_escalated:
-        # For partial houses, reset points and use larger bbox
-        print(f"  SAM mode: escalated (partial house) - using larger bbox, resetting MLQA points")
-        inside = []
-        outside = []
-        bbox_scale = 0.8
-    else:
-        # For full houses, use standard bbox and MLQA points
-        print(f"  SAM mode: standard (full house) - using MLQA points")
-        bbox_scale = 0.2
-
-    if len(inside) == 0 and not is_escalated:
-        print("SAM skipped (no inside points)")
-        return None
-        
     # initial bbox from footprint
     bbox_init = polygon_to_sam_bbox(poly_px, scale=bbox_scale)
     bbox = bbox_init.copy() if bbox_init else None
