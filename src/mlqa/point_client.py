@@ -14,18 +14,21 @@ client = OpenAI(
     base_url=f"https://{RUNPOD_ID}-7860.proxy.runpod.net/v1"
 )
 
-POINT_PROMPT = """
+# --------------------------------------------------
+# PROMPTS
+# --------------------------------------------------
+
+POINT_PROMPT_POSITIVE = """
 You are a precise spatial locator.
 
 A BLUE STAR marks the center of the TARGET HOUSE.
 
 Task:
 1. Identify the roof of the house marked by the star.
-2. Select 2 points ON the roof (spread apart).
-3. Select 2 points OFF the roof (on ground or water).
+2. Select 3 points ON the roof (spread apart).
 
 Important:
-- Coordinate system: 
+- Coordinate system:
   - (0,0) = top-left corner
   - (1000,1000) = bottom-right corner
 - Points must lie clearly on visible roof pixels.
@@ -33,13 +36,41 @@ Important:
 Return ONLY valid JSON:
 
 {
-  "inside": [[x,y],[x,y]],
-  "outside": [[x,y],[x,y]]
+  "inside": [[x,y],[x,y],[x,y]]
 }
 """
 
+POINT_PROMPT_NEGATIVE = """
+You are a precise spatial locator.
+
+A BLUE STAR marks the center of the TARGET HOUSE.
+
+Task:
+1. Identify the roof of the house marked by the star.
+2. Select 3 points OUTSIDE the roof.
+   - Choose points clearly NOT on the roof
+   - Use ground, vegetation, roads, or shadows.
+
+Important:
+- Coordinate system:
+  - (0,0) = top-left corner
+  - (1000,1000) = bottom-right corner
+- Points must NOT lie on roof pixels.
+
+Return ONLY valid JSON:
+
+{
+  "outside": [[x,y],[x,y],[x,y]]
+}
+"""
+
+# --------------------------------------------------
+# UTILS
+# --------------------------------------------------
+
 def _encode(path: Path):
     return base64.b64encode(path.read_bytes()).decode("utf-8")
+
 
 def _parse(raw):
     try:
@@ -49,7 +80,7 @@ def _parse(raw):
         try:
             return json.loads(cleaned)
         except:
-            return {"inside": [], "outside": []}
+            return {}
 
 
 def _denormalize(points, width, height):
@@ -62,14 +93,8 @@ def _denormalize(points, width, height):
     return real
 
 
-def analyze_points(image_path: Path):
-
-    img = cv2.imread(str(image_path))
-    height, width = img.shape[:2]
-
-    img_b64 = _encode(image_path)
-
-    r = client.chat.completions.create(
+def _call_model(prompt_text, image_b64):
+    response = client.chat.completions.create(
         model=MODEL_NAME,
         temperature=0,
         max_tokens=512,
@@ -77,11 +102,11 @@ def analyze_points(image_path: Path):
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": POINT_PROMPT},
+                    {"type": "text", "text": prompt_text},
                     {
                         "type": "image_url",
                         "image_url": {
-                            "url": f"data:image/png;base64,{img_b64}"
+                            "url": f"data:image/png;base64,{image_b64}"
                         }
                     }
                 ]
@@ -89,17 +114,41 @@ def analyze_points(image_path: Path):
         ]
     )
 
-    raw = r.choices[0].message.content
+    raw = response.choices[0].message.content
 
-    print("\n--- POINT MLLM RAW ---")
+    print("\n--- MLLM RAW ---")
     print(raw)
-    print("----------------------")
+    print("----------------")
 
-    parsed = _parse(raw)
+    return _parse(raw)
 
-    inside_norm = parsed.get("inside", [])
-    outside_norm = parsed.get("outside", [])
 
+# --------------------------------------------------
+# MAIN FUNCTION
+# --------------------------------------------------
+
+def analyze_points(image_path: Path):
+
+    img = cv2.imread(str(image_path))
+    height, width = img.shape[:2]
+
+    img_b64 = _encode(image_path)
+
+    # ----------------------------
+    # 1Positive points call
+    # ----------------------------
+    pos_result = _call_model(POINT_PROMPT_POSITIVE, img_b64)
+    inside_norm = pos_result.get("inside", [])
+
+    # ----------------------------
+    #  Negative points call
+    # ----------------------------
+    neg_result = _call_model(POINT_PROMPT_NEGATIVE, img_b64)
+    outside_norm = neg_result.get("outside", [])
+
+    # ----------------------------
+    # Convert to pixel coords
+    # ----------------------------
     inside = _denormalize(inside_norm, width, height)
     outside = _denormalize(outside_norm, width, height)
 
