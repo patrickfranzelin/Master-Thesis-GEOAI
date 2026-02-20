@@ -20,7 +20,10 @@ class FullHousePipeline(Pipeline):
             outside=outside,
             out_dir=ctx.sam_dir,
             bid=ctx.building_id,
-            mode="standard",
+            geom=ctx.geom,
+            crs=ctx.crs,
+            tiff_path=ctx.tiff_path,
+            context=2.0,
         )
         
         # Return structured result

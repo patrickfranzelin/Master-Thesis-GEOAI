@@ -75,8 +75,6 @@ OR
 }
 """
 
-
-
 def _parse_json_safe(raw):
     """Robustly parse JSON, handling markdown code blocks."""
     try:
