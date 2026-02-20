@@ -1,39 +1,34 @@
 import cv2
-import numpy as np
 from shapely.geometry import Point
-
-from src.patches.extractor import extract_patch
+from src.patches.extractor import extract_patch, extract_patch_pixel
 from src.pipelines.base import Pipeline, PipelineResult
 from src.sam.partial import run_sam_detect_all
 from src.sam.refine import run_sam_stage
 
+PARTIAL_CONTEXT_START = 4.0  # initial detection context
+PARTIAL_CONTEXT_REFINE_START = 4.0  # refine starts at same context so no backwards resize
+
 
 class PartialHousePipeline(Pipeline):
-
     name = "PARTIAL"
 
     def execute(self, ctx):
-
         # --------------------------------------------------
-        # Extract larger context
+        # 1. Extract larger context patch for detection
         # --------------------------------------------------
-
         img_big, poly_px_big = extract_patch(
             ctx.geom,
             ctx.crs,
             ctx.tiff_path,
-            context=4.0,
+            context=PARTIAL_CONTEXT_START,
         )
-
         img_big = cv2.cvtColor(img_big, cv2.COLOR_RGB2BGR)
-
         temp_big_path = ctx.sam_dir / f"bld_{ctx.building_id:07d}_partial_context.png"
         cv2.imwrite(str(temp_big_path), img_big)
 
         # --------------------------------------------------
-        # Detect all candidate roofs
+        # 2. Detect all candidate roofs with SAM auto-mask
         # --------------------------------------------------
-
         candidates = run_sam_detect_all(
             img=img_big,
             out_dir=ctx.sam_dir,
@@ -41,76 +36,68 @@ class PartialHousePipeline(Pipeline):
         )
 
         if not candidates:
+            print("  ✗ PARTIAL: no candidates detected")
             return PipelineResult(
                 pipeline_name=self.name,
                 sam_polygons=None,
                 inside_pts=[],
                 outside_pts=[],
-                metadata={"stage": "no_masks_found"}
+                metadata={"stage": "no_masks_found"},
             )
 
         # --------------------------------------------------
-        # Compute center of original footprint
+        # 3. Pick the candidate that contains the start polygon centroid
         # --------------------------------------------------
-
-        center = poly_px_big.centroid
-        center_point = Point(center.x, center.y)
-
-        # --------------------------------------------------
-        #Pick candidate containing that center
-        # --------------------------------------------------
+        center_point = Point(poly_px_big.centroid.x, poly_px_big.centroid.y)
 
         selected = None
-
         for poly in candidates:
             if poly.contains(center_point):
                 selected = poly
                 break
 
+        # Fallback: nearest candidate by centroid distance
         if selected is None:
-            return PipelineResult(
-                pipeline_name=self.name,
-                sam_polygons=None,
-                inside_pts=[],
-                outside_pts=[],
-                metadata={"stage": "no_candidate_contains_center"}
+            print("  ⚠ No candidate contains footprint center — picking nearest by centroid distance")
+            selected = min(
+                candidates,
+                key=lambda p: p.centroid.distance(center_point),
             )
 
         # --------------------------------------------------
-        #  Prepare refinement inputs
+        # 4. Re-extract refinement patch with standard context
         # --------------------------------------------------
 
-        # use selected polygon as new "footprint"
-        selected_center = selected.centroid
-        inside = [[int(selected_center.x), int(selected_center.y)]]
+        # Convert selected polygon (pixel space of big patch)
+        # back to geo space using inverse transform from extractor
+
+        refine_img, refine_poly_px = extract_patch_pixel(
+            img_big,
+            selected,
+            out_size=512,
+            context=1.5  # same as FULL refine
+        )
+
+        temp_refine_path = ctx.sam_dir / f"bld_{ctx.building_id:07d}_partial_refine.png"
+        cv2.imwrite(str(temp_refine_path), refine_img)
+
+        inside = [[int(refine_poly_px.centroid.x), int(refine_poly_px.centroid.y)]]
         outside = []
 
-        # --------------------------------------------------
-        # Run refinement stage
-        # --------------------------------------------------
-
         refined_polygon = run_sam_stage(
-            img=img_big,
-            raw_path=temp_big_path,
-            poly_px=selected,
+            img=refine_img,
+            raw_path=temp_refine_path,
+            poly_px=refine_poly_px,
             inside=inside,
             outside=outside,
             out_dir=ctx.sam_dir,
             bid=ctx.building_id,
-            geom=ctx.geom,
-            crs=ctx.crs,
-            tiff_path=ctx.tiff_path,
-            context=3.0,  # partial starts larger
         )
-
-        # --------------------------------------------------
-        #  Return result
-        # --------------------------------------------------
 
         return PipelineResult(
             pipeline_name=self.name,
             sam_polygons=refined_polygon,
             inside_pts=inside,
             outside_pts=outside,
-            metadata={"stage": "discovery+refine"}
+            metadata={"stage": "discovery+refine", "context_used": PARTIAL_CONTEXT_REFINE_START},
         )

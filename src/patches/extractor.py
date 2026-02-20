@@ -57,3 +57,45 @@ def extract_patch(geom, geom_crs, raster_path, out_size=512, context=2):
 
         return img, geom_px
 
+def extract_patch_pixel(img, poly_px, out_size=512, context=2.0):
+    """
+    Pixel-space version of extract_patch.
+    Works entirely inside an existing patch (no CRS).
+    """
+
+    h_img, w_img = img.shape[:2]
+
+    minx, miny, maxx, maxy = poly_px.bounds
+
+    # center of house
+    cx = (minx + maxx) / 2
+    cy = (miny + maxy) / 2
+
+    # house size
+    size = max(maxx - minx, maxy - miny) * context
+    half = size / 2
+
+    # square crop bounds
+    x1 = int(max(cx - half, 0))
+    y1 = int(max(cy - half, 0))
+    x2 = int(min(cx + half, w_img))
+    y2 = int(min(cy + half, h_img))
+
+    crop = img[y1:y2, x1:x2]
+
+    # resize to fixed output size
+    h_crop, w_crop = crop.shape[:2]
+    crop_resized = cv2.resize(crop, (out_size, out_size), interpolation=cv2.INTER_AREA)
+
+    # shift polygon into crop space
+    from shapely.affinity import translate, scale
+
+    poly_shifted = translate(poly_px, xoff=-x1, yoff=-y1)
+
+    # scale polygon to resized image
+    sx = out_size / w_crop
+    sy = out_size / h_crop
+
+    poly_rescaled = scale(poly_shifted, xfact=sx, yfact=sy, origin=(0, 0))
+
+    return crop_resized, poly_rescaled

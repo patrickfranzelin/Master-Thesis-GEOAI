@@ -37,7 +37,7 @@ out_dirs = {
 # --------------------------------------------------
 
 engine = create_engine(os.environ["PG_CONN"])
-AOI_ID = 3
+AOI_ID = 1
 
 aoi_gdf = gpd.read_postgis(
     f"SELECT geom FROM src.aoi WHERE aoi_id = {AOI_ID}",

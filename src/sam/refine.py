@@ -1,40 +1,10 @@
 import cv2
 import numpy as np
-
-from src.patches.extractor import extract_patch
-from src.sam.model_ import segment_with_points
+from src.sam.model import segment_with_points
 from src.utils.geometry import polygon_to_sam_bbox
 
-def _touches_border(mask, margin=2):
-    h, w = mask.shape[:2]
 
-    # check 4 borders
-    if np.any(mask[:margin, :] > 0):
-        return True
-    if np.any(mask[h - margin:h, :] > 0):
-        return True
-    if np.any(mask[:, :margin] > 0):
-        return True
-    if np.any(mask[:, w - margin:w] > 0):
-        return True
-
-    return False
-
-def run_sam_stage(
-    img,
-    raw_path,
-    poly_px,
-    inside,
-    outside,
-    out_dir,
-    bid,
-    geom=None,
-    crs=None,
-    tiff_path=None,
-    context=2.0,
-    max_context=8.0,
-    max_iters=3,
-):
+def run_sam_stage(img, raw_path, poly_px, inside, outside, out_dir, bid, max_iters=3, mode="standard"):
     """
     Run SAM refinement stage.
 
@@ -51,132 +21,138 @@ def run_sam_stage(
     """
     original_inside = inside.copy()
     original_outside = outside.copy()
-    bbox_scale = 0.35
+    bbox_scale = 0.25
 
-    while True:
+    # initial bbox from footprint
+    bbox_init = polygon_to_sam_bbox(poly_px, scale=bbox_scale)
+    bbox = bbox_init.copy() if bbox_init else None
 
-        # initial bbox from footprint
-        bbox_init = polygon_to_sam_bbox(poly_px, scale=bbox_scale)
-        bbox = bbox_init.copy() if bbox_init else None
+    # always add bbox center as positive anchor
+    if bbox is not None:
+        x1, y1, x2, y2 = bbox[0]
+        cx = int((x1 + x2) / 2)
+        cy = int((y1 + y2) / 2)
+        inside = inside + [[cx, cy]]
 
-        inside = original_inside.copy()
-        outside = original_outside.copy()
+    mask = None
+    poly = None
 
-        # always add bbox center as positive anchor
-        if bbox is not None:
-            x1, y1, x2, y2 = bbox[0]
-            cx = int((x1 + x2) / 2)
-            cy = int((y1 + y2) / 2)
-            inside = inside + [[cx, cy]]
+    for iter_idx in range(max_iters):
 
-        mask = None
-        poly = None
+        print(f"SAM iteration {iter_idx + 1}")
 
-        for iter_idx in range(max_iters):
+        masks, polys = segment_with_points(
+            image_path=raw_path,
+            inside_pts=inside,
+            outside_pts=outside,
+            bbox=bbox,
+            morph_kernel=8,
+            debug=False,
+        )
 
-            print(f"SAM iteration {iter_idx + 1}")
+        if not polys:
+            print("SAM failed")
+            break
 
-            masks, polys = segment_with_points(
-                image_path=raw_path,
-                inside_pts=inside,
-                outside_pts=outside,
-                bbox=bbox,
-                morph_kernel=5,
-                debug=False,
-            )
+        print(f"Found {len(polys)} polygons")
 
-            if not polys:
-                print("SAM failed")
-                break
+        # -------------------------------------------------
+        # 🔎 DEBUG: plot all polygons
+        # -------------------------------------------------
+        # -------------------------------------------
+        # Select polygon closest to original anchor
+        # -------------------------------------------
 
-            print(f"Found {len(polys)} polygons")
+        anchor = poly_px.centroid
 
-            # TEMP: choose first mask (your original logic)
-            if len(masks) > 0 and len(polys) > 0:
-                mask = masks[0]
-                poly = polys[0]
-            else:
-                break
+        def score(p):
+            return p.centroid.distance(anchor)
 
-            # BORDER CHECK (moved here so mask exists)
-            if _touches_border(mask):
+        best_idx = min(range(len(polys)), key=lambda i: score(polys[i]))
 
-                if geom is None:
-                    print("Border touched but no geom provided.")
-                    return None
+        mask = masks[best_idx]
+        poly = polys[best_idx]
 
-                if context >= max_context:
-                    print("Reached max context. Stopping resize.")
-                    break
+        # -------------------------------------------
+        # DEBUG: visualize ONLY selected polygon
+        # -------------------------------------------
 
-                print(f"⚠️ Border hit → increasing context {context} → {context * 1.5}")
+        overlay_selected = img.copy()
+        pts = np.array(poly.exterior.coords).astype("int32")
 
-                context *= 1.5
+        # Thick bright green outline
+        cv2.polylines(overlay_selected, [pts], True, (0, 255, 0), 4)
 
-                # Re-extract bigger patch
-                img, poly_px = extract_patch(
-                    geom,
-                    crs,
-                    tiff_path,
-                    context=context,
-                )
+        # Optional: fill transparent highlight
+        mask_color = overlay_selected.copy()
+        cv2.fillPoly(mask_color, [pts], (0, 255, 0))
+        overlay_selected = cv2.addWeighted(mask_color, 0.3, overlay_selected, 0.7, 0)
 
-                img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        cv2.imwrite(
+            str(out_dir / f"bld_{bid:07d}_selected_iter{iter_idx + 1}.png"),
+            overlay_selected
 
-                raw_path = out_dir / f"bld_{bid:07d}_resized.png"
-                cv2.imwrite(str(raw_path), img)
+        )
 
-                continue  # restart outer while loop
+        if not polys:
+            break
 
-            # -------------------------------------------------
-            # DEBUG: plot all polygons
-            # -------------------------------------------------
-            overlay_all = img.copy()
+        # -------------------------------------------
+        # Select polygon closest to original anchor
+        # -------------------------------------------
 
-            for idx, poly_candidate in enumerate(polys):
-                pts = np.array(poly_candidate.exterior.coords).astype("int32")
-                color = (0, 255 - idx * 80, idx * 80)
-                cv2.polylines(overlay_all, [pts], True, color, 2)
+        anchor = poly_px.centroid
 
-            cv2.imwrite(
-                str(out_dir / f"bld_{bid:07d}_all_masks_iter{iter_idx + 1}.png"),
-                overlay_all
-            )
+        def score(p):
+            return p.centroid.distance(anchor)
 
-            # tighten bbox
-            ys, xs = np.where(mask > 0)
+        best_idx = min(range(len(polys)), key=lambda i: score(polys[i]))
 
-            if len(xs) > 0:
-                bbox = [[
-                    int(xs.min()),
-                    int(ys.min()),
-                    int(xs.max()),
-                    int(ys.max()),
-                ]]
+        mask = masks[best_idx]
+        poly = polys[best_idx]
 
-                cx = int((bbox[0][0] + bbox[0][2]) / 2)
-                cy = int((bbox[0][1] + bbox[0][3]) / 2)
-                inside.append([cx, cy])
+        # -------------------------------------------------
+        # tighten bbox from selected mask
+        # -------------------------------------------------
+        ys, xs = np.where(mask > 0)
 
-        break  # exit while if no border retry
+        if len(xs) > 0:
+            bbox = [[
+                int(xs.min()),
+                int(ys.min()),
+                int(xs.max()),
+                int(ys.max()),
+            ]]
+
+            cx = int((bbox[0][0] + bbox[0][2]) / 2)
+            cy = int((bbox[0][1] + bbox[0][3]) / 2)
+            inside.append([cx, cy])
 
     if mask is None:
         return None
 
     print("SAM converged")
 
+    # ---------------------------------------------
+    # Debug visualization
+    # ---------------------------------------------
+
     sam_input = img.copy()
 
+    # Draw ONLY original MLLM inside points (green)
     for x, y in original_inside:
         cv2.circle(sam_input, (int(x), int(y)), 6, (0, 255, 0), -1)
 
+    # Draw ONLY original MLLM outside points (red)
     for x, y in original_outside:
         cv2.circle(sam_input, (int(x), int(y)), 6, (0, 0, 255), -1)
 
+    # original bbox (BLUE)
     if bbox_init is not None:
         x1, y1, x2, y2 = bbox_init[0]
         cv2.rectangle(sam_input, (x1, y1), (x2, y2), (255, 0, 0), 2)
 
+    # final bbox (YELLOW)
     if bbox is not None:
         x1, y1, x2, y2 = bbox[0]
         cv2.rectangle(sam_input, (x1, y1), (x2, y2), (0, 255, 255), 2)
@@ -191,7 +167,3 @@ def run_sam_stage(
         cv2.imwrite(str(out_dir / f"bld_{bid:07d}_sam.png"), overlay)
 
     return poly
-
-
-
-
