@@ -74,6 +74,32 @@ OR
   "full_house_present": false
 }
 """
+ERROR_SYSTEM = """
+You are an expert geospatial analyst.
+
+Your task is to describe geometric mismatches between a building roof and a given polygon.
+
+Output ONLY valid JSON.
+No markdown.
+No explanations outside JSON.
+"""
+ERROR_USER = """
+Input: An aerial image patch with a GREEN polygon outlining a building footprint.
+
+Task:
+Describe any visible mismatch between the green polygon and the actual roof structure.
+
+If there is no visible mismatch, return null.
+
+Expected Output Format:
+{
+  "error_description": "Short human-readable explanation"
+}
+OR
+{
+  "error_description": null
+}
+"""
 
 def _parse_json_safe(raw):
     """Robustly parse JSON, handling markdown code blocks."""
@@ -135,20 +161,31 @@ def _ask(system_prompt: str, user_prompt: str, image_b64: str):
 def analyze_patch(image_path: Path):
     img_b64 = _encode_image(image_path)
 
-    # Step 1: Presence check
+    # --------------------------
+    # 1. Presence check
+    # --------------------------
     presence = _ask(PRESENCE_SYSTEM, PRESENCE_USER, img_b64)
 
     if not presence.get("house_present", False):
         return {
             "house_present": False,
-            "full_house_present": False
+            "full_house_present": False,
+            "error_description": "No roof structure detected inside polygon"
         }
 
-    # Step 2: Coverage check
+    # --------------------------
+    # 2. Coverage check
+    # --------------------------
     coverage = _ask(COVERAGE_SYSTEM, COVERAGE_USER, img_b64)
+
+    # --------------------------
+    # 3. Error description check (separate call)
+    # --------------------------
+    error_info = _ask(ERROR_SYSTEM, ERROR_USER, img_b64)
 
     return {
         "house_present": True,
-        "full_house_present": coverage.get("full_house_present", False)
+        "full_house_present": coverage.get("full_house_present", False),
+        "error_description": error_info.get("error_description")
     }
 
