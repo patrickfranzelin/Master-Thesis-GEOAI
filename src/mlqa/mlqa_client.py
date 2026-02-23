@@ -24,6 +24,7 @@ Your task is to detect man-made roof structures within specified polygon boundar
 Output ONLY valid JSON. No markdown, no explanations.
 """
 
+
 PRESENCE_USER = """
 Input: An aerial image patch containing a GREEN polygon outlining a specific area.
 
@@ -87,7 +88,8 @@ ERROR_USER = """
 Input: An aerial image patch with a GREEN polygon outlining a building footprint.
 
 Task:
-Describe any visible mismatch between the green polygon and the actual roof structure.
+Describe any visible mismatch between the green polygon and the actual roof structure and where it is (East,West,North,South).
+Output ONLY valid JSON.).
 
 If there is no visible mismatch, return null.
 
