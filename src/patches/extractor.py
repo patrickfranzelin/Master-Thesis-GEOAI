@@ -55,7 +55,7 @@ def extract_patch(geom, geom_crs, raster_path, out_size=512, context=2):
 
         geom_px = transform(lambda x, y: (x * sx, y * sy), geom_px)
 
-        return img, geom_px
+        return img, geom_px, win
 
 def extract_patch_pixel(img, poly_px, out_size=512, context=2.0):
     """

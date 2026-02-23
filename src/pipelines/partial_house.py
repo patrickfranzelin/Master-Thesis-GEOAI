@@ -16,7 +16,7 @@ class PartialHousePipeline(Pipeline):
         # --------------------------------------------------
         # 1. Extract larger context patch for detection
         # --------------------------------------------------
-        img_big, poly_px_big = extract_patch(
+        img_big, poly_px_big, win_big = extract_patch(
             ctx.geom,
             ctx.crs,
             ctx.tiff_path,

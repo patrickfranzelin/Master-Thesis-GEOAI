@@ -4,6 +4,9 @@ import geopandas as gpd
 from sqlalchemy import create_engine
 import os
 from datetime import datetime
+from uuid import uuid4
+
+
 
 from src.core.context import PipelineContext
 from src.db.export_to_filegdb import export_buildings_to_filegdb
@@ -34,6 +37,8 @@ out_dirs = {
     "debug": debug_dir,
 }
 
+RUN_ID = str(uuid4())
+print(f"RUN_ID: {RUN_ID}")
 # --------------------------------------------------
 # Database
 # --------------------------------------------------
@@ -59,6 +64,7 @@ gdf = gpd.read_postgis(
             geom,
             (SELECT geom FROM src.aoi WHERE aoi_id = {AOI_ID})
           )
+    LIMIT 30
     """,
     engine,
     geom_col="geom",
@@ -81,7 +87,7 @@ for _, row in gdf.iterrows():
     # Patch extraction
     # ---------------------------------------------
 
-    img, poly_px = extract_patch(row.geom, gdf.crs, row.tiff_path, context=1.5)
+    img, poly_px, win = extract_patch(row.geom, gdf.crs, row.tiff_path, context=1.5)
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
     raw_path, clean_path, debug_path = create_patch_outputs(
@@ -166,6 +172,9 @@ for _, row in gdf.iterrows():
             building_id=row.id,
             polygons=polys,
             detection_type=dtype,
+            run_id=RUN_ID,
+            tiff_path=row.tiff_path,
+            win=win,
         )
 
     # ---------------------------------------------
@@ -204,5 +213,6 @@ export_buildings_to_filegdb(
     engine=engine,
     output_path=str(gdb_output),
     aoi_id=AOI_ID,
+    run_id=RUN_ID,
     overwrite=True,
 )

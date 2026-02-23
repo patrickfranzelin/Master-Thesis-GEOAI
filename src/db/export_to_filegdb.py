@@ -2,14 +2,13 @@ from pathlib import Path
 import shutil
 
 import fiona
-import fiona.crs
+from fiona.crs import CRS
 from shapely import wkt as shapely_wkt
 from shapely.geometry import mapping
 from sqlalchemy import text
 
 
-EPSG_4326 = fiona.crs.from_epsg(4326)
-
+EPSG_4326 = CRS.from_epsg(4326)
 
 # ---------------------------------------------------------------------------
 # Schemas
@@ -61,6 +60,7 @@ def _check_filegdb_driver():
         "Writable FileGDB driver not available.\n"
         "Requires GDAL >= 3.6 (OpenFileGDB write support)."
     )
+
 def _load_original_buildings(engine, aoi_id=None):
 
     where_clause = ""
@@ -79,7 +79,7 @@ def _load_original_buildings(engine, aoi_id=None):
             b.confidence,
             b.plus_code,
             b.tiff_path,
-            ST_AsText(b.geom) AS geom_wkt,
+            ST_AsText(ST_Transform(b.geom, 4326)) AS geom_wkt,
             m.house_present,
             m.full_house_present,
             m.error_description,
@@ -97,16 +97,24 @@ def _load_original_buildings(engine, aoi_id=None):
 
     return [dict(r) for r in rows]
 
-def _load_improved_buildings(engine, aoi_id=None):
+def _load_improved_buildings(engine, aoi_id=None, run_id=None):
 
-    where_clause = ""
+    where_clauses = []
+
     if aoi_id is not None:
-        where_clause = f"""
-            WHERE ST_Intersects(
+        where_clauses.append(f"""
+            ST_Intersects(
                 b.geom,
                 (SELECT geom FROM src.aoi WHERE aoi_id = {aoi_id})
             )
-        """
+        """)
+
+    if run_id is not None:
+        where_clauses.append("d.run_id = :run_id")
+
+    where_sql = ""
+    if where_clauses:
+        where_sql = "WHERE " + " AND ".join(where_clauses)
 
     sql = text(f"""
         SELECT
@@ -114,7 +122,7 @@ def _load_improved_buildings(engine, aoi_id=None):
             d.building_id,
             d.detection_type,
             d.area AS sam_area,
-            ST_AsText(d.geom) AS geom_wkt,
+            ST_AsText(ST_Transform(d.geom, 4326)) AS geom_wkt,
             b.area_m2,
             b.confidence,
             b.plus_code,
@@ -128,13 +136,13 @@ def _load_improved_buildings(engine, aoi_id=None):
         JOIN src.buildings b
           ON b.id = d.building_id
         LEFT JOIN src.building_mlqa m
-               ON m.building_id = d.building_id
-        {where_clause}
+          ON m.building_id = d.building_id
+        {where_sql}
         ORDER BY d.id
     """)
 
     with engine.connect() as conn:
-        rows = conn.execute(sql).mappings().all()
+        rows = conn.execute(sql, {"run_id": run_id}).mappings().all()
 
     return [dict(r) for r in rows]
 
@@ -222,6 +230,7 @@ def export_buildings_to_filegdb(
     engine,
     output_path: str,
     aoi_id: int | None = None,
+    run_id: str | None = None,
     overwrite: bool = True,
 ):
     """
@@ -247,7 +256,7 @@ def export_buildings_to_filegdb(
     print(f"\nExporting FileGDB → {gdb_path}")
 
     original_rows = _load_original_buildings(engine, aoi_id)
-    improved_rows = _load_improved_buildings(engine, aoi_id)
+    improved_rows = _load_improved_buildings(engine, aoi_id, run_id)
 
     _write_layer(
         gdb_path,
