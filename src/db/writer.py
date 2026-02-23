@@ -3,8 +3,9 @@ import os
 import json
 import rasterio
 from shapely.affinity import affine_transform
-from shapely.ops import transform as shp_transform
 import pyproj
+from shapely.affinity import translate, scale
+from shapely.ops import transform as shp_transform
 
 PG_CONN = os.environ["PG_CONN"]
 
@@ -74,21 +75,16 @@ def write_detected_houses(
         run_id: str,
         tiff_path: str,
         win,
+        metadata: dict = None,
 ):
     """
-    Polygons are in resized PATCH PIXEL coordinates (512x512).
-    We reverse:
-        1. resize
-        2. window offset
-        3. raster affine
-        4. reprojection
+    Polygons backprojection chain:
+      PARTIAL: refine_img (512) → img_big (512) → win_big px → raster CRS → WGS84
+      FULL:    patch (512)                       → win px     → raster CRS → WGS84
     """
 
     if not polygons:
         return
-
-    from shapely.affinity import translate, scale
-    from shapely.ops import transform as shp_transform
 
     sql = text("""
         INSERT INTO src.detected_house (
@@ -107,21 +103,22 @@ def write_detected_houses(
         )
     """)
 
+    crop_info = metadata.get("crop_info") if metadata else None
+
     with rasterio.open(tiff_path) as src:
 
-        transform = src.transform
+        raster_transform = src.transform
         raster_crs = src.crs
 
         affine_params = [
-            transform.a,
-            transform.b,
-            transform.d,
-            transform.e,
-            transform.xoff,
-            transform.yoff,
+            raster_transform.a,
+            raster_transform.b,
+            raster_transform.d,
+            raster_transform.e,
+            raster_transform.xoff,
+            raster_transform.yoff,
         ]
 
-        # reprojection
         if raster_crs.to_epsg() != 4326:
             transformer = pyproj.Transformer.from_crs(
                 raster_crs,
@@ -138,31 +135,47 @@ def write_detected_houses(
                 if poly is None:
                     continue
 
-                # 1️⃣ Undo resize (512 → window size)
+                # ── PARTIAL only: undo refine sub-crop ──────────────────────
+                # poly lives in refine_img space (512×512 sub-crop of img_big)
+                # must map back to img_big space (also 512×512) first
+                if crop_info is not None:
+                    x1, y1, w_crop, h_crop = crop_info
+
+                    #  undo resize: refine 512×512 → actual crop size
+                    poly = scale(
+                        poly,
+                        xfact=w_crop / 512,
+                        yfact=h_crop / 512,
+                        origin=(0, 0),
+                    )
+
+                    # undo crop offset: crop space → img_big pixel space
+                    poly = translate(poly, xoff=x1, yoff=y1)
+
+                # ── ALL pipelines: undo img→win resize ──────────────────────
+                # img_big / patch img was resized from win pixel size to 512×512
+                #  undo resize: 512×512 → win pixel dimensions
                 sx = win.width / 512
                 sy = win.height / 512
                 poly_unscaled = scale(poly, xfact=sx, yfact=sy, origin=(0, 0))
 
-                # 2️⃣ Add window offset (patch → full raster pixel)
+                #  add window offset: win-relative px → full raster pixel
                 poly_full_px = translate(
                     poly_unscaled,
                     xoff=win.col_off,
-                    yoff=win.row_off
+                    yoff=win.row_off,
                 )
 
-                # 3️⃣ Pixel → raster CRS (UTM meters)
+                #  pixel → raster CRS (UTM / local metres)
                 utm_poly = affine_transform(poly_full_px, affine_params)
 
-                # 4️⃣ Raster CRS → WGS84
-                if project:
-                    geo_poly = shp_transform(project, utm_poly)
-                else:
-                    geo_poly = utm_poly
+                #  raster CRS → WGS84
+                geo_poly = shp_transform(project, utm_poly) if project else utm_poly
 
                 conn.execute(sql, {
                     "building_id": building_id,
                     "detection_type": detection_type,
-                    "area": utm_poly.area,  # keep metric area
+                    "area": utm_poly.area,
                     "wkt": geo_poly.wkt,
                     "run_id": run_id,
                 })

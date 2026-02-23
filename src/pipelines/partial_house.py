@@ -1,13 +1,13 @@
 import cv2
 from shapely.geometry import Point
+
 from src.patches.extractor import extract_patch, extract_patch_pixel
 from src.pipelines.base import Pipeline, PipelineResult
 from src.sam.partial import run_sam_detect_all
 from src.sam.refine import run_sam_stage
 
-PARTIAL_CONTEXT_START = 4.0  # initial detection context
-PARTIAL_CONTEXT_REFINE_START = 4.0  # refine starts at same context so no backwards resize
-
+PARTIAL_CONTEXT_START = 4.0
+PARTIAL_CONTEXT_REFINE_START = 4.0
 
 class PartialHousePipeline(Pipeline):
     name = "PARTIAL"
@@ -22,6 +22,7 @@ class PartialHousePipeline(Pipeline):
             ctx.tiff_path,
             context=PARTIAL_CONTEXT_START,
         )
+
         img_big = cv2.cvtColor(img_big, cv2.COLOR_RGB2BGR)
         temp_big_path = ctx.sam_dir / f"bld_{ctx.building_id:07d}_partial_context.png"
         cv2.imwrite(str(temp_big_path), img_big)
@@ -36,47 +37,46 @@ class PartialHousePipeline(Pipeline):
         )
 
         if not candidates:
-            print("  ✗ PARTIAL: no candidates detected")
+            print(" ✗ PARTIAL: no candidates detected")
             return PipelineResult(
                 pipeline_name=self.name,
                 sam_polygons=None,
                 inside_pts=[],
                 outside_pts=[],
-                metadata={"stage": "no_masks_found"},
+                metadata={"stage": "no_masks_found", "win": win_big},  # ✅ win_big always available
             )
 
         # --------------------------------------------------
-        # 3. Pick the candidate that contains the start polygon centroid
+        # 3. Pick the candidate that contains the footprint centroid
         # --------------------------------------------------
         center_point = Point(poly_px_big.centroid.x, poly_px_big.centroid.y)
-
         selected = None
         for poly in candidates:
             if poly.contains(center_point):
                 selected = poly
                 break
 
-        # Fallback: nearest candidate by centroid distance
         if selected is None:
-            print("  ⚠ No candidate contains footprint center — picking nearest by centroid distance")
+            print(" ⚠ No candidate contains footprint center — picking nearest by centroid distance")
             selected = min(
                 candidates,
                 key=lambda p: p.centroid.distance(center_point),
             )
 
         # --------------------------------------------------
-        # 4. Re-extract refinement patch with standard context
-        #    Expand if selected polygon touches the patch border
+        # 4. Refine with expanding context loop
         # --------------------------------------------------
-
         context_refine = 1.5
         max_expand = 3
         refined_polygon = None
+        inside = []
+        outside = []
+        crop_info = None  # ✅ initialize so it's always defined
 
         for expand_iter in range(max_expand):
-            print(f"SAM iteration {expand_iter + 1}")
+            print(f"SAM expansion iteration {expand_iter + 1}")
 
-            refine_img, refine_poly_px = extract_patch_pixel(
+            refine_img, refine_poly_px, crop_info = extract_patch_pixel(
                 img_big,
                 selected,
                 out_size=512,
@@ -101,15 +101,25 @@ class PartialHousePipeline(Pipeline):
 
             if result == "EXPAND_PATCH":
                 context_refine *= 1.5
-                print(f"🔁 Expanding patch → new context: {context_refine:.2f}")
-            else:
-                refined_polygon = result
+                print(f"Expanding patch → new context: {context_refine:.2f}")
+                continue
+
+            if result is None:
+                refined_polygon = None
                 break
+
+            refined_polygon = result
+            break
 
         return PipelineResult(
             pipeline_name=self.name,
             sam_polygons=refined_polygon,
             inside_pts=inside,
             outside_pts=outside,
-            metadata={"stage": "discovery+refine", "context_used": PARTIAL_CONTEXT_REFINE_START},
+            metadata={
+                "stage": "discovery+refine",
+                "context_used": context_refine,
+                "win": win_big,
+                "crop_info": crop_info,
+            },
         )

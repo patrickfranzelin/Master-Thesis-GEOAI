@@ -64,7 +64,7 @@ gdf = gpd.read_postgis(
             geom,
             (SELECT geom FROM src.aoi WHERE aoi_id = {AOI_ID})
           )
-    LIMIT 30
+    LIMIT 100
     """,
     engine,
     geom_col="geom",
@@ -174,7 +174,8 @@ for _, row in gdf.iterrows():
             detection_type=dtype,
             run_id=RUN_ID,
             tiff_path=row.tiff_path,
-            win=win,
+            win=result.metadata.get("win", win),
+            metadata=result.metadata,
         )
 
     # ---------------------------------------------
