@@ -4,6 +4,15 @@ from src.sam.model import segment_with_points
 from src.utils.geometry import polygon_to_sam_bbox
 
 
+def touches_border(poly, img_shape, margin=3):
+    """Return True if any vertex of *poly* lies within *margin* pixels of the image border."""
+    h, w = img_shape[:2]
+    for x, y in poly.exterior.coords:
+        if x <= margin or x >= w - margin or y <= margin or y >= h - margin:
+            return True
+    return False
+
+
 def run_sam_stage(img, raw_path, poly_px, inside, outside, out_dir, bid, max_iters=3, mode="standard"):
     """
     Run SAM refinement stage.
@@ -130,6 +139,11 @@ def run_sam_stage(img, raw_path, poly_px, inside, outside, out_dir, bid, max_ite
 
     if mask is None:
         return None
+
+    # Check if the final selected polygon touches the image border
+    if touches_border(poly, img.shape):
+        print("⚠ Selected polygon touches border → expand patch")
+        return "EXPAND_PATCH"
 
     print("SAM converged")
 

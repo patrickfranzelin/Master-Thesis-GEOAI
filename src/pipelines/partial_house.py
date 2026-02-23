@@ -66,33 +66,45 @@ class PartialHousePipeline(Pipeline):
 
         # --------------------------------------------------
         # 4. Re-extract refinement patch with standard context
+        #    Expand if selected polygon touches the patch border
         # --------------------------------------------------
 
-        # Convert selected polygon (pixel space of big patch)
-        # back to geo space using inverse transform from extractor
+        context_refine = 1.5
+        max_expand = 3
+        refined_polygon = None
 
-        refine_img, refine_poly_px = extract_patch_pixel(
-            img_big,
-            selected,
-            out_size=512,
-            context=1.5  # same as FULL refine
-        )
+        for expand_iter in range(max_expand):
+            print(f"SAM iteration {expand_iter + 1}")
 
-        temp_refine_path = ctx.sam_dir / f"bld_{ctx.building_id:07d}_partial_refine.png"
-        cv2.imwrite(str(temp_refine_path), refine_img)
+            refine_img, refine_poly_px = extract_patch_pixel(
+                img_big,
+                selected,
+                out_size=512,
+                context=context_refine,
+            )
 
-        inside = [[int(refine_poly_px.centroid.x), int(refine_poly_px.centroid.y)]]
-        outside = []
+            temp_refine_path = ctx.sam_dir / f"bld_{ctx.building_id:07d}_partial_refine.png"
+            cv2.imwrite(str(temp_refine_path), refine_img)
 
-        refined_polygon = run_sam_stage(
-            img=refine_img,
-            raw_path=temp_refine_path,
-            poly_px=refine_poly_px,
-            inside=inside,
-            outside=outside,
-            out_dir=ctx.sam_dir,
-            bid=ctx.building_id,
-        )
+            inside = [[int(refine_poly_px.centroid.x), int(refine_poly_px.centroid.y)]]
+            outside = []
+
+            result = run_sam_stage(
+                img=refine_img,
+                raw_path=temp_refine_path,
+                poly_px=refine_poly_px,
+                inside=inside,
+                outside=outside,
+                out_dir=ctx.sam_dir,
+                bid=ctx.building_id,
+            )
+
+            if result == "EXPAND_PATCH":
+                context_refine *= 1.5
+                print(f"🔁 Expanding patch → new context: {context_refine:.2f}")
+            else:
+                refined_polygon = result
+                break
 
         return PipelineResult(
             pipeline_name=self.name,
