@@ -3,8 +3,10 @@ import cv2
 import geopandas as gpd
 from sqlalchemy import create_engine
 import os
+from datetime import datetime
 
 from src.core.context import PipelineContext
+from src.db.export_to_filegdb import export_buildings_to_filegdb
 from src.mlqa.decision import decide
 from src.mlqa.mlqa_client import MLQAParseError
 from src.pipelines.router import route
@@ -190,3 +192,17 @@ for _, row in gdf.iterrows():
         print(f"  ✓ {result.pipeline_name}: No SAM segmentation")
 
 print("\nDONE")
+
+# --------------------------------------------------
+# Export to FileGDB
+# --------------------------------------------------
+
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+gdb_output = output_dir / f"building_results_{timestamp}.gdb"
+
+export_buildings_to_filegdb(
+    engine=engine,
+    output_path=str(gdb_output),
+    aoi_id=AOI_ID,
+    overwrite=True,
+)
