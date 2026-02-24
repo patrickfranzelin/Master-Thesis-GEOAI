@@ -64,7 +64,7 @@ def run_sam_detect_all(
 
             roof_polys.append(poly)
 
-            # 🔥 draw immediately
+            # draw immediately
             pts = np.array(poly.exterior.coords).astype("int32")
             cv2.polylines(overlay, [pts], True, (0, 255, 0), 2)
 

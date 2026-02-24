@@ -59,11 +59,13 @@ Instructions:
 Evaluate if the green polygon accurately captures the MAIN body of the visible roof.
 
 Criteria for TRUE:
-- The green polygon covers the majority (>50%) of the visible roof area.
+- The green polygon covers the majority (>50%) of the visible roof area 
+- All roof edges are visible in the image
 - The roof structure is complete within the image.
 
 Criteria for FALSE:
 - A significant portion of the building lies outside the green polygon.
+- Polygon segments only a samll part of the roof.
 - The image cuts off the building.
 
 Expected Output Format:
