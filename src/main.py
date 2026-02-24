@@ -10,6 +10,7 @@ from uuid import uuid4
 
 from src.core.context import PipelineContext
 from src.db.export_to_filegdb import export_buildings_to_filegdb
+from src.mlqa.comparison_client import compare_polygons
 from src.mlqa.decision import decide
 from src.mlqa.mlqa_client import MLQAParseError
 from src.pipelines.router import route
@@ -27,14 +28,18 @@ sam_dir = output_dir / "sam"
 raw_dir = output_dir / "raw"
 clean_dir = output_dir / "clean"
 debug_dir = output_dir / "debug"
+comparison_dir = output_dir / "comparison"
 
-for d in [sam_dir, raw_dir, clean_dir, debug_dir]:
+
+
+for d in [sam_dir, raw_dir, clean_dir, debug_dir, comparison_dir]:
     d.mkdir(parents=True, exist_ok=True)
 
 out_dirs = {
     "raw": raw_dir,
     "clean": clean_dir,
     "debug": debug_dir,
+    "comparison": comparison_dir,
 }
 
 RUN_ID = str(uuid4())
@@ -44,7 +49,7 @@ print(f"RUN_ID: {RUN_ID}")
 # --------------------------------------------------
 
 engine = create_engine(os.environ["PG_CONN"])
-AOI_ID = 1
+AOI_ID = 3
 
 aoi_gdf = gpd.read_postgis(
     f"SELECT geom FROM src.aoi WHERE aoi_id = {AOI_ID}",
@@ -155,10 +160,6 @@ for _, row in gdf.iterrows():
 
     # Normalize result.sam_polygons into list
     if result.sam_polygons:
-        if isinstance(result.sam_polygons, list):
-            polys = result.sam_polygons
-        else:
-            polys = [result.sam_polygons]
 
         # Determine detection type
         if decision.full_house is True:
@@ -168,9 +169,39 @@ for _, row in gdf.iterrows():
         else:
             dtype = "discovery"
 
+        # Normalize to list
+        if isinstance(result.sam_polygons, list):
+            polys = result.sam_polygons
+        else:
+            polys = [result.sam_polygons]
+
+        final_polys = []
+
+        for refined_poly in polys:
+
+            comp = compare_polygons(
+                img_big=ctx.img,
+                start_poly_px=ctx.poly_px,
+                refined_poly_px=refined_poly,
+                out_dirs=out_dirs,
+                bid=row.id,
+            )
+
+            print("Comparison result:", comp["better"])
+
+            if comp["better"] == "refined":
+                final_polys.append(refined_poly)
+
+            elif comp["better"] == "original":
+                final_polys.append(ctx.poly_px)
+
+            else:
+                # equal or unknown → default to refined
+                final_polys.append(refined_poly)
+
         write_detected_houses(
             building_id=row.id,
-            polygons=polys,
+            polygons=final_polys,
             detection_type=dtype,
             run_id=RUN_ID,
             tiff_path=row.tiff_path,
@@ -179,7 +210,7 @@ for _, row in gdf.iterrows():
         )
 
     # ---------------------------------------------
-    # Write MLQA results for all pipelines (fixes Bug 4)
+    # Write MLQA results for all pipelines
     # ---------------------------------------------
     
     write_mlqa({
