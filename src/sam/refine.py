@@ -33,7 +33,11 @@ def run_sam_stage(img, raw_path, poly_px, inside, outside, out_dir, bid, max_ite
     bbox_scale = 0.25
 
     # initial bbox from footprint
-    bbox_init = polygon_to_sam_bbox(poly_px, scale=bbox_scale)
+    bbox_init = polygon_to_sam_bbox(
+        poly_px,
+        img.shape,
+        scale=bbox_scale
+    )
     bbox = bbox_init.copy() if bbox_init else None
 
     # always add bbox center as positive anchor
