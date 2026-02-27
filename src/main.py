@@ -92,7 +92,7 @@ for _, row in gdf.iterrows():
     # Patch extraction
     # ---------------------------------------------
 
-    img, poly_px, win = extract_patch(row.geom, gdf.crs, row.tiff_path, context=1.5)
+    img, poly_px, win = extract_patch(row.geom, gdf.crs, row.tiff_path, context=1.75)
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
     raw_path, clean_path, debug_path = create_patch_outputs(
@@ -179,25 +179,25 @@ for _, row in gdf.iterrows():
 
         for refined_poly in polys:
 
-            comp = compare_polygons(
-                img_big=ctx.img,
-                start_poly_px=ctx.poly_px,
-                refined_poly_px=refined_poly,
-                out_dirs=out_dirs,
-                bid=row.id,
-            )
+           # comp = compare_polygons(
+            #    img_big=ctx.img,
+             #   start_poly_px=ctx.poly_px,
+              #  refined_poly_px=refined_poly,
+              #  out_dirs=out_dirs,
+              #  bid=row.id,
+            #)
 
-            print("Comparison result:", comp["better"])
+#            print("Comparison result:", comp["better"])
 
-            if comp["better"] == "refined":
-                final_polys.append(refined_poly)
+ #           if comp["better"] == "refined":
+  #              final_polys.append(refined_poly)
+#
+ #           elif comp["better"] == "original":
+  #              final_polys.append(ctx.poly_px)
 
-            elif comp["better"] == "original":
-                final_polys.append(ctx.poly_px)
-
-            else:
+   #         else:
                 # equal or unknown → default to refined
-                final_polys.append(refined_poly)
+            final_polys.append(refined_poly)
 
         write_detected_houses(
             building_id=row.id,

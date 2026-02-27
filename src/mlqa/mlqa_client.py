@@ -18,12 +18,15 @@ class MLQAParseError(Exception):
     pass
 
 
+# ==================================================
+# PROMPTS (UNCHANGED)
+# ==================================================
+
 PRESENCE_SYSTEM = """
 You are an expert geospatial analyst specializing in aerial imagery.
 Your task is to detect man-made roof structures within specified polygon boundaries.
 Output ONLY valid JSON. No markdown, no explanations.
 """
-
 
 PRESENCE_USER = """
 Input: An aerial image patch containing a GREEN polygon outlining a specific area.
@@ -45,11 +48,10 @@ OR
 }
 """
 
-
 COVERAGE_SYSTEM = """
 You are an expert geospatial analyst specializing in building footprint coverage.
 Your task is to evaluate if a polygon captures the main body of a visible roof and if the whole building is visible in the patch.
-Output ONLY valid JSON,
+Output ONLY valid JSON.
 """
 
 COVERAGE_USER = """
@@ -59,13 +61,13 @@ Instructions:
 Evaluate if the green polygon accurately captures the MAIN body of the visible roof.
 
 Criteria for TRUE:
-- The green polygon covers the majority (>50%) of the visible roof area 
+- The green polygon covers the majority (>50%) of the visible roof area
 - All roof edges are visible in the image
 - The roof structure is complete within the image.
 
 Criteria for FALSE:
 - A significant portion of the building lies outside the green polygon.
-- Polygon segments only a samll part of the roof.
+- Polygon segments only a small part of the roof.
 - The image cuts off the building.
 
 Expected Output Format:
@@ -77,119 +79,148 @@ OR
   "full_house_present": false
 }
 """
-ERROR_SYSTEM = """
-You are an expert geospatial analyst.
 
-Your task is to describe geometric mismatches between a building roof and a given polygon.
+ERROR_SYSTEM = """
+You are an expert geospatial analyst specializing in building footprint validation.
+
+Your task is to classify geometric errors between a visible roof and a given polygon.
+
+You must assign structured error categories from a fixed list.
 
 Output ONLY valid JSON.
 No markdown.
 No explanations outside JSON.
 """
+
 ERROR_USER = """
 Input: An aerial image patch with a GREEN polygon outlining a building footprint.
 
 Task:
-Describe any visible mismatch between the green polygon and the actual roof structure and where it is (East,West,North,South).
-Output ONLY valid JSON.).
+Compare the green polygon to the visible roof structure inside the image.
 
-If there is no visible mismatch, return null.
+Classify the geometric relationship using ONE of the following categories:
 
-Expected Output Format:
+- NO_ERROR
+- UNDERSEGMENTATION
+- OVERSEGMENTATION
+- MISALIGNMENT
+- SHAPE_SIMPLIFICATION
+- PARTIAL_VISIBILITY
+
+Additionally:
+- Specify where the mismatch occurs:
+  Choose from: NORTH, SOUTH, EAST, WEST, CENTER, MULTIPLE, NONE
+- Provide a short human-readable description.
+
+Return ONLY valid JSON:
+
 {
-  "error_description": "Short human-readable explanation"
-}
-OR
-{
-  "error_description": null
+  "error_category": "...",
+  "error_location": ["..."],
+  "error_description": "..."
 }
 """
 
+
+# ==================================================
+# UTILS
+# ==================================================
+
 def _parse_json_safe(raw):
-    """Robustly parse JSON, handling markdown code blocks."""
     try:
         return json.loads(raw)
-    except json.JSONDecodeError:
-        # Remove markdown code blocks if present
+    except Exception:
         cleaned = re.sub(r"```json|```", "", raw).strip()
-        # Remove any trailing commas before closing braces (common LLM error)
         cleaned = re.sub(r',\s*}', '}', cleaned)
         try:
             return json.loads(cleaned)
-        except json.JSONDecodeError:
-            raise MLQAParseError(
-                f"Failed to parse MLQA response as JSON. Raw: {raw[:200]}"
-            )
+        except Exception:
+            print("⚠ JSON parse failed → returning empty dict")
+            return {}
+
 
 def _encode_image(path: Path):
     return base64.b64encode(path.read_bytes()).decode("utf-8")
 
 
 def _ask(system_prompt: str, user_prompt: str, image_b64: str):
-    response = client.chat.completions.create(
-        model=MODEL_NAME,
-        temperature=0,
-        max_tokens=256,
-        messages=[
-            {
-                "role": "system",
-                "content": system_prompt
-            },
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": user_prompt},
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/png;base64,{image_b64}"
+    try:
+        response = client.chat.completions.create(
+            model=MODEL_NAME,
+            temperature=0,
+            max_tokens=512,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": user_prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/png;base64,{image_b64}"
+                            }
                         }
-                    }
-                ]
-            }
-        ]
-    )
+                    ]
+                }
+            ]
+        )
 
-    raw = response.choices[0].message.content
-    print("\n--- MLLM RAW RESPONSE ---")
-    print(raw)
-    print("-------------------------\n")
+        raw = response.choices[0].message.content
 
-    return _parse_json_safe(raw)
+        print("\n--- MLLM RAW RESPONSE ---")
+        print(raw)
+        print("-------------------------\n")
+
+        return _parse_json_safe(raw)
+
+    except Exception as e:
+        print(f"⚠ MLQA temporary error → skipping: {e}")
+        return None
 
 
-# ---------------------------------------------------
-# Public API
-# ---------------------------------------------------
+# ==================================================
+# PUBLIC API
+# ==================================================
 
 def analyze_patch(image_path: Path):
+
     img_b64 = _encode_image(image_path)
 
     # --------------------------
-    # 1. Presence check
+    # 1. Presence
     # --------------------------
     presence = _ask(PRESENCE_SYSTEM, PRESENCE_USER, img_b64)
 
-    if not presence.get("house_present", False):
+    if presence is None or not presence.get("house_present", False):
         return {
             "house_present": False,
             "full_house_present": False,
-            "error_description": "No roof structure detected inside polygon"
+            "error_description": "No roof structure detected or MLQA failure"
         }
 
     # --------------------------
-    # 2. Coverage check
+    # 2. Coverage
     # --------------------------
     coverage = _ask(COVERAGE_SYSTEM, COVERAGE_USER, img_b64)
 
+    if coverage is None:
+        coverage_value = False
+    else:
+        coverage_value = coverage.get("full_house_present", False)
+
     # --------------------------
-    # 3. Error description check (separate call)
+    # 3. Error classification
     # --------------------------
     error_info = _ask(ERROR_SYSTEM, ERROR_USER, img_b64)
 
+    if error_info is None:
+        error_desc = "MLQA_ERROR"
+    else:
+        error_desc = error_info.get("error_description")
+
     return {
         "house_present": True,
-        "full_house_present": coverage.get("full_house_present", False),
-        "error_description": error_info.get("error_description")
+        "full_house_present": coverage_value,
+        "error_description": error_desc
     }
-

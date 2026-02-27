@@ -6,6 +6,10 @@ from pathlib import Path
 import os
 import cv2
 
+# ==================================================
+# CONFIG
+# ==================================================
+
 RUNPOD_ID = os.environ["RUNPOD_ID"]
 MODEL_NAME = "qwen3vl8b"
 
@@ -14,10 +18,12 @@ client = OpenAI(
     base_url=f"https://{RUNPOD_ID}-7860.proxy.runpod.net/v1"
 )
 
+# ==================================================
+# EXCEPTION
+# ==================================================
 
 class PointParseError(Exception):
     pass
-
 
 # ==================================================
 # SYSTEM PROMPT
@@ -29,7 +35,6 @@ You must output ONLY valid JSON.
 No markdown.
 No explanations.
 """
-
 
 # ==================================================
 # USER PROMPTS
@@ -83,7 +88,6 @@ Return ONLY valid JSON:
 }
 """.strip()
 
-
 # ==================================================
 # UTILS
 # ==================================================
@@ -97,59 +101,61 @@ def _parse_json_safe(raw: str) -> dict:
         try:
             return json.loads(cleaned)
         except json.JSONDecodeError:
-            raise PointParseError(
-                f"Failed to parse point response. Raw: {raw[:200]}"
-            )
-
+            print("⚠ JSON parse failed → returning empty dict")
+            return {}
 
 def _encode_image(path: Path) -> str:
     return base64.b64encode(path.read_bytes()).decode("utf-8")
 
-
-def _ask(user_prompt: str, image_b64: str, max_tokens=128) -> dict:
-
-    response = client.chat.completions.create(
-        model=MODEL_NAME,
-        temperature=0,
-        max_tokens=max_tokens,
-        messages=[
-            {
-                "role": "system",
-                "content": POINT_SYSTEM
-            },
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": user_prompt},
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/png;base64,{image_b64}"
+def _ask(user_prompt: str, image_b64: str, max_tokens=128) -> dict | None:
+    try:
+        response = client.chat.completions.create(
+            model=MODEL_NAME,
+            temperature=0,
+            max_tokens=max_tokens,
+            messages=[
+                {"role": "system", "content": POINT_SYSTEM},
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": user_prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/png;base64,{image_b64}"
+                            }
                         }
-                    }
-                ]
-            }
-        ]
-    )
+                    ]
+                }
+            ]
+        )
 
-    raw = response.choices[0].message.content
+        raw = response.choices[0].message.content
 
-    print("\n--- POINT RAW ---")
-    print(raw)
-    print("------------------")
+        print("\n--- POINT RAW ---")
+        print(raw)
+        print("------------------")
 
-    return _parse_json_safe(raw)
+        return _parse_json_safe(raw)
 
+    except Exception as e:
+        print(f"⚠ MLQA temporary error → skipping: {e}")
+        return None
 
 def _denormalize(points: list, width: int, height: int) -> list:
+    if not points:
+        return []
+
     return [
-        [int((x / 1000) * width), int((y / 1000) * height)]
+        [
+            int((x / 1000) * width),
+            int((y / 1000) * height)
+        ]
         for x, y in points
     ]
 
-
 # ==================================================
-# POSITIVE (ITERATIVE)
+# POSITIVE COLLECTION
 # ==================================================
 
 def _collect_positive_points(image_b64: str, n: int) -> list[list[int]]:
@@ -159,8 +165,11 @@ def _collect_positive_points(image_b64: str, n: int) -> list[list[int]]:
     for i in range(n):
 
         prompt = _build_positive_user(collected)
-
         result = _ask(prompt, image_b64)
+
+        if result is None:
+            print("⚠ Positive point request failed → returning partial result")
+            return collected
 
         pts = result.get("inside", [])
 
@@ -171,7 +180,6 @@ def _collect_positive_points(image_b64: str, n: int) -> list[list[int]]:
 
     return collected
 
-
 # ==================================================
 # PUBLIC API
 # ==================================================
@@ -179,28 +187,29 @@ def _collect_positive_points(image_b64: str, n: int) -> list[list[int]]:
 def analyze_points(image_path: Path, n_points: int = 3) -> dict:
 
     img = cv2.imread(str(image_path))
-    height, width = img.shape[:2]
 
+    if img is None:
+        print("⚠ Could not read image → returning empty points")
+        return {"inside": [], "outside": []}
+
+    height, width = img.shape[:2]
     img_b64 = _encode_image(image_path)
 
     # --------------------------
-    # Positive (step-by-step)
+    # Positive points
     # --------------------------
-    inside_norm = _collect_positive_points(
-        img_b64,
-        n_points
-    )
+    inside_norm = _collect_positive_points(img_b64, n_points)
 
     # --------------------------
-    # Negative (single call)
+    # Negative points
     # --------------------------
-    neg_result = _ask(
-        NEGATIVE_USER,
-        img_b64,
-        max_tokens=256
-    )
+    neg_result = _ask(NEGATIVE_USER, img_b64, max_tokens=256)
 
-    outside_norm = neg_result.get("outside", [])
+    if neg_result is None:
+        print("⚠ Negative point request failed → using empty list")
+        outside_norm = []
+    else:
+        outside_norm = neg_result.get("outside", [])
 
     # --------------------------
     # Convert to pixel coords

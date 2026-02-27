@@ -1,6 +1,7 @@
 import cv2
 from shapely.geometry import Point
 
+from src.mlqa.point_client import analyze_points
 from src.patches.extractor import extract_patch, extract_patch_pixel
 from src.pipelines.base import Pipeline, PipelineResult
 from src.sam.partial import run_sam_detect_all
@@ -71,7 +72,7 @@ class PartialHousePipeline(Pipeline):
         refined_polygon = None
         inside = []
         outside = []
-        crop_info = None  # ✅ initialize so it's always defined
+        crop_info = None
 
         for expand_iter in range(max_expand):
             print(f"SAM expansion iteration {expand_iter + 1}")
@@ -86,8 +87,9 @@ class PartialHousePipeline(Pipeline):
             temp_refine_path = ctx.sam_dir / f"bld_{ctx.building_id:07d}_partial_refine.png"
             cv2.imwrite(str(temp_refine_path), refine_img)
 
-            inside = [[int(refine_poly_px.centroid.x), int(refine_poly_px.centroid.y)]]
-            outside = []
+            pts = analyze_points(temp_refine_path)
+            inside = pts["inside"]
+            outside = pts["outside"]
 
             result = run_sam_stage(
                 img=refine_img,
