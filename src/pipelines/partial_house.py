@@ -123,5 +123,6 @@ class PartialHousePipeline(Pipeline):
                 "context_used": context_refine,
                 "win": win_big,
                 "crop_info": crop_info,
+                "sam_input_size": refine_img.shape[0],  # ADD THIS
             },
         )

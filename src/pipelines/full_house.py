@@ -25,7 +25,7 @@ class FullHousePipeline(Pipeline):
             # ---------------------------------------------
             # Re-extract patch with larger context
             # ---------------------------------------------
-            img, poly_px, _ = extract_patch(
+            img, poly_px, win = extract_patch(
                 ctx.geom,
                 ctx.crs,
                 ctx.tiff_path,
@@ -61,6 +61,7 @@ class FullHousePipeline(Pipeline):
                 break
 
             refined_polygon = result
+            sam_size = img.shape[0]
             break
 
         return PipelineResult(
@@ -68,5 +69,10 @@ class FullHousePipeline(Pipeline):
             sam_polygons=refined_polygon,
             inside_pts=inside_base,
             outside_pts=outside_base,
-            metadata={"mode": "standard", "context_used": context_refine},
+            metadata={
+                "mode": "standard",
+                "context_used": context_refine,
+                "win": win,
+                "sam_input_size": img.shape[0],
+            },
         )

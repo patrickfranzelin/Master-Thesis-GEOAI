@@ -155,8 +155,10 @@ def write_detected_houses(
                 # ── ALL pipelines: undo img→win resize ──────────────────────
                 # img_big / patch img was resized from win pixel size to 512×512
                 #  undo resize: 512×512 → win pixel dimensions
-                sx = win.width / 512
-                sy = win.height / 512
+                sam_size = metadata.get("sam_input_size", 512)
+
+                sx = win.width / sam_size
+                sy = win.height / sam_size
                 poly_unscaled = scale(poly, xfact=sx, yfact=sy, origin=(0, 0))
 
                 #  add window offset: win-relative px → full raster pixel
@@ -179,3 +181,8 @@ def write_detected_houses(
                     "wkt": geo_poly.wkt,
                     "run_id": run_id,
                 })
+
+                print("WIN WIDTH:", win.width)
+                print("WIN HEIGHT:", win.height)
+                print("Poly bounds (pixel space):", poly.bounds)
+
