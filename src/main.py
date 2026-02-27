@@ -16,7 +16,7 @@ from src.mlqa.mlqa_client import MLQAParseError
 from src.pipelines.router import route
 from src.patches.extractor import extract_patch
 from src.patches.create_patch_output import create_patch_outputs
-from src.db.writer import write_mlqa
+from src.db.writer import write_mlqa, write_detected_trees
 from src.db.writer import write_detected_houses
 
 # --------------------------------------------------
@@ -49,7 +49,7 @@ print(f"RUN_ID: {RUN_ID}")
 # --------------------------------------------------
 
 engine = create_engine(os.environ["PG_CONN"])
-AOI_ID = 3
+AOI_ID = 1
 
 aoi_gdf = gpd.read_postgis(
     f"SELECT geom FROM src.aoi WHERE aoi_id = {AOI_ID}",
@@ -69,7 +69,7 @@ gdf = gpd.read_postgis(
             geom,
             (SELECT geom FROM src.aoi WHERE aoi_id = {AOI_ID})
           )
-    LIMIT 100
+    LIMIT 10
     """,
     engine,
     geom_col="geom",
@@ -203,6 +203,17 @@ for _, row in gdf.iterrows():
             building_id=row.id,
             polygons=final_polys,
             detection_type=dtype,
+            run_id=RUN_ID,
+            tiff_path=row.tiff_path,
+            win=result.metadata.get("win", win),
+            metadata=result.metadata,
+        )
+
+        tree_polys = result.metadata.get("tree_polygons", [])
+
+        write_detected_trees(
+            building_id=row.id,
+            polygons=tree_polys,
             run_id=RUN_ID,
             tiff_path=row.tiff_path,
             win=result.metadata.get("win", win),

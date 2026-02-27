@@ -1,5 +1,6 @@
 from src.pipelines.base import Pipeline, PipelineResult
 from src.mlqa.point_client import analyze_points
+from src.sam.occlusion import segment_trees
 from src.sam.refine import run_sam_stage
 from src.patches.extractor import extract_patch
 import cv2
@@ -61,6 +62,7 @@ class FullHousePipeline(Pipeline):
                 break
 
             refined_polygon = result
+            tree_masks, tree_polys = segment_trees(temp_raw_path)
             sam_size = img.shape[0]
             break
 
@@ -74,5 +76,6 @@ class FullHousePipeline(Pipeline):
                 "context_used": context_refine,
                 "win": win,
                 "sam_input_size": img.shape[0],
+                "tree_polygons": tree_polys,
             },
         )

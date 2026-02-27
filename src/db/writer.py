@@ -186,3 +186,124 @@ def write_detected_houses(
                 print("WIN HEIGHT:", win.height)
                 print("Poly bounds (pixel space):", poly.bounds)
 
+def write_detected_trees(
+        building_id: int,
+        polygons,
+        run_id: str,
+        tiff_path: str,
+        win,
+        metadata: dict = None,
+):
+    """
+    Backprojects tree polygons from SAM pixel space to WGS84.
+
+    Uses identical projection chain as write_detected_houses.
+    """
+
+    if not polygons:
+        return
+
+    sql = text("""
+        INSERT INTO src.detected_tree (
+            building_id,
+            area,
+            geom,
+            run_id
+        )
+        VALUES (
+            :building_id,
+            :area,
+            ST_SetSRID(ST_GeomFromText(:wkt), 4326),
+            :run_id
+        )
+    """)
+
+    crop_info = metadata.get("crop_info") if metadata else None
+    sam_size = metadata.get("sam_input_size", 512)
+
+    with rasterio.open(tiff_path) as src:
+
+        raster_transform = src.transform
+        raster_crs = src.crs
+
+        affine_params = [
+            raster_transform.a,
+            raster_transform.b,
+            raster_transform.d,
+            raster_transform.e,
+            raster_transform.xoff,
+            raster_transform.yoff,
+        ]
+
+        if raster_crs.to_epsg() != 4326:
+            transformer = pyproj.Transformer.from_crs(
+                raster_crs,
+                "EPSG:4326",
+                always_xy=True
+            )
+            project = transformer.transform
+        else:
+            project = None
+
+        with engine.begin() as conn:
+            for poly in polygons:
+
+                if poly is None or poly.is_empty:
+                    continue
+
+                # ─────────────────────────────────────────────
+                # 1️⃣ Undo refine crop (PARTIAL only)
+                # ─────────────────────────────────────────────
+                if crop_info is not None:
+                    x1, y1, w_crop, h_crop = crop_info
+
+                    poly = scale(
+                        poly,
+                        xfact=w_crop / 512,
+                        yfact=h_crop / 512,
+                        origin=(0, 0),
+                    )
+
+                    poly = translate(poly, xoff=x1, yoff=y1)
+
+                # ─────────────────────────────────────────────
+                # 2️⃣ Undo SAM resize
+                # ─────────────────────────────────────────────
+                sx = win.width / sam_size
+                sy = win.height / sam_size
+
+                poly_unscaled = scale(
+                    poly,
+                    xfact=sx,
+                    yfact=sy,
+                    origin=(0, 0),
+                )
+
+                # ─────────────────────────────────────────────
+                # 3️⃣ Add window offset
+                # ─────────────────────────────────────────────
+                poly_full_px = translate(
+                    poly_unscaled,
+                    xoff=win.col_off,
+                    yoff=win.row_off,
+                )
+
+                # ─────────────────────────────────────────────
+                # 4️⃣ Pixel → raster CRS
+                # ─────────────────────────────────────────────
+                utm_poly = affine_transform(poly_full_px, affine_params)
+
+                # ─────────────────────────────────────────────
+                # 5️⃣ Raster CRS → WGS84
+                # ─────────────────────────────────────────────
+                geo_poly = (
+                    shp_transform(project, utm_poly)
+                    if project else utm_poly
+                )
+
+                conn.execute(sql, {
+                    "building_id": building_id,
+                    "area": utm_poly.area,
+                    "wkt": geo_poly.wkt,
+                    "run_id": run_id,
+                })

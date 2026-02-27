@@ -42,7 +42,7 @@ No explanations.
 
 def _build_positive_user(already_placed: list[list[int]]) -> str:
     avoid_str = (
-        f"\nAlready placed points (DO NOT place near these): {already_placed}"
+        f"\nAlready placed points (DO NOT place within 80 pixels of these): {already_placed}"
         if already_placed else ""
     )
 
@@ -51,9 +51,11 @@ A BLUE STAR marks the center of the TARGET HOUSE.
 
 Task:
 1. Identify the roof of the house marked by the star.
-2. Select exactly 1 point ON the roof.
-   - It must be clearly on visible roof pixels.
-   - It must be spatially separated from previous points.{avoid_str}
+2. Select exactly 1 NEW point ON a DIFFERENT PART of the roof.
+   - The point must lie on visible roof pixels.
+   - It must be at least 50 pixels away from any previously placed point.
+   - It should cover a roof region not yet represented (e.g., another side, corner, or extension).
+{avoid_str}
 
 Coordinate system:
 - (0,0) = top-left

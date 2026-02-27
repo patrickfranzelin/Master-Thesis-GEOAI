@@ -4,6 +4,7 @@ from shapely.geometry import Point
 from src.mlqa.point_client import analyze_points
 from src.patches.extractor import extract_patch, extract_patch_pixel
 from src.pipelines.base import Pipeline, PipelineResult
+from src.sam.occlusion import segment_trees
 from src.sam.partial import run_sam_detect_all
 from src.sam.refine import run_sam_stage
 
@@ -111,6 +112,7 @@ class PartialHousePipeline(Pipeline):
                 break
 
             refined_polygon = result
+            tree_masks, tree_polys = segment_trees(temp_refine_path)
             break
 
         return PipelineResult(
@@ -123,6 +125,7 @@ class PartialHousePipeline(Pipeline):
                 "context_used": context_refine,
                 "win": win_big,
                 "crop_info": crop_info,
-                "sam_input_size": refine_img.shape[0],  # ADD THIS
+                "sam_input_size": refine_img.shape[0],
+                "tree_polygons": tree_polys,
             },
         )
