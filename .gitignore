@@ -10,3 +10,7 @@ train_sam/patches
 .idea/
 startup_mllm_commands.txt
 create_qwen8b3_pod.txt
+/.idea/Masterarbeit.iml
+/.idea/misc.xml
+/.idea/vcs.xml
+
