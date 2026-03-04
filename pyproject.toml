@@ -20,6 +20,7 @@ dependencies = [
     "fiona",
     "pyogrio",
     "geoalchemy2",
+    "buildingregulariser",
 
     # Database
     "sqlalchemy",
