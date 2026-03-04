@@ -3,15 +3,17 @@ name = "master-thesis-geoai"
 version = "0.1.0"
 description = "AI-assisted building footprint correction pipeline using SAM and VLM"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11, <3.14"
 
 dependencies = [
     # Core ML / Vision
-    "torch",
+    "torch>=2.12.0.dev0; sys_platform == 'win32'",
+    "torch>=2.0; sys_platform != 'win32'",
+    "torchvision==0.26.0.dev20260221+cu128; sys_platform == 'win32'",
+    "torchvision>=0.20; sys_platform != 'win32'",
     "ultralytics>=8.4",
     "segment-anything",
     "opencv-python",
-
     # Geo stack
     "geopandas",
     "rasterio",
@@ -21,32 +23,46 @@ dependencies = [
     "pyogrio",
     "geoalchemy2",
     "buildingregulariser",
-
     # Database
     "sqlalchemy",
     "psycopg2-binary",
-
     # LLM
     "openai",
-
     # Utilities
     "numpy",
     "pandas",
     "pyyaml",
     "requests",
-    "tqdm"
+    "tqdm",
+    "notebook>=7.5.4",
 ]
 
-[tool.uv]
-dev-dependencies = [
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-nightly-cu128", marker = "sys_platform == 'win32'" },
+]
+torchvision = [
+    { url = "https://download.pytorch.org/whl/nightly/cu128/torchvision-0.26.0.dev20260221%2Bcu128-cp311-cp311-win_amd64.whl", marker = "sys_platform == 'win32'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-nightly-cu128"
+url = "https://download.pytorch.org/whl/nightly/cu128"
+explicit = true
+
+[dependency-groups]
+dev = [
     "ipython",
     "jupyterlab",
     "matplotlib",
     "pytest",
     "black",
-    "ruff"
+    "ruff",
 ]
 
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
