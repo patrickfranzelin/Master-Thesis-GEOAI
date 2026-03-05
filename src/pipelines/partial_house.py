@@ -9,12 +9,13 @@ from src.sam.partial import run_sam_detect_all
 from src.sam.refine import run_sam_stage
 
 PARTIAL_CONTEXT_START = 4.0
-PARTIAL_CONTEXT_REFINE_START = 4.0
+
 
 class PartialHousePipeline(Pipeline):
     name = "PARTIAL"
 
     def execute(self, ctx):
+
         # --------------------------------------------------
         # 1. Extract larger context patch for detection
         # --------------------------------------------------
@@ -45,7 +46,7 @@ class PartialHousePipeline(Pipeline):
                 sam_polygons=None,
                 inside_pts=[],
                 outside_pts=[],
-                metadata={"stage": "no_masks_found", "win": win_big},  # ✅ win_big always available
+                metadata={"stage": "no_masks_found", "win": win_big},
             )
 
         # --------------------------------------------------
@@ -60,10 +61,7 @@ class PartialHousePipeline(Pipeline):
 
         if selected is None:
             print(" ⚠ No candidate contains footprint center — picking nearest by centroid distance")
-            selected = min(
-                candidates,
-                key=lambda p: p.centroid.distance(center_point),
-            )
+            selected = min(candidates, key=lambda p: p.centroid.distance(center_point))
 
         # --------------------------------------------------
         # 4. Refine with expanding context loop
@@ -74,6 +72,8 @@ class PartialHousePipeline(Pipeline):
         inside = []
         outside = []
         crop_info = None
+        refine_img = None
+        tree_polys = []
 
         for expand_iter in range(max_expand):
             print(f"SAM expansion iteration {expand_iter + 1}")
@@ -114,6 +114,22 @@ class PartialHousePipeline(Pipeline):
             refined_polygon = result
             tree_masks, tree_polys = segment_trees(temp_refine_path)
             break
+        else:
+            print(f" ✗ PARTIAL: patch expansion exhausted for building {ctx.building_id}")
+            return PipelineResult(
+                pipeline_name=self.name,
+                sam_polygons=None,
+                inside_pts=inside,
+                outside_pts=outside,
+                metadata={
+                    "stage": "max_expand_reached",
+                    "context_used": context_refine,
+                    "win": win_big,
+                    "crop_info": crop_info,
+                    "sam_input_size": refine_img.shape[0] if refine_img is not None else None,
+                    "tree_polygons": [],
+                },
+            )
 
         return PipelineResult(
             pipeline_name=self.name,
@@ -125,7 +141,7 @@ class PartialHousePipeline(Pipeline):
                 "context_used": context_refine,
                 "win": win_big,
                 "crop_info": crop_info,
-                "sam_input_size": refine_img.shape[0],
+                "sam_input_size": refine_img.shape[0] if refine_img is not None else None,
                 "tree_polygons": tree_polys,
             },
         )
