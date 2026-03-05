@@ -14,3 +14,5 @@ create_qwen8b3_pod.txt
 /.idea/misc.xml
 /.idea/vcs.xml
 
+/runs/
+
