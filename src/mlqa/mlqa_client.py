@@ -19,7 +19,7 @@ class MLQAParseError(Exception):
 
 
 # ==================================================
-# PROMPTS (UNCHANGED)
+# PROMPTS
 # ==================================================
 
 PRESENCE_SYSTEM = """
@@ -81,43 +81,46 @@ OR
 """
 
 ERROR_SYSTEM = """
-You are an expert geospatial analyst specializing in building footprint validation.
-
-Your task is to classify geometric errors between a visible roof and a given polygon.
-
-You must assign structured error categories from a fixed list.
-
-Output ONLY valid JSON.
-No markdown.
-No explanations outside JSON.
+You are a precise geospatial quality analyst evaluating building footprint polygons in aerial imagery.
+Output ONLY valid JSON. No markdown. No text outside JSON.
 """
 
 ERROR_USER = """
-Input: An aerial image patch with a GREEN polygon outlining a building footprint.
+You see an aerial image with a GREEN polygon drawn over a building area.
 
-Task:
-Compare the green polygon to the visible roof structure inside the image.
+STEP 1 — Examine each side independently (NORTH=top, SOUTH=bottom, EAST=right, WEST=left):
+- Does the roof extend BEYOND the polygon on this side? → UNDERSEGMENTATION on that side
+- Does the polygon extend BEYOND the roof on this side? → OVERSEGMENTATION on that side
+- Is the polygon shifted/rotated but roughly correct size? → MISALIGNMENT
+- Is the roof cut off at the image border? → PARTIAL_VISIBILITY
 
-Classify the geometric relationship using ONE of the following categories:
+STEP 2 — List ALL errors you observe. A polygon can have BOTH oversegmentation on one side
+AND undersegmentation on another side simultaneously.
 
-- NO_ERROR
-- UNDERSEGMENTATION
-- OVERSEGMENTATION
-- MISALIGNMENT
-- SHAPE_SIMPLIFICATION
-- PARTIAL_VISIBILITY
+STEP 3 — For each error, specify which sides are affected.
 
-Additionally:
-- Specify where the mismatch occurs:
-  Choose from: NORTH, SOUTH, EAST, WEST, CENTER, MULTIPLE, NONE
-- Provide a short human-readable description.
+Valid categories: NO_ERROR, UNDERSEGMENTATION, OVERSEGMENTATION, MISALIGNMENT, SHAPE_SIMPLIFICATION, PARTIAL_VISIBILITY
 
-Return ONLY valid JSON:
-
+Return ONLY this JSON:
 {
-  "error_category": "...",
-  "error_location": ["..."],
-  "error_description": "..."
+  "errors": [
+    {
+      "error_category": "UNDERSEGMENTATION",
+      "error_location": ["EAST", "SOUTH"],
+      "error_description": "Roof extends beyond polygon on east and south sides."
+    }
+  ]
+}
+
+If no error exists:
+{
+  "errors": [
+    {
+      "error_category": "NO_ERROR",
+      "error_location": ["NONE"],
+      "error_description": "Polygon accurately matches the visible roof."
+    }
+  ]
 }
 """
 
@@ -127,6 +130,8 @@ Return ONLY valid JSON:
 # ==================================================
 
 def _parse_json_safe(raw):
+    # Strip Qwen3 thinking block before parsing
+    raw = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL).strip()
     try:
         return json.loads(raw)
     except Exception:
@@ -135,7 +140,7 @@ def _parse_json_safe(raw):
         try:
             return json.loads(cleaned)
         except Exception:
-            print("⚠ JSON parse failed → returning empty dict")
+            print("JSON parse failed → returning empty dict")
             return {}
 
 
@@ -148,7 +153,10 @@ def _ask(system_prompt: str, user_prompt: str, image_b64: str):
         response = client.chat.completions.create(
             model=MODEL_NAME,
             temperature=0,
-            max_tokens=512,
+            max_tokens=1024,
+            extra_body={
+                "chat_template_kwargs": {"enable_thinking": True}
+            },
             messages=[
                 {"role": "system", "content": system_prompt},
                 {
@@ -196,31 +204,35 @@ def analyze_patch(image_path: Path):
         return {
             "house_present": False,
             "full_house_present": False,
-            "error_description": "No roof structure detected or MLQA failure"
+            "errors": [],
+            "error_description": "No roof structure detected or MLQA failure",
         }
 
     # --------------------------
     # 2. Coverage
     # --------------------------
     coverage = _ask(COVERAGE_SYSTEM, COVERAGE_USER, img_b64)
-
-    if coverage is None:
-        coverage_value = False
-    else:
-        coverage_value = coverage.get("full_house_present", False)
+    coverage_value = coverage.get("full_house_present", False) if coverage else False
 
     # --------------------------
-    # 3. Error classification
+    # 3. Multi-error classification
     # --------------------------
     error_info = _ask(ERROR_SYSTEM, ERROR_USER, img_b64)
 
     if error_info is None:
-        error_desc = "MLQA_ERROR"
+        errors = []
+        error_description = "MLQA_ERROR"
     else:
-        error_desc = error_info.get("error_description")
+        errors = error_info.get("errors", [])
+        error_description = "; ".join(
+            e.get("error_description", "")
+            for e in errors
+            if e.get("error_description")
+        ) or "MLQA_ERROR"
 
     return {
         "house_present": True,
         "full_house_present": coverage_value,
-        "error_description": error_desc
+        "errors": errors,
+        "error_description": error_description,
     }
