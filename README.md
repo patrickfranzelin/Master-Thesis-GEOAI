@@ -1,122 +1,218 @@
-# Interim Results: LLM-Assisted Quality Assurance in Building Segmentation
-The initial idea is to use a large language model (LLM) to perform quality assurance checks on automatically generated building footprints produced by a visual model.
-The key challenge lies in integrating the two models, since they are based on fundamentally different technical approaches.
+# Master Thesis GEOAI
 
-The plan is to first use a visual model to generate a building mask. Afterwards, the LLM evaluates the mask by identifying typical errors, such as shadows being included, missing parts of the building, or polygons that do not actually represent buildings. The LLM’s suggestions must then be translated into a format that the visual model can understand and apply.
+Multimodal quality assessment and refinement of **automatically generated building footprints** using:
+- a multimodal language model (MLLM) for semantic reasoning,
+- SAM/SAM3 for geometry refinement,
+- PostGIS for scalable geospatial data management.
 
-In my tests with the combination of SAM and ChatGPT-4.1, this feedback could take the form of a point mask: the LLM places positive points on the building and negative points outside it, which the visual model can process to improve the mask. Alternatively, bounding boxes or full masks can also be used as correction input.
-
-This combination of multimodal LLMs and visual models has so far mainly been explored for interactive tasks, where the LLM instructs the visual model what to segment. However, using the LLM to assess and correct already generated masks represents a as far as I now new approach.
-
-
-Below are examples showing the three main steps of the proposed QA pipeline:
-
-1. **Raw polygon from SAM/SegFormer** (red outline, often wobbly or with errors).  
-2. **MLLM QA step** (polygon chip with grid overlay and generated positive/negative points).  
-3. **Refined polygon** (after SAM re-prompt and/or regularization).
+This repository implements a two-stage, decoupled architecture:
+1. **Evaluate** if a building footprint is valid and complete (MLLM-based QA).
+2. **Refine** only footprints that can be improved (SAM-based segmentation).
 
 ---
 
-## Example 1
+## 1) Project Goal
 
-| Raw Extraction         | MLLM QA          | Refined Result        |
-|------------------------|------------------|-----------------------|
-| ![raw](Theory/img.png) | ![qa](Theory/img_2.png) | ![refined](Theory/img_1.png) |
+Large regions (especially in parts of the Global South) have no reliable authoritative building reference data. Classical QA methods that compare to official datasets are often impossible there.
 
----
-
-## Example 2
-
-| Raw Extraction    | MLLM QA          | Refined Result        |
-|-------------------|------------------|-----------------------|
-| ![raw](Theory/img_4.png) | ![qa](Theory/img_5.png) | ![refined](Theory/img_3.png) |
+This project explores a **reference-free validation strategy**:
+- inspect imagery + footprint together,
+- classify quality semantically,
+- route to specialized refinement pipelines,
+- write improved polygons back to a geospatial database.
 
 ---
 
-## Example 3
+## 2) Method Overview
 
-| Raw Extraction    | MLLM QA | Refined Result        |
-|-------------------|---------|-----------------------|
-| ![raw](Theory/img_6.png) | ![qa](Theory/poly_4_points.png) | ![refined](Theory/img_7.png) |
+### System architecture
 
----
+The workflow is modular and split into decision + correction:
 
-## Communication Channels
+- **MLLM stage** (semantic QA):
+  - Is there a roof in the footprint?
+  - Is the footprint mostly complete?
+  - Which error type is visible?
 
-### SAM Prompting Options
-SAM accepts different kinds of prompts to refine a mask:
+- **SAM stage** (geometric correction):
+  - Uses point prompts (+ optional bounding box / semantic prompt)
+  - Produces refined binary masks
+  - Converts masks back to polygons and geospatial CRS
 
-- **Points**  
-  - Positive points = "this pixel is inside the object"  
-  - Negative points = "this pixel is outside the object"  
+Flowchart:
 
-- **Boxes**  
-  - A bounding box is given, SAM segments the object inside.  
-  The box is converted into four corner points + edges as a geometric hint.
-
-SAM then segments the object inside the box that best matches local image features.
-- **Masks**  
-  - Previous mask or polygon can be refined further.  
+![Main workflow](Theory/flowchart_v1.png)
 
 ---
 
-### What the MLLM Does (`scripts/02_mllm_qa.py`)
+## 3) Processing Pipeline (End-to-End)
 
-The MLLM (e.g., GPT-4.1 with vision):
+The implementation in `src/main.py` executes the following sequence:
 
-1. **Receives input**  
-   - A building chip image (with red outline).  
-   - An overlaid white grid with pixel coordinates.  
+1. **Load buildings from PostGIS + AOI filtering**
+2. **Extract raster patches** around each building (`512×512`)
+3. **Create patch variants** for different tasks:
+   - raw patch (segmentation)
+   - clean patch (polygon overlay for QA)
+   - debug patch (centroid marker for point prompting)
+4. **Run MLLM QA** and build a decision object:
+   - `house_present`
+   - `full_house_present`
+   - `error_description`
+5. **Route to pipeline**:
+   - no house → stop and store QA result
+   - full house → `FullHousePipeline`
+   - partial/uncertain → `PartialHousePipeline`
+6. **Run SAM refinement** (iterative; with optional context expansion)
+7. **Backproject polygons** to geospatial coordinates and store in DB
+8. **Store metadata** (prompt points, error info, run id, detection type, etc.)
 
-2. **Tasks**  
-   - Decide if the object is a **building** or not.  
-   - Detect issues in the polygon outline, chosen from a fixed set:  
-     `shadow_inclusion`, `vegetation_overlap`, `road_or_path`,  
-     `open_polygon`, `partial_roof`, `shape_inaccurate`, `too_small`,  
-     `missing_part`, `other`.  
-
-3. **Outputs**  
-   - JSON object with:  
-     - `is_building` (true/false)  
-     - `issues` (list of detected problems)  
-     - `positive_points` = at least 4 coordinates **inside the roof**  
-     - `negative_points` = at least 4 coordinates **outside the roof**  
-
-   Example:
-   ```json
-   {
-     "is_building": true,
-     "issues": ["shadow_inclusion", "missing_part"],
-     "positive_points": [[100,120],[150,140],[200,150],[250,160]],
-     "negative_points": [[80,80],[90,200],[230,240],[260,100]]
-   }
-   
 ---
 
-### Fusion strategies in the literature:
+## 4) Pipeline Logic
 
-Adapter-based (LISA) → plug text directly into SAM.
+### A) FullHousePipeline (`src/pipelines/full_house.py`)
+Used when the footprint already covers most of the building.
 
-Universal prompt encoder (SEEM) → unify text/points/boxes.
+- generates positive/negative points from debug patch,
+- refines with SAM,
+- expands context if the prediction touches patch borders,
+- outputs refined polygon(s) + metadata.
 
-Two-stage pipeline (SAM4MLLM) → MLLM proposes, SAM segments.
+### B) PartialHousePipeline (`src/pipelines/partial_house.py`)
+Used when footprint is partial or uncertain.
 
-Vision-language grounding (Kosmos-2) → direct text-to-pixels.
+- extracts a larger context patch,
+- runs SAM text/concept discovery (`house` / `building`) to find candidates,
+- selects best candidate around footprint centroid,
+- runs iterative point-guided refinement,
+- returns final refined polygon + crop metadata for correct backprojection.
 
+> If you have dedicated figures for `Theory/fullpipline` and `Theory/partialpipline`, place them in the repo and add them here; the current repository snapshot does not include those files.
 
-# QA Pipeline Flow
+---
 
-![raw](Theory/flowchart_v1.png)
+## 5) Repository Structure
 
-```mermaid
-flowchart TD
-    A[Input: Orthophoto + SegFormer or SAM polygons] --> B[Clip chip around polygon]
-    B --> C[Overlay polygon + grid for QA chip]
-    C --> D[MLLM step: e.g. GPT-4V, LLaVA]
-    D -->|JSON with is_building, issues, points| E{Valid building?}
-    E -->|No| F[Discard polygon]
-    E -->|Yes| G[Run SAM refinement with points or mask]
-    G --> I[Validate geometry: area, topology]
-     -->|Valid| J[Save to GeoPackage]
-    I -->|Invalid| F
-    J --> K[Final debug outputs: mask, overlay, refined polygon]
+```text
+src/
+  main.py                     # Orchestrates complete workflow
+  core/context.py             # Shared pipeline context object
+
+  pipelines/
+    router.py                 # Decision routing to full/partial pipelines
+    full_house.py             # Standard refinement path
+    partial_house.py          # Discovery + refinement path
+    base.py                   # Common Pipeline / PipelineResult
+
+  mlqa/
+    mlqa_client.py            # QA prompts + structured MLLM parsing
+    point_client.py           # Positive/negative point generation
+    decision.py               # Converts QA JSON into routing decision
+
+  patches/
+    extractor.py              # Geo patch extraction + pixel transforms
+    create_patch_output.py    # raw/clean/debug image generation
+
+  sam/
+    model_sam3.py             # SAM3 wrappers (points / text / exemplar)
+    refine.py                 # Iterative SAM refinement stage
+    partial.py                # Detect-all candidate discovery
+    occlusion.py              # Tree/occlusion segmentation helpers
+
+  db/
+    writer.py                 # Persist QA + refined geometries
+    loader.py                 # DB loading utilities
+    export_to_filegdb.py      # Export helpers
+```
+
+---
+
+## 6) Inputs and Outputs
+
+### Required Inputs
+
+1. **PostgreSQL/PostGIS tables** (expected schemas under `src.*` namespace)
+   - building geometries (`src.buildings`)
+   - AOI polygon (`src.aoi`)
+2. **GeoTIFF paths** for each building row (`tiff_path` column)
+3. **Runtime model services / weights**
+   - MLLM endpoint (RunPod/OpenAI-compatible API)
+   - SAM3 weights in `models/sam3_weights/sam3.pt`
+
+### Runtime Environment Variables
+
+- `PG_CONN` → SQLAlchemy/PostGIS connection string
+- `RUNPOD_ID` → host id used to call the multimodal endpoint
+
+### Main Outputs
+
+- patch artifacts in `outputs/db_results/{raw,clean,debug,sam,comparison}`
+- QA decisions written to `src.building_mlqa`
+- refined footprints written to `src.detected_house`
+- optional tree masks/polygons written via writer utilities
+
+---
+
+## 7) Installation
+
+This project uses Python `>=3.11` and is configured with `pyproject.toml`.
+
+```bash
+# from repository root
+python -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -U pip
+pip install -e .
+```
+
+Or with `uv`:
+
+```bash
+uv sync
+```
+
+---
+
+## 8) Run the Pipeline
+
+```bash
+export PG_CONN="postgresql+psycopg2://USER:PASS@HOST:5432/DB"
+export RUNPOD_ID="<your-runpod-id>"
+python -m src.main
+```
+
+Notes:
+- `AOI_ID` is currently set in `src/main.py`.
+- The processing limit is currently set to `LIMIT 10` for testing.
+- Adjust context factors and prompt behavior in pipeline files for your study area.
+
+---
+
+## 9) Current Status and Thesis Context
+
+This repository is a research implementation for a master thesis workflow and proof-of-concept. It is optimized for transparent experimentation, modularity, and reproducibility rather than turnkey production deployment.
+
+Planned documentation extensions:
+- evaluation metrics (IoU, boundary quality, error classes),
+- baseline comparisons,
+- ablation studies for point prompts and context expansion,
+- additional figures for full/partial pipeline internals.
+
+---
+
+## 10) Example Visual Outputs
+
+Current examples in this repository:
+
+| Raw Extraction | MLLM QA / Prompting | Refined Result |
+|---|---|---|
+| ![raw-1](Theory/img.png) | ![qa-1](Theory/img_2.png) | ![refined-1](Theory/img_1.png) |
+| ![raw-2](Theory/img_4.png) | ![qa-2](Theory/img_5.png) | ![refined-2](Theory/img_3.png) |
+| ![raw-3](Theory/img_6.png) | ![qa-3](Theory/poly_4_points.png) | ![refined-3](Theory/img_7.png) |
+
+---
+
+## 11) Citation
+
+If you use this code in academic work, please cite your thesis and the key model/data sources (Open Buildings, SAM, and the selected MLLM backend).
