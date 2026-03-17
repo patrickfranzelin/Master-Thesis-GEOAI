@@ -42,7 +42,7 @@ No explanations.
 
 def _build_positive_user(already_placed: list[list[int]]) -> str:
     avoid_str = (
-        f"\nAlready placed points (DO NOT place within 80 pixels of these): {already_placed}"
+        f"\nAlready placed points (DO NOT place within 40 pixels of these): {already_placed}"
         if already_placed else ""
     )
 
