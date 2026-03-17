@@ -100,6 +100,7 @@ class PartialHousePipeline(Pipeline):
                 outside=outside,
                 out_dir=ctx.sam_dir,
                 bid=ctx.building_id,
+                init_polygon=refine_poly_px,
             )
 
             if result == "EXPAND_PATCH":

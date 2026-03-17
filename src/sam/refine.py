@@ -13,13 +13,23 @@ def touches_border(poly, img_shape, margin=3):
     return False
 
 
-def run_sam_stage(img, raw_path, poly_px, inside, outside, out_dir, bid, max_iters=3, mode="standard"):
+def run_sam_stage(img, raw_path, poly_px, inside, outside, out_dir, bid, max_iters=3, mode="standard", init_polygon=None ):
     original_inside = inside.copy()
     original_outside = outside.copy()
     bbox_scale = 0.25
 
     bbox_init = polygon_to_sam_bbox(poly_px, img.shape, scale=bbox_scale)
     bbox = bbox_init.copy() if bbox_init else None
+    prev_logits = None
+
+    if init_polygon is not None:
+        # boundary points
+        for x, y in init_polygon.exterior.coords[::8]:
+            inside.append([int(x), int(y)])
+
+        # centroid
+        c = init_polygon.centroid
+        inside.append([int(c.x), int(c.y)])
 
     if bbox is not None:
         x1, y1, x2, y2 = bbox[0]
@@ -28,7 +38,7 @@ def run_sam_stage(img, raw_path, poly_px, inside, outside, out_dir, bid, max_ite
 
     mask = None
     poly = None
-    prev_logits = None  # ← tracks logits across iterations
+    #prev_logits = None  # ← tracks logits across iterations
 
     for iter_idx in range(max_iters):
         print(f"SAM iteration {iter_idx + 1}")
@@ -81,9 +91,16 @@ def run_sam_stage(img, raw_path, poly_px, inside, outside, out_dir, bid, max_ite
 
     # --- Debug visualization (unchanged) ---
     sam_input = img.copy()
+    # MLLM inside → green
     for x, y in original_inside:
         cv2.circle(sam_input, (int(x), int(y)), 6, (0, 255, 0), -1)
-    for x, y in original_outside:
+
+    # polygon inside → cyan
+    for x, y in inside[len(original_inside):]:
+        cv2.circle(sam_input, (int(x), int(y)), 6, (255, 255, 0), -1)
+
+    # outside → red
+    for x, y in outside:
         cv2.circle(sam_input, (int(x), int(y)), 6, (0, 0, 255), -1)
     if bbox_init is not None:
         x1, y1, x2, y2 = bbox_init[0]
