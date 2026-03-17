@@ -1,5 +1,6 @@
 import geopandas as gpd
 import rasterio
+import shapely
 from shapely.geometry import box
 import pandas as pd
 from sqlalchemy import create_engine
@@ -131,6 +132,37 @@ ON src.detected_tree USING GIST(geom);
 
 conn.commit()
 
+cursor.execute("""
+-- --------------------------------------------------
+-- BUILDING MLQA TABLE
+-- --------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS src.building_mlqa(
+    building_id INTEGER PRIMARY KEY,
+    house_present BOOLEAN,
+    error_description TEXT,
+    errors JSONB,               
+    analyzed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    inside_pts JSONB,
+    outside_pts JSONB,
+    patch_path TEXT,
+    full_house_present BOOLEAN
+);
+
+CREATE INDEX IF NOT EXISTS idx_building_mlqa_building
+ON src.building_mlqa(building_id);
+""")
+
+conn.commit()
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS src.aoi(
+    aoi_id SERIAL PRIMARY KEY,
+    geom geometry(MULTIPOLYGON,4326)
+);
+""")
+conn.commit()
+
 # --------------------------------------------------
 # LOAD AOI
 # --------------------------------------------------
@@ -142,8 +174,15 @@ if AOI_EXISTS:
     aoi = gpd.read_file(AOI_PATH, layer=AOI_LAYER).to_crs(4326)
     aoi = aoi.rename(columns={"geometry": "geom"}).set_geometry("geom")
 
-    aoi.to_postgis("aoi", engine, schema="src", if_exists="replace", index=False)
-
+    aoi = aoi[["geom"]]
+    aoi["geom"] = aoi["geom"].apply(lambda g: shapely.force_2d(g))
+    aoi.to_postgis(
+        "aoi",
+        engine,
+        schema="src",
+        if_exists="append",
+        index=False
+    )
     minx, miny, maxx, maxy = aoi.total_bounds
     print("AOI bbox:", minx, miny, maxx, maxy)
 
