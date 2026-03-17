@@ -81,49 +81,42 @@ OR
 """
 
 ERROR_SYSTEM = """
-You are a precise geospatial quality analyst evaluating building footprint polygons in aerial imagery.
-Output ONLY valid JSON. No markdown. No text outside JSON.
-"""
+You are an expert geospatial analyst.
 
+Your task is to evaluate how well a polygon matches a building roof in aerial imagery.
+
+Explain clearly what is wrong (or correct) about the polygon.
+
+IMPORTANT:
+- Use natural, human-readable language
+
+Output ONLY valid JSON.
+"""
 ERROR_USER = """
-You see an aerial image with a GREEN polygon drawn over a building area.
+You see an aerial image with a GREEN polygon over a building.
 
-STEP 1 — Examine each side independently (NORTH=top, SOUTH=bottom, EAST=right, WEST=left):
-- Does the roof extend BEYOND the polygon on this side? → UNDERSEGMENTATION on that side
-- Does the polygon extend BEYOND the roof on this side? → OVERSEGMENTATION on that side
-- Is the polygon shifted/rotated but roughly correct size? → MISALIGNMENT
-- Is the roof cut off at the image border? → PARTIAL_VISIBILITY
+Describe what is wrong with the polygon.
 
-STEP 2 — List ALL errors you observe. A polygon can have BOTH oversegmentation on one side
-AND undersegmentation on another side simultaneously.
+Return ONLY this JSON format:
 
-STEP 3 — For each error, specify which sides are affected.
-
-Valid categories: NO_ERROR, UNDERSEGMENTATION, OVERSEGMENTATION, MISALIGNMENT, SHAPE_SIMPLIFICATION, PARTIAL_VISIBILITY
-
-Return ONLY this JSON:
 {
   "errors": [
     {
-      "error_category": "UNDERSEGMENTATION",
-      "error_location": ["EAST", "SOUTH"],
-      "error_description": "Roof extends beyond polygon on east and south sides."
+      "description": "Your explanation here"
     }
   ]
 }
 
-If no error exists:
+If everything is correct:
+
 {
   "errors": [
     {
-      "error_category": "NO_ERROR",
-      "error_location": ["NONE"],
-      "error_description": "Polygon accurately matches the visible roof."
+      "description": "The polygon correctly matches the roof."
     }
   ]
 }
 """
-
 
 # ==================================================
 # UTILS
@@ -183,7 +176,7 @@ def _ask(system_prompt: str, user_prompt: str, image_b64: str):
         return _parse_json_safe(raw)
 
     except Exception as e:
-        print(f"⚠ MLQA temporary error → skipping: {e}")
+        print(f" MLQA temporary error → skipping: {e}")
         return None
 
 
@@ -215,7 +208,7 @@ def analyze_patch(image_path: Path):
     coverage_value = coverage.get("full_house_present", False) if coverage else False
 
     # --------------------------
-    # 3. Multi-error classification
+    # 3. Error explanation (natural language)
     # --------------------------
     error_info = _ask(ERROR_SYSTEM, ERROR_USER, img_b64)
 
@@ -224,10 +217,11 @@ def analyze_patch(image_path: Path):
         error_description = "MLQA_ERROR"
     else:
         errors = error_info.get("errors", [])
+
         error_description = "; ".join(
-            e.get("error_description", "")
+            e.get("description", "")
             for e in errors
-            if e.get("error_description")
+            if e.get("description")
         ) or "MLQA_ERROR"
 
     return {

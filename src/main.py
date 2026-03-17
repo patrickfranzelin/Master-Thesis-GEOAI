@@ -10,7 +10,6 @@ from uuid import uuid4
 
 from src.core.context import PipelineContext
 from src.db.export_to_filegdb import export_buildings_to_filegdb
-from src.mlqa.comparison_client import compare_polygons
 from src.mlqa.decision import decide
 from src.mlqa.mlqa_client import MLQAParseError
 from src.pipelines.router import route
@@ -18,7 +17,6 @@ from src.patches.extractor import extract_patch
 from src.patches.create_patch_output import create_patch_outputs
 from src.db.writer import write_mlqa, write_detected_trees
 from src.db.writer import write_detected_houses
-
 # --------------------------------------------------
 # Paths
 # --------------------------------------------------
@@ -30,7 +28,8 @@ clean_dir = output_dir / "clean"
 debug_dir = output_dir / "debug"
 comparison_dir = output_dir / "comparison"
 
-
+import torch
+print(torch.cuda.is_available())
 
 for d in [sam_dir, raw_dir, clean_dir, debug_dir, comparison_dir]:
     d.mkdir(parents=True, exist_ok=True)
@@ -69,7 +68,7 @@ gdf = gpd.read_postgis(
             geom,
             (SELECT geom FROM src.aoi WHERE aoi_id = {AOI_ID})
           )
-    LIMIT 10
+    LIMIT 100
     """,
     engine,
     geom_col="geom",
@@ -92,7 +91,7 @@ for _, row in gdf.iterrows():
     # Patch extraction
     # ---------------------------------------------
 
-    img, poly_px, win = extract_patch(row.geom, gdf.crs, row.tiff_path, context=1.75)
+    img, poly_px, win = extract_patch(row.geom, gdf.crs, row.tiff_path, context=1.5)
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
     raw_path, clean_path, debug_path = create_patch_outputs(
@@ -230,6 +229,7 @@ for _, row in gdf.iterrows():
         "house_present": decision.house_present,
         "full_house_present": decision.full_house,
         "error_description": decision.error,
+        "errors": decision.errors,
         "inside_pts": result.inside_pts,
         "outside_pts": result.outside_pts,
     })

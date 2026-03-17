@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 import shutil
 
@@ -25,6 +26,7 @@ ORIGINAL_SCHEMA = {
         "house_present":      "str",
         "full_house_present": "str",
         "error_description":  "str",
+        "errors": "str",
         "patch_path":         "str",
         "analyzed_at":        "str",
     },
@@ -44,6 +46,7 @@ IMPROVED_SCHEMA = {
         "house_present":      "str",
         "full_house_present": "str",
         "error_description":  "str",
+        "errors":             "str",
         "patch_path":         "str",
         "analyzed_at":        "str",
     },
@@ -83,6 +86,7 @@ def _load_original_buildings(engine, aoi_id=None):
             m.house_present,
             m.full_house_present,
             m.error_description,
+            m.errors,
             m.patch_path,
             m.analyzed_at
         FROM src.buildings b
@@ -130,6 +134,7 @@ def _load_improved_buildings(engine, aoi_id=None, run_id=None):
             m.house_present,
             m.full_house_present,
             m.error_description,
+            m.errors,
             m.patch_path,
             m.analyzed_at
         FROM src.detected_house d
@@ -195,6 +200,13 @@ def _write_layer(gdb_path, driver, layer_name, schema, rows, is_improved):
 
     print(f"  {layer_name}: {written} written, {skipped} skipped")
 
+def s_json(v):
+    if v is None:
+        return ""
+    if isinstance(v, str):
+        return v
+    return json.dumps(v)
+
 def _build_properties(row, is_improved):
 
     def s(v): return "" if v is None else str(v)
@@ -210,6 +222,7 @@ def _build_properties(row, is_improved):
         "house_present":      s(row.get("house_present")),
         "full_house_present": s(row.get("full_house_present")),
         "error_description":  s(row.get("error_description")),
+        "errors":             s_json(row.get("errors")),
         "patch_path":         s(row.get("patch_path")),
         "analyzed_at":        s(row.get("analyzed_at")),
     }
