@@ -16,3 +16,10 @@ create_qwen8b3_pod.txt
 
 /runs/
 
+/.env
+/requirements_master.txt
+/requirements.txt
+/TODO_MASTER.txt
+/uv.lock
+/src/test_script.ipynb
+/src/test_script.ipynb
