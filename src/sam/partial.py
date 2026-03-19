@@ -10,7 +10,7 @@ from src.sam.model_sam3 import _MODEL_SEMANTIC, _mask_to_polygon
 # House concept prompt — swap to ["roof"] or ["building rooftop"]
 # for aerial/nadir imagery if needed
 # ------------------------------------------------------------------
-HOUSE_PROMPTS = ["house"]
+HOUSE_PROMPTS = ["roof"]
 
 
 def run_sam_detect_all(

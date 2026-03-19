@@ -16,7 +16,7 @@ def touches_border(poly, img_shape, margin=3):
 def run_sam_stage(img, raw_path, poly_px, inside, outside, out_dir, bid, max_iters=3, mode="standard", init_polygon=None ):
     original_inside = inside.copy()
     original_outside = outside.copy()
-    bbox_scale = 0.25
+    bbox_scale = 0.35
 
     bbox_init = polygon_to_sam_bbox(poly_px, img.shape, scale=bbox_scale)
     bbox = bbox_init.copy() if bbox_init else None
