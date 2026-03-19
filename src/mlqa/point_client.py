@@ -42,7 +42,7 @@ No explanations.
 
 def _build_positive_user(already_placed: list[list[int]]) -> str:
     avoid_str = (
-        f"\nAlready placed points (DO NOT place within 40 pixels of these): {already_placed}"
+        f"\nAlready placed points: {already_placed}"
         if already_placed else ""
     )
 
@@ -53,13 +53,15 @@ Task:
 1. Identify the roof of the house marked by the star.
 2. Select exactly 1 NEW point ON a DIFFERENT PART of the roof.
    - The point must lie on visible roof pixels.
-   - It must be at least 50 pixels away from any previously placed point.
+   - It must be at away from any previously placed point.
    - It should cover a roof region not yet represented (e.g., another side, corner, or extension).
 {avoid_str}
 
 Coordinate system:
 - (0,0) = top-left
 - (1000,1000) = bottom-right
+- Do NOT use rounded numbers like 100, 200, 300.
+- Use precise coordinates (e.g., 237, 418, 563).
 
 Return ONLY valid JSON:
 
