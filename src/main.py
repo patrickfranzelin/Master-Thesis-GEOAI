@@ -5,18 +5,21 @@ from sqlalchemy import create_engine
 import os
 from datetime import datetime
 from uuid import uuid4
-
-
+import torch
 
 from src.core.context import PipelineContext
 from src.db.export_to_filegdb import export_buildings_to_filegdb
 from src.mlqa.decision import decide
 from src.mlqa.mlqa_client import MLQAParseError
 from src.pipelines.router import route
-from src.patches.extractor import extract_patch
+from src.patches.extractor import extract_patch, extract_aoi_raster
 from src.patches.create_patch_output import create_patch_outputs
 from src.db.writer import write_mlqa, write_detected_trees
 from src.db.writer import write_detected_houses
+from src.pipelines.global_discovery import run_global_discovery
+from src.postprocess.matching import filter_new_buildings
+from src.postprocess.deduplication import deduplicate_polygons
+from src.utils.geometry import pixel_to_world
 # --------------------------------------------------
 # Paths
 # --------------------------------------------------
@@ -27,8 +30,8 @@ raw_dir = output_dir / "raw"
 clean_dir = output_dir / "clean"
 debug_dir = output_dir / "debug"
 comparison_dir = output_dir / "comparison"
+ENABLE_GLOBAL = True
 
-import torch
 print(torch.cuda.is_available())
 
 for d in [sam_dir, raw_dir, clean_dir, debug_dir, comparison_dir]:
@@ -68,7 +71,7 @@ gdf = gpd.read_postgis(
             geom,
             (SELECT geom FROM src.aoi WHERE aoi_id = {AOI_ID})
           )
-    LIMIT 100
+    LIMIT 1
     """,
     engine,
     geom_col="geom",
@@ -82,7 +85,8 @@ print(f"Buildings inside AOI: {len(gdf)}")
 # --------------------------------------------------
 # Main loop
 # --------------------------------------------------
-
+all_refined_polys = []
+images = {}
 for _, row in gdf.iterrows():
 
     print(f"\nProcessing building {row.id}")
@@ -178,25 +182,10 @@ for _, row in gdf.iterrows():
 
         for refined_poly in polys:
 
-           # comp = compare_polygons(
-            #    img_big=ctx.img,
-             #   start_poly_px=ctx.poly_px,
-              #  refined_poly_px=refined_poly,
-              #  out_dirs=out_dirs,
-              #  bid=row.id,
-            #)
-
-#            print("Comparison result:", comp["better"])
-
- #           if comp["better"] == "refined":
-  #              final_polys.append(refined_poly)
-#
- #           elif comp["better"] == "original":
-  #              final_polys.append(ctx.poly_px)
-
-   #         else:
-                # equal or unknown → default to refined
             final_polys.append(refined_poly)
+            all_refined_polys.extend(final_polys)
+            images[row.tiff_path] = img
+
 
         write_detected_houses(
             building_id=row.id,
@@ -244,6 +233,74 @@ for _, row in gdf.iterrows():
         print(f"  ✓ {result.pipeline_name}: No SAM segmentation")
 
 print("\nDONE")
+
+# --------------------------------------------------
+# GLOBAL DISCOVERY (FIXED: Use full AOI image)
+# --------------------------------------------------
+
+
+
+if ENABLE_GLOBAL:
+    print("\n GLOBAL DISCOVERY START")
+
+    aoi_tiff_path = gdf.iloc[0]["tiff_path"]
+
+    aoi_img_rgb, aoi_transform, aoi_crs = extract_aoi_raster(
+        aoi_geom=aoi_gdf.iloc[0]["geom"],
+        aoi_crs=aoi_gdf.crs,
+        tiff_path=aoi_tiff_path,
+    )
+
+    print(f"AOI image shape: {aoi_img_rgb.shape}")
+
+    candidates = run_global_discovery(
+        image=aoi_img_rgb,  # Full AOI RGB image
+        prompt="roof",
+        tile_size=1024,
+        overlap=128
+    )
+
+    print(f"Total candidates: {len(candidates)}")
+
+    # ----------------------------
+    # 1. DEDUPLICATION
+    # ----------------------------
+    deduped_px = deduplicate_polygons(candidates)
+
+    print(f"After deduplication: {len(deduped_px)}")
+
+    deduped = deduped_px
+
+    # ----------------------------
+    # 3. MATCHING
+    # ----------------------------
+    new_buildings = filter_new_buildings(
+        deduped,
+        all_refined_polys,
+        iou_threshold=0.3
+    )
+
+    print(f"New buildings: {len(new_buildings)}")
+
+    # ----------------------------
+    # 3. SAVE
+    # ----------------------------
+    if new_buildings:
+        # Use AOI TIFF (safe fallback)
+        aoi_tiff_path = gdf.iloc[0]["tiff_path"] if not gdf.empty else "unknown.tif"
+
+        write_detected_houses(
+            building_id=-1,
+            polygons=new_buildings,
+            detection_type="global_discovery",
+            run_id=RUN_ID,
+            tiff_path=aoi_tiff_path,  # Safe!
+            win=None,
+            metadata={
+                "stage": "global",
+                "raw_count": len(candidates),
+                "transform": aoi_transform  # ← CRITICAL FIX
+            })
 
 # --------------------------------------------------
 # Export to FileGDB

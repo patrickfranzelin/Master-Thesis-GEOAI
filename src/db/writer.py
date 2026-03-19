@@ -155,21 +155,38 @@ def write_detected_houses(
                 # ── ALL pipelines: undo img→win resize ──────────────────────
                 # img_big / patch img was resized from win pixel size to 512×512
                 #  undo resize: 512×512 → win pixel dimensions
+                # ── ALL pipelines: undo img→win resize ──────────────────────
                 sam_size = metadata.get("sam_input_size", 512)
 
-                sx = win.width / sam_size
-                sy = win.height / sam_size
-                poly_unscaled = scale(poly, xfact=sx, yfact=sy, origin=(0, 0))
+                if win is None:
+                    # GLOBAL MODE
+                    transform_affine = metadata.get("transform")
 
-                #  add window offset: win-relative px → full raster pixel
-                poly_full_px = translate(
-                    poly_unscaled,
-                    xoff=win.col_off,
-                    yoff=win.row_off,
-                )
+                    if transform_affine is None:
+                        raise ValueError("Global detection requires 'transform' in metadata")
 
-                #  pixel → raster CRS (UTM / local metres)
-                utm_poly = affine_transform(poly_full_px, affine_params)
+                    # Direct pixel → CRS transform
+                    utm_poly = affine_transform(poly, [
+                        transform_affine.a,
+                        transform_affine.b,
+                        transform_affine.d,
+                        transform_affine.e,
+                        transform_affine.xoff,
+                        transform_affine.yoff,
+                    ])
+
+                else:
+                    # EXISTING LOGIC
+                    sam_size = metadata.get('sam_input_size', 1024) if metadata else 1024
+                    sx = win.width / sam_size
+                    sy = win.height / sam_size
+                    col_off = win.col_off
+                    row_off = win.row_off
+
+                    poly_unscaled = scale(poly, xfact=sx, yfact=sy, origin=(0, 0))
+                    poly_full_px = translate(poly_unscaled, xoff=col_off, yoff=row_off)
+
+                    utm_poly = affine_transform(poly_full_px, affine_params)
 
                 #  raster CRS → WGS84
                 geo_poly = shp_transform(project, utm_poly) if project else utm_poly
@@ -182,8 +199,12 @@ def write_detected_houses(
                     "run_id": run_id,
                 })
 
-                print("WIN WIDTH:", win.width)
-                print("WIN HEIGHT:", win.height)
+                if win is not None:
+                    print("WIN WIDTH:", win.width)
+                    print("WIN HEIGHT:", win.height)
+                else:
+                    print("GLOBAL MODE (AOI transform used)")
+
                 print("Poly bounds (pixel space):", poly.bounds)
 
 def write_detected_trees(

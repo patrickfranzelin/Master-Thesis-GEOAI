@@ -51,6 +51,16 @@ IMPROVED_SCHEMA = {
         "analyzed_at":        "str",
     },
 }
+GLOBAL_SCHEMA = {
+    "geometry": "Polygon",
+    "properties": {
+        "detect_id":      "int",
+        "building_id":    "int",
+        "detection_type": "str",
+        "sam_area":       "float",
+        "tiff_path":      "str",
+    },
+}
 def _check_filegdb_driver():
     supported = fiona.supported_drivers
 
@@ -98,6 +108,47 @@ def _load_original_buildings(engine, aoi_id=None):
 
     with engine.connect() as conn:
         rows = conn.execute(sql).mappings().all()
+
+    return [dict(r) for r in rows]
+
+def _build_global_properties(row):
+
+    def s(v): return "" if v is None else str(v)
+    def f(v): return None if v is None else float(v)
+    def i(v): return None if v is None else int(v)
+
+    return {
+        "detect_id":      i(row.get("detect_id")),
+        "building_id":    i(row.get("building_id")),
+        "detection_type": s(row.get("detection_type")),
+        "sam_area":       f(row.get("sam_area")),
+        "tiff_path":      s(row.get("tiff_path")),
+    }
+
+def _load_global_buildings(engine, run_id=None):
+
+    conditions = ["d.detection_type = 'global_discovery'"]
+
+    if run_id is not None:
+        conditions.append("d.run_id = :run_id")
+
+    where_sql = "WHERE " + " AND ".join(conditions)
+
+    sql = text(f"""
+        SELECT
+            d.id AS detect_id,
+            d.building_id,
+            d.detection_type,
+            d.area AS sam_area,
+            ST_AsText(ST_Transform(d.geom, 4326)) AS geom_wkt,
+            NULL AS tiff_path
+        FROM src.detected_house d
+        {where_sql}
+        ORDER BY d.id
+    """)
+
+    with engine.connect() as conn:
+        rows = conn.execute(sql, {"run_id": run_id}).mappings().all()
 
     return [dict(r) for r in rows]
 
@@ -151,8 +202,7 @@ def _load_improved_buildings(engine, aoi_id=None, run_id=None):
 
     return [dict(r) for r in rows]
 
-def _write_layer(gdb_path, driver, layer_name, schema, rows, is_improved):
-
+def _write_layer(gdb_path, driver, layer_name, schema, rows, is_improved, is_global=False):
     written = 0
     skipped = 0
 
@@ -185,7 +235,10 @@ def _write_layer(gdb_path, driver, layer_name, schema, rows, is_improved):
 
                 for part in parts:
 
-                    properties = _build_properties(row, is_improved)
+                    if is_global:
+                        properties = _build_global_properties(row)
+                    else:
+                        properties = _build_properties(row, is_improved)
 
                     dst.write({
                         "geometry": mapping(part),
@@ -270,6 +323,7 @@ def export_buildings_to_filegdb(
 
     original_rows = _load_original_buildings(engine, aoi_id)
     improved_rows = _load_improved_buildings(engine, aoi_id, run_id)
+    global_rows = _load_global_buildings(engine, run_id)
 
     _write_layer(
         gdb_path,
@@ -287,6 +341,15 @@ def export_buildings_to_filegdb(
         IMPROVED_SCHEMA,
         improved_rows,
         is_improved=True,
+    )
+    _write_layer(
+        gdb_path,
+        driver,
+        "global_buildings",
+        GLOBAL_SCHEMA,
+        global_rows,
+        is_improved=False,
+        is_global=True,  # ← THIS is the key
     )
 
     print("✓ FileGDB export complete.")
