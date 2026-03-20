@@ -1,7 +1,7 @@
 from shapely.ops import unary_union
 
 
-def build_tree_union(grouped, buffer=0.5):
+def build_tree_union(grouped):
     all_trees = [
         t
         for entry in grouped.values()
@@ -11,5 +11,4 @@ def build_tree_union(grouped, buffer=0.5):
     if not all_trees:
         return None
 
-    raw_union = unary_union(all_trees)
-    return raw_union.buffer(buffer)
+    return unary_union(all_trees)

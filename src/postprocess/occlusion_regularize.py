@@ -109,17 +109,22 @@ def process_buildings(
     source_engine = create_engine(source_conn)
 
     sql = text(f"""
-        SELECT h.id,
-               h.building_id,
-               h.run_id,
-               h.detection_type,
-               h.created_at,
-               ST_AsText(h.geom) AS roof_wkt,
-               ST_AsText(t.geom) AS tree_wkt
+        SELECT 
+            h.id,
+            h.building_id,
+            h.run_id,
+            h.detection_type,
+            h.created_at,
+            ST_AsText(h.geom) AS roof_wkt,
+            ST_AsText(t.geom) AS tree_wkt
         FROM {source_table} h
         LEFT JOIN {tree_table} t
-               ON h.building_id = t.building_id
-              AND h.run_id = t.run_id
+          ON h.run_id = t.run_id
+         AND ST_DWithin(
+                ST_Transform(h.geom, 3857),
+                ST_Transform(t.geom, 3857),
+                2.0
+             )
         WHERE h.run_id = :run_id
     """)
 
@@ -199,29 +204,40 @@ def process_buildings(
     # ---------------------------------------------------------
     tree_union = build_tree_union(grouped)
 
+    print("Tree union is None:", tree_union is None)
+    if tree_union:
+        print("Tree union area:", tree_union.area)
+
     gdf_utm = apply_tree_occlusion_fix(gdf_utm, tree_union)
 
     # ---------------------------------------------------------
     # REGULARIZATION
     # ---------------------------------------------------------
-    regularized = regularize_geodataframe(
-        gdf_utm,
-        simplify=True,
-        parallel_threshold=1,
-        simplify_tolerance=0.5,
-        allow_45_degree=True,
-        allow_circles=True,
-        circle_threshold=0.9,
-        neighbor_alignment=False
-    )
+   # regularized = regularize_geodataframe(
+    #    gdf_utm,
+    #    simplify=True,
+    #    parallel_threshold=1,
+    #    simplify_tolerance=0.5,
+    #    allow_45_degree=True,
+    #    allow_circles=True,
+    #    circle_threshold=0.9,
+    #    neighbor_alignment=False
+    #)
 
-    geom_col = "geometry" if "geometry" in regularized.columns else "geom"
-    regularized = regularized.rename(columns={geom_col: "geometry"})
+   # geom_col = "geometry" if "geometry" in regularized.columns else "geom"
+    #regularized = regularized.rename(columns={geom_col: "geometry"})
 
-    regularized = gpd.GeoDataFrame(regularized, geometry="geometry", crs=utm_crs)
+  #  regularized = gpd.GeoDataFrame(regularized, geometry="geometry", crs=utm_crs)
+
+    #regularized["area"] = regularized.geometry.area
+
+    #regularized = regularized.to_crs(4326)
+    # ---------------------------------------------------------
+    # SKIP REGULARIZATION (DEBUG TREE OCCLUSION ONLY)
+    # ---------------------------------------------------------
+    regularized = gdf_utm.copy()
 
     regularized["area"] = regularized.geometry.area
-
     regularized = regularized.to_crs(4326)
 
     # ---------------------------------------------------------
@@ -279,10 +295,10 @@ def parse_args() -> argparse.Namespace:
         description="Tree occlusion + building regularization pipeline"
     )
 
-    parser.add_argument("--run-id", default="e93c5607-559f-4797-b814-6834dc29580a")
-    parser.add_argument("--source-table", default="src__.detected_house")
-    parser.add_argument("--tree-table", default="src__.detected_tree")
-    parser.add_argument("--target-schema", default="src__")
+    parser.add_argument("--run-id", default="1a9332c0-bc57-45c3-90f7-76dbef772368")
+    parser.add_argument("--source-table", default="src.detected_house")
+    parser.add_argument("--tree-table", default="src.detected_tree")
+    parser.add_argument("--target-schema", default="src")
     parser.add_argument("--target-table", default="detected_house_regularized")
     parser.add_argument("--replace-target", action="store_true")
 
