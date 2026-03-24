@@ -2,9 +2,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import List, Optional
-from shapely.geometry import LineString, Point, Polygon
-from shapely.ops import unary_union, polygonize
 
+import numpy as np
+from shapely.geometry import LineString, Point, Polygon
+from shapely.ops import unary_union
+
+
+# ============================================================
+# CONFIG
+# ============================================================
 
 @dataclass
 class OcclusionConfig:
@@ -16,6 +22,10 @@ class OcclusionConfig:
     repair_buffer: float = 0.3
 
 
+# ============================================================
+# BASIC HELPERS
+# ============================================================
+
 def _to_polygons(geom) -> List[Polygon]:
     if geom is None or geom.is_empty:
         return []
@@ -24,7 +34,7 @@ def _to_polygons(geom) -> List[Polygon]:
     return list(geom.geoms)
 
 
-def _geom_parts(geom) -> List:
+def _geom_parts(geom):
     if geom.is_empty:
         return []
     if hasattr(geom, "geoms"):
@@ -32,105 +42,104 @@ def _geom_parts(geom) -> List:
     return [geom]
 
 
+def _to_lines(geom):
+    if geom.is_empty:
+        return []
+    if geom.geom_type == "LineString":
+        return [geom]
+    if geom.geom_type == "MultiLineString":
+        return list(geom.geoms)
+    if hasattr(geom, "geoms"):
+        return [g for g in geom.geoms if g.geom_type == "LineString"]
+    return []
+
+
+# ============================================================
+# CURVATURE + DOMINANT EDGE
+# ============================================================
+
 def _curvature(edge) -> float:
-    parts = _geom_parts(edge)
-    if not parts:
+    lines = _to_lines(edge)
+    if not lines:
         return 0.0
-    seg = max(parts, key=lambda g: g.length)
+
+    seg = max(lines, key=lambda g: g.length)
     coords = list(seg.coords)
+
     if len(coords) < 3:
         return 0.0
+
     chord = LineString([coords[0], coords[-1]])
     chord_len = max(chord.length, 1e-9)
+
     max_dev = max(Point(c).distance(chord) for c in coords)
     return max_dev / chord_len
 
 
 def _dominant(edge) -> Optional[LineString]:
-    parts = [g for g in _geom_parts(edge) if g.geom_type == "LineString"]
-    if not parts:
+    lines = _to_lines(edge)
+    if not lines:
         return None
-    return max(parts, key=lambda g: g.length)
+    return max(lines, key=lambda g: g.length)
 
 
-def _fit_line(p1, p2, scale=1000):
-    """Create long line from two points (for intersection)"""
-    dx = p2[0] - p1[0]
-    dy = p2[1] - p1[1]
+# ============================================================
+# GEOMETRY / DIRECTION
+# ============================================================
+
+def _normalize(v):
+    return v / (np.linalg.norm(v) + 1e-9)
+
+
+def _fit_local_direction(coords, idx, window=3):
+    n = len(coords)
+    pts = [coords[(idx + i) % n] for i in range(-window, window + 1)]
+    pts = np.array(pts)
+
+    mean = pts.mean(axis=0)
+    centered = pts - mean
+
+    _, _, vh = np.linalg.svd(centered)
+    return _normalize(vh[0])
+
+
+def _fit_line(anchor, direction, scale=1000):
     return LineString([
-        (p1[0] - dx * scale, p1[1] - dy * scale),
-        (p1[0] + dx * scale, p1[1] + dy * scale),
+        (anchor[0] - direction[0] * scale, anchor[1] - direction[1] * scale),
+        (anchor[0] + direction[0] * scale, anchor[1] + direction[1] * scale),
     ])
 
 
-import numpy as np
-
 def _dominant_axes(poly: Polygon):
-    """
-    Robust dominant axes using only long, straight edges.
-    """
     coords = np.array(poly.exterior.coords[:-1])
     edges = np.diff(np.vstack([coords, coords[0]]), axis=0)
 
     lengths = np.linalg.norm(edges, axis=1)
     directions = edges / (lengths[:, None] + 1e-9)
 
-    # ---- FILTER: only long edges ----
-    length_thresh = np.percentile(lengths, 60)   # keep top 40%
-    mask = lengths > length_thresh
-
+    mask = lengths > np.percentile(lengths, 60)
     directions = directions[mask]
-    lengths = lengths[mask]
 
     if len(directions) < 2:
-        # fallback
         return np.array([1, 0]), np.array([0, 1])
 
-    # ---- normalize orientation (0–180°) ----
     directions = np.where(directions[:, 0:1] < 0, -directions, directions)
 
-    # ---- cluster into 2 main directions ----
-    # project angles
     angles = np.arctan2(directions[:, 1], directions[:, 0])
 
-    # k-means (k=2) on angle
     from sklearn.cluster import KMeans
     kmeans = KMeans(n_clusters=2, n_init=5).fit(angles.reshape(-1, 1))
 
-    centers = kmeans.cluster_centers_.flatten()
+    a = kmeans.cluster_centers_.flatten()
 
-    axis1 = np.array([np.cos(centers[0]), np.sin(centers[0])])
-    axis2 = np.array([np.cos(centers[1]), np.sin(centers[1])])
-
-    # enforce orthogonality
+    axis1 = np.array([np.cos(a[0]), np.sin(a[0])])
     axis2 = np.array([-axis1[1], axis1[0]])
 
-    return axis1 / np.linalg.norm(axis1), axis2 / np.linalg.norm(axis2)
+    return _normalize(axis1), _normalize(axis2)
 
 
-def _snap_to_axes(direction: np.ndarray, axis1: np.ndarray, axis2: np.ndarray) -> np.ndarray:
-    """Snap a direction vector to whichever dominant axis it is closest to."""
-    d1 = abs(np.dot(direction, axis1))
-    d2 = abs(np.dot(direction, axis2))
-    snapped = axis1 if d1 >= d2 else axis2
-    # preserve original sign
-    if np.dot(direction, snapped) < 0:
-        snapped = -snapped
-    return snapped
-
-
-def _fit_line_from_wall(anchor: np.ndarray, direction: np.ndarray, scale: float = 1000) -> LineString:
-    return LineString([
-        (anchor[0] - direction[0] * scale, anchor[1] - direction[1] * scale),
-        (anchor[0] + direction[0] * scale, anchor[1] + direction[1] * scale),
-    ])
 def _soft_snap(direction, axis1, axis2, strength=0.3):
-    """
-    Blend original direction with nearest dominant axis.
-    strength = 0 → no snapping
-    strength = 1 → full snapping
-    """
-    direction = direction / (np.linalg.norm(direction) + 1e-9)
+    direction = _normalize(direction)
 
     d1 = abs(np.dot(direction, axis1))
     d2 = abs(np.dot(direction, axis2))
@@ -140,7 +149,22 @@ def _soft_snap(direction, axis1, axis2, strength=0.3):
         target = -target
 
     blended = (1 - strength) * direction + strength * target
-    return blended / (np.linalg.norm(blended) + 1e-9)
+    return _normalize(blended)
+
+
+# ============================================================
+# SNAP CLOSE (IMPORTANT)
+# ============================================================
+
+def _snap_if_close(p1, p2, tol):
+    if np.linalg.norm(p1 - p2) < tol:
+        return (p1 + p2) / 2
+    return None
+
+
+# ============================================================
+# REPAIR (CORE)
+# ============================================================
 
 def _repair_polygon(poly: Polygon, dom: LineString, repair_buffer: float) -> Polygon:
     coords = list(poly.exterior.coords)
@@ -150,6 +174,7 @@ def _repair_polygon(poly: Polygon, dom: LineString, repair_buffer: float) -> Pol
 
     enter_idx = None
     exit_idx = None
+
     for i in range(n):
         if not inside[i] and inside[(i + 1) % n]:
             enter_idx = i
@@ -158,103 +183,87 @@ def _repair_polygon(poly: Polygon, dom: LineString, repair_buffer: float) -> Pol
 
     if enter_idx is None or exit_idx is None:
         return poly
+
     if abs(enter_idx - exit_idx) < 2:
         return poly
 
-    # -------------------------------------------------
-    # dominant axes (robust global orientation)
-    # -------------------------------------------------
+    # --------------------------------------------------------
+    # DIRECTIONS
+    # --------------------------------------------------------
     axis1, axis2 = _dominant_axes(poly)
 
-    # -------------------------------------------------
-    # local geometry (IMPORTANT)
-    # -------------------------------------------------
-    prev_idx = (enter_idx - 1) % n
-    next_idx = (exit_idx + 1) % n
-
-    p_prev  = np.array(coords[prev_idx])
     p_enter = np.array(coords[enter_idx])
     p_exit  = np.array(coords[exit_idx])
-    p_next  = np.array(coords[next_idx])
 
-    raw_dir1 = p_enter - p_prev
-    raw_dir2 = p_next  - p_exit
+    dir1 = _fit_local_direction(coords, enter_idx)
+    dir2 = _fit_local_direction(coords, exit_idx)
 
-    # normalize
-    raw_dir1 = raw_dir1 / (np.linalg.norm(raw_dir1) + 1e-9)
-    raw_dir2 = raw_dir2 / (np.linalg.norm(raw_dir2) + 1e-9)
+    dir1 = _soft_snap(dir1, axis1, axis2, 0.3)
+    dir2 = _soft_snap(dir2, axis1, axis2, 0.3)
 
-    # -------------------------------------------------
-    # SNAP but KEEP geometry logic
-    # -------------------------------------------------
-    dir1 = _soft_snap(raw_dir1, axis1, axis2, strength=0.25)
-    dir2 = _soft_snap(raw_dir2, axis1, axis2, strength=0.25)
-
-    # preserve correct orientation
-    if np.dot(raw_dir2, dir2) < 0:
-        dir2 = -dir2
-    # -------------------------------------------------
-    # ENSURE DIRECTIONS ARE NOT PARALLEL
-    # -------------------------------------------------
-    if abs(np.dot(dir1, dir2)) > 0.9:
-        # force orthogonal direction for dir2
+    # avoid parallel collapse
+    if abs(np.dot(dir1, dir2)) > 0.98:
         dir2 = np.array([-dir1[1], dir1[0]])
 
-        # keep orientation consistent with original
-        if np.dot(raw_dir2, dir2) < 0:
-            dir2 = -dir2
-    # -------------------------------------------------
-    # EXTEND WALLS (this is what you lost)
-    # -------------------------------------------------
-    line1 = _fit_line_from_wall(p_enter, dir1)
-    line2 = _fit_line_from_wall(p_exit,  dir2)
+    # --------------------------------------------------------
+    # EXTEND BOTH LINES (KEEP THIS!)
+    # --------------------------------------------------------
+    line1 = _fit_line(p_enter, dir1)
+    line2 = _fit_line(p_exit,  dir2)
 
-    intersection = line1.intersection(line2)
+    inter = line1.intersection(line2)
 
-    # -------------------------------------------------
-    # BUILD NEW POLYGON
-    # -------------------------------------------------
-    if intersection.is_empty or intersection.geom_type != "Point":
-        # fallback → project onto dominant edge
-        proj_enter = dom.interpolate(dom.project(Point(coords[enter_idx])))
-        proj_exit  = dom.interpolate(dom.project(Point(coords[exit_idx])))
+    # --------------------------------------------------------
+    # SNAP / FALLBACK
+    # --------------------------------------------------------
+    if inter.is_empty or inter.geom_type != "Point":
 
-        new_coords = []
-        i = exit_idx
-        while i != enter_idx:
-            new_coords.append(coords[i])
-            i = (i + 1) % n
+        snap = _snap_if_close(p_enter, p_exit, repair_buffer)
 
-        new_coords.append(coords[enter_idx])
-        new_coords.append((proj_enter.x, proj_enter.y))
-        new_coords.append((proj_exit.x, proj_exit.y))
+        if snap is not None:
+            inter_pt = snap
+        else:
+            proj1 = dom.interpolate(dom.project(Point(p_enter)))
+            proj2 = dom.interpolate(dom.project(Point(p_exit)))
 
+            inter_pt = np.array([
+                (proj1.x + proj2.x) / 2,
+                (proj1.y + proj2.y) / 2
+            ])
     else:
-        ip = (intersection.x, intersection.y)
+        inter_pt = np.array(inter.coords[0])
 
-        new_coords = []
-        i = exit_idx
-        while i != enter_idx:
-            new_coords.append(coords[i])
-            i = (i + 1) % n
+    # --------------------------------------------------------
+    # BUILD POLYGON
+    # --------------------------------------------------------
+    new_coords = []
+    i = exit_idx
 
-        new_coords.append(coords[enter_idx])
-        new_coords.append(ip)
+    while i != enter_idx:
+        new_coords.append(coords[i])
+        i = (i + 1) % n
 
-    # -------------------------------------------------
-    # VALIDATION
-    # -------------------------------------------------
+    new_coords.append(coords[enter_idx])
+    new_coords.append(tuple(inter_pt))
+
     if len(new_coords) < 3:
         return poly
 
     try:
         fixed = Polygon(new_coords).buffer(0)
-        if fixed.is_valid and not fixed.is_empty and fixed.area > poly.area * 0.6:
+
+        if fixed.is_valid and fixed.area > poly.area * 0.6:
             return fixed
+
     except Exception:
         pass
 
     return poly
+
+
+# ============================================================
+# MAIN
+# ============================================================
 
 def detect_tree_occlusions(building_geom, tree_geom, cfg: Optional[OcclusionConfig] = None):
 
@@ -301,10 +310,6 @@ def detect_tree_occlusions(building_geom, tree_geom, cfg: Optional[OcclusionConf
         if dom is None:
             repaired.append(poly)
             continue
-
-        # =====================================================
-        # 🔧 REPAIR
-        # =====================================================
 
         fixed = _repair_polygon(poly, dom, cfg.repair_buffer)
         repaired.append(fixed)
