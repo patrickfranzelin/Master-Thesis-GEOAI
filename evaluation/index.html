@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Building Evaluation</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:,">
+</head>
+<body>
+
+<div id="app">
+
+  <div id="image-container">
+    <img id="patch" src="" />
+  </div>
+
+  <div id="controls">
+    <h2 id="title">Building</h2>
+
+    <div class="question">
+      <p>Quality</p>
+      <button onclick="answer('quality','perfect', this)">Perfect</button>
+      <button onclick="answer('quality','good', this)">Good</button>
+      <button onclick="answer('quality','ok', this)">OK</button>
+      <button onclick="answer('quality','bad', this)">Bad</button>
+    </div>
+
+    <div class="question">
+      <p>Postprocessing</p>
+      <button onclick="answer('postprocessing','improved', this)">Improved</button>
+      <button onclick="answer('postprocessing','same', this)">Same</button>
+      <button onclick="answer('postprocessing','worse', this)">Worse</button>
+    </div>
+
+    <div class="question">
+      <p>Best result</p>
+      <button onclick="answer('best','original', this)">Original</button>
+      <button onclick="answer('best','sam', this)">SAM</button>
+      <button onclick="answer('best','post', this)">Post</button>
+    </div>
+
+    <div class="question" id="error-section" style="display:none;">
+      <p>Error type</p>
+      <select onchange="answer('error_type', this.value)">
+        <option value="">Select...</option>
+        <option value="missing_parts">Missing parts</option>
+        <option value="oversegmented">Too many parts</option>
+        <option value="shadow">Shadow included</option>
+        <option value="wrong_shape">Wrong shape</option>
+        <option value="misaligned">Misaligned</option>
+        <option value="tree_issue">Tree occlusion</option>
+      </select>
+    </div>
+
+    <button onclick="nextSample()">Next →</button>
+  </div>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

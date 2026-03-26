@@ -1,0 +1,58 @@
+body {
+  font-family: Arial;
+  margin: 0;
+}
+
+#app {
+  display: flex;
+  height: 100vh;
+}
+
+#image-container {
+  flex: 2;
+  background: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#patch {
+  max-width: 100%;
+  max-height: 100%;
+  border: 2px solid #333;
+}
+
+#controls {
+  flex: 1;
+  padding: 20px;
+  background: #f5f5f5;
+}
+
+.question {
+  margin-bottom: 20px;
+}
+
+button {
+  margin: 5px;
+  padding: 10px;
+  font-size: 16px;
+  background: #ddd;
+  border: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  background: #bbb;
+}
+
+button.active {
+  background: #4caf50;
+  color: white;
+  font-weight: bold;
+}
+
+select {
+  padding: 8px;
+  font-size: 14px;
+}
