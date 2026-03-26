@@ -59,10 +59,20 @@ def merge_polygons_with_tracking(gdf, buffer_dist=0.3):
             if used[j]:
                 continue
 
-            if geom.intersects(geoms[j]) or geom.distance(geoms[j]) < buffer_dist:
+
+            intersection = geom.intersection(geoms[j]).area
+            union = geom.area + geoms[j].area - intersection
+
+            iou = intersection / union if union > 0 else 0
+
+            touching = geom.touches(geoms[j])
+            contains = geom.contains(geoms[j]) or geoms[j].contains(geom)
+
+            if (
+                    iou > 0.2  # strong overlap → same building
+                    or contains  # one inside another
+            ):
                 group_geoms.append(geoms[j])
-                group_ids.append(records[j]["building_id"])
-                group_records.append(records[j])
                 used[j] = True
 
         buffered = [g.buffer(buffer_dist) for g in group_geoms]
@@ -213,32 +223,32 @@ def process_buildings(
     # ---------------------------------------------------------
     # REGULARIZATION
     # ---------------------------------------------------------
-   # regularized = regularize_geodataframe(
-    #    gdf_utm,
-    #    simplify=True,
-    #    parallel_threshold=1,
-    #    simplify_tolerance=0.5,
-    #    allow_45_degree=True,
-    #    allow_circles=True,
-    #    circle_threshold=0.9,
-    #    neighbor_alignment=False
-    #)
+    regularized = regularize_geodataframe(
+        gdf_utm,
+        simplify=True,
+        parallel_threshold=2,
+        simplify_tolerance=0.5,
+        allow_45_degree=True,
+        allow_circles=True,
+        circle_threshold=0.9,
+        neighbor_alignment=False
+    )
 
-   # geom_col = "geometry" if "geometry" in regularized.columns else "geom"
-    #regularized = regularized.rename(columns={geom_col: "geometry"})
+    geom_col = "geometry" if "geometry" in regularized.columns else "geom"
+    regularized = regularized.rename(columns={geom_col: "geometry"})
 
-  #  regularized = gpd.GeoDataFrame(regularized, geometry="geometry", crs=utm_crs)
+    regularized = gpd.GeoDataFrame(regularized, geometry="geometry", crs=utm_crs)
 
-    #regularized["area"] = regularized.geometry.area
+    regularized["area"] = regularized.geometry.area
 
-    #regularized = regularized.to_crs(4326)
+    regularized = regularized.to_crs(4326)
     # ---------------------------------------------------------
     # SKIP REGULARIZATION (DEBUG TREE OCCLUSION ONLY)
     # ---------------------------------------------------------
-    regularized = gdf_utm.copy()
+    #regularized = gdf_utm.copy()
 
-    regularized["area"] = regularized.geometry.area
-    regularized = regularized.to_crs(4326)
+    #regularized["area"] = regularized.geometry.area
+    #regularized = regularized.to_crs(4326)
 
     # ---------------------------------------------------------
     # OUTPUT
@@ -273,6 +283,22 @@ def process_buildings(
         lambda x: json.dumps(x) if isinstance(x, list) else None
     )
 
+    def ensure_single_polygon(g):
+        if g is None:
+            return None
+
+        # fix invalid geometries
+        if not g.is_valid:
+            g = g.buffer(0)
+
+        # MultiPolygon → keep largest
+        if g.geom_type == "MultiPolygon":
+            g = max(g.geoms, key=lambda x: x.area)
+
+        return g
+
+    regularized["geom"] = regularized["geom"].apply(ensure_single_polygon)
+
     regularized.to_postgis(
         name=target_table,
         con=output_engine,
@@ -295,7 +321,7 @@ def parse_args() -> argparse.Namespace:
         description="Tree occlusion + building regularization pipeline"
     )
 
-    parser.add_argument("--run-id", default="1a9332c0-bc57-45c3-90f7-76dbef772368")
+    parser.add_argument("--run-id", default="97cd6744-3b24-4e2c-9ad7-fe65a2a32bbd")
     parser.add_argument("--source-table", default="src.detected_house")
     parser.add_argument("--tree-table", default="src.detected_tree")
     parser.add_argument("--target-schema", default="src")

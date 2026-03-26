@@ -1,4 +1,6 @@
-from .dents import detect_tree_occlusions, OcclusionConfig
+from .detection import detect_dents, OcclusionConfig
+from .repair import repair_dent
+
 
 def apply_tree_occlusion_fix(gdf, tree_union):
     if tree_union is None:
@@ -27,13 +29,21 @@ def apply_tree_occlusion_fix(gdf, tree_union):
             return geom
 
         # STEP 2: Run occlusion detection
-        new_geom, detections = detect_tree_occlusions(geom, tree_union, cfg)
 
+        dents = detect_dents(geom, tree_union, cfg)
+
+        current = geom
+
+        for dent in dents:
+            current = repair_dent(current, dent, cfg)
+
+        new_geom = current
+        detections = dents
         if detections:
             print(f" FIXED {len(detections)} occlusion(s):")
             for d in detections:
-                print(f"  L={d['edge_length']:.2f} curv={d['curvature']:.3f} overlap={d['overlap_ratio']:.2f}")
-            print("GEOMETRY CHANGED")
+                print(f"  L={d['dent'].length:.2f} curv={d['curvature']:.3f} overlap={d['overlap_ratio']:.2f}")
+                print("GEOMETRY CHANGED")
         else:
             print("No occlusions detected")
 
