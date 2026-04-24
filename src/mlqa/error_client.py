@@ -13,94 +13,96 @@ client = OpenAI(
     base_url=f"https://{RUNPOD_ID}-7860.proxy.runpod.net/v1"
 )
 
-
 # ==================================================
-# PROMPTS (STRONGER + MULTI-ERROR SAFE)
+# STAGE 1 — ALIGNMENT
 # ==================================================
 
-ERROR_SYSTEM = """
-You are a strict geospatial QA system.
-
-Rules:
-- Output ONLY valid JSON
-- No markdown, no explanations
-- You MUST return ALL applicable errors
-- You MUST evaluate ALL FOUR SIDES independently
+ALIGNMENT_SYSTEM = """
+You are a geospatial QA system.
+Return ONLY valid JSON.
 """
 
-ERROR_USER = """
+ALIGNMENT_USER = """
 You see an aerial image with a GREEN polygon over a building.
 
-IMPORTANT:
-- Evaluate ALL four sides independently:
-  NORTH (top), SOUTH (bottom), EAST (right), WEST (left)
-- Even if partially cropped, still evaluate visible evidence
-- MULTIPLE errors MUST be returned if present
+Question:
+Is the polygon shifted relative to the building?
 
-----------------------------------------
+Return ONLY:
 
-STEP 1 — Per-side evaluation
+{ "misaligned": true }
 
-For EACH side answer ALL:
+or
 
-1. Does the roof extend BEYOND the polygon?
-   → UNDERSEGMENTATION
+{ "misaligned": false }
+"""
 
-2. Does the polygon extend BEYOND the roof?
-   → OVERSEGMENTATION
+# ==================================================
+# STAGE 2 — TAGS
+# ==================================================
 
-3. Is the polygon shifted or rotated incorrectly?
-   → MISALIGNMENT
+TAGS_SYSTEM = """
+You are a geospatial QA system.
+Return ONLY valid JSON.
+"""
 
-4. Is the roof cut off by the image boundary?
-   → PARTIAL_VISIBILITY
+TAGS_USER = """
+You see an aerial image with a GREEN polygon over a building.
 
-----------------------------------------
+The alignment has already been evaluated.
 
-STEP 2 — Combine ALL observed issues
+Classify the SHAPE using ONLY these tags:
 
-- A polygon CAN have multiple errors
-- DO NOT collapse to a single category
-- DO NOT ignore minor errors
+- STRUCTURE_MATCH
+- SHAPE_MISMATCH
+- MISSING_PARTS
+- EXTRA_PARTS
+- OVERSIMPLIFIED
 
-----------------------------------------
+Rules:
+- Multiple tags allowed
+- Only choose from the list
+- No explanations
 
-STEP 3 — Return STRICT JSON
-
-Valid categories:
-NO_ERROR, UNDERSEGMENTATION, OVERSEGMENTATION,
-MISALIGNMENT, SHAPE_SIMPLIFICATION, PARTIAL_VISIBILITY
-
-Format:
-
-{
-  "errors": [
-    {
-      "error_category": "UNDERSEGMENTATION",
-      "error_location": ["EAST"],
-      "error_description": "Roof extends beyond polygon on east side."
-    },
-    {
-      "error_category": "OVERSEGMENTATION",
-      "error_location": ["WEST"],
-      "error_description": "Polygon extends beyond roof on west side."
-    }
-  ]
-}
-
-If truly perfect:
+Return ONLY:
 
 {
-  "errors": [
-    {
-      "error_category": "NO_ERROR",
-      "error_location": ["NONE"],
-      "error_description": "Polygon matches roof."
-    }
-  ]
+  "tags": ["..."]
 }
 """
 
+VALID_TAGS = {
+    "STRUCTURE_MATCH",
+    "SHAPE_MISMATCH",
+    "MISSING_PARTS",
+    "EXTRA_PARTS",
+    "OVERSIMPLIFIED"
+}
+
+# ==================================================
+# STAGE 3 — DESCRIPTION
+# ==================================================
+
+DESCRIPTION_SYSTEM = """
+You are a geospatial QA assistant.
+Return ONLY valid JSON.
+"""
+
+DESCRIPTION_TEMPLATE = """
+You see an aerial image with a GREEN polygon over a building.
+
+Known:
+- misaligned: {misaligned}
+- tags: {tags}
+
+Write ONE short, simple sentence describing the issue and the area.
+
+Return ONLY:
+
+{{
+  "description": "..."
+}}
+"""
 
 # ==================================================
 # UTILS
@@ -117,7 +119,7 @@ def _parse_json_safe(raw: str):
         try:
             return json.loads(cleaned)
         except Exception:
-            print("⚠ JSON parse failed → returning empty dict")
+            print("JSON parse failed")
             return {}
 
 
@@ -125,21 +127,21 @@ def _encode_image(path: Path):
     return base64.b64encode(path.read_bytes()).decode("utf-8")
 
 
-def _ask(image_b64: str):
+def _ask(system_prompt: str, user_prompt: str, image_b64: str, max_tokens=200):
     try:
         response = client.chat.completions.create(
             model=MODEL_NAME,
             temperature=0,
-            max_tokens=800,
+            max_tokens=max_tokens,
             extra_body={
                 "chat_template_kwargs": {"enable_thinking": True}
             },
             messages=[
-                {"role": "system", "content": ERROR_SYSTEM},
+                {"role": "system", "content": system_prompt},
                 {
                     "role": "user",
                     "content": [
-                        {"type": "text", "text": ERROR_USER},
+                        {"type": "text", "text": user_prompt},
                         {
                             "type": "image_url",
                             "image_url": {
@@ -153,72 +155,84 @@ def _ask(image_b64: str):
 
         raw = response.choices[0].message.content
 
-        print("\n--- ERROR RAW ---")
+        print("\n--- RAW ---")
         print(raw)
-        print("------------------\n")
+        print("-----------\n")
 
         return _parse_json_safe(raw)
 
     except Exception as e:
-        print(f"⚠ ERROR client failed: {e}")
+        print(f"⚠ request failed: {e}")
         return None
 
 
-# ==================================================
-# POST-PROCESSING (VERY IMPORTANT)
-# ==================================================
-
-def _enforce_multi_error(errors: list):
-    """
-    Prevent single-class collapse.
-    """
-
-    if not errors:
+def _clean_tags(tags):
+    if not isinstance(tags, list):
         return []
-
-    categories = {e.get("error_category") for e in errors}
-
-    # If only one category → force diversity hint
-    if len(categories) == 1 and "NO_ERROR" not in categories:
-        errors.append({
-            "error_category": "SHAPE_SIMPLIFICATION",
-            "error_location": ["UNKNOWN"],
-            "error_description": "Possible simplification or missing detail."
-        })
-
-    return errors
-
-
-def _build_description(errors: list):
-    return "; ".join(
-        e.get("error_description", "")
-        for e in errors
-        if e.get("error_description")
-    ) or "MLQA_ERROR"
+    return [t for t in tags if t in VALID_TAGS]
 
 
 # ==================================================
 # PUBLIC API
 # ==================================================
 
-def analyze_errors(image_path: Path):
+def analyze_start_polygon(image_path: Path):
 
     img_b64 = _encode_image(image_path)
 
-    result = _ask(img_b64)
+    # --------------------------
+    # ALIGNMENT
+    # --------------------------
+    alignment_result = _ask(
+        ALIGNMENT_SYSTEM,
+        ALIGNMENT_USER,
+        img_b64
+    )
 
-    if result is None:
-        return {
-            "errors": [],
-            "error_description": "MLQA_ERROR"
-        }
+    if alignment_result is None:
+        return {"status": "error"}
 
-    errors = result.get("errors", [])
+    misaligned = alignment_result.get("misaligned", False)
 
+    # --------------------------
+    # TAGS
+    # --------------------------
+    tag_result = _ask(
+        TAGS_SYSTEM,
+        TAGS_USER,
+        img_b64
+    )
 
-    errors = _enforce_multi_error(errors)
+    if tag_result is None:
+        return {"status": "error"}
 
+    tags = _clean_tags(tag_result.get("tags", []))
+
+    # --------------------------
+    # 3️ DESCRIPTION
+    # --------------------------
+    desc_prompt = DESCRIPTION_TEMPLATE.format(
+        misaligned=str(misaligned).lower(),
+        tags=", ".join(tags)
+    )
+
+    desc_result = _ask(
+        DESCRIPTION_SYSTEM,
+        desc_prompt,
+        img_b64,
+        max_tokens=100
+    )
+
+    if desc_result is None:
+        description = ""
+    else:
+        description = desc_result.get("description", "")
+
+    # --------------------------
+    # FINAL OUTPUT
+    # --------------------------
     return {
-        "errors": errors,
-        "error_description": _build_description(errors)
+        "misaligned": misaligned,
+        "tags": tags,
+        "description": description
     }

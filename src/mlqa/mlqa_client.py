@@ -79,45 +79,6 @@ OR
   "full_house_present": false
 }
 """
-
-ERROR_SYSTEM = """
-You are an expert geospatial analyst.
-
-Your task is to evaluate how well a polygon matches a building roof in aerial imagery.
-
-Explain clearly what is wrong (or correct) about the polygon.
-
-IMPORTANT:
-- Use natural, human-readable language
-
-Output ONLY valid JSON.
-"""
-ERROR_USER = """
-You see an aerial image with a GREEN polygon over a building.
-
-Describe what is wrong with the polygon.
-
-Return ONLY this JSON format:
-
-{
-  "errors": [
-    {
-      "description": "Your explanation here"
-    }
-  ]
-}
-
-If everything is correct:
-
-{
-  "errors": [
-    {
-      "description": "The polygon correctly matches the roof."
-    }
-  ]
-}
-"""
-
 # ==================================================
 # UTILS
 # ==================================================
@@ -197,8 +158,6 @@ def analyze_patch(image_path: Path):
         return {
             "house_present": False,
             "full_house_present": False,
-            "errors": [],
-            "error_description": "No roof structure detected or MLQA failure",
         }
 
     # --------------------------
@@ -207,26 +166,7 @@ def analyze_patch(image_path: Path):
     coverage = _ask(COVERAGE_SYSTEM, COVERAGE_USER, img_b64)
     coverage_value = coverage.get("full_house_present", False) if coverage else False
 
-    # --------------------------
-    # 3. Error explanation (natural language)
-    # --------------------------
-    error_info = _ask(ERROR_SYSTEM, ERROR_USER, img_b64)
-
-    if error_info is None:
-        errors = []
-        error_description = "MLQA_ERROR"
-    else:
-        errors = error_info.get("errors", [])
-
-        error_description = "; ".join(
-            e.get("description", "")
-            for e in errors
-            if e.get("description")
-        ) or "MLQA_ERROR"
-
     return {
         "house_present": True,
         "full_house_present": coverage_value,
-        "errors": errors,
-        "error_description": error_description,
     }

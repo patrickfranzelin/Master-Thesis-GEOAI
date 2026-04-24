@@ -20,6 +20,7 @@ from src.pipelines.global_discovery import run_global_discovery
 from src.postprocess.matching import filter_new_buildings
 from src.postprocess.deduplication import deduplicate_polygons
 from src.utils.geometry import pixel_to_world
+from src.mlqa.error_client import analyze_start_polygon
 # --------------------------------------------------
 # Paths
 # --------------------------------------------------
@@ -51,7 +52,7 @@ print(f"RUN_ID: {RUN_ID}")
 # --------------------------------------------------
 
 engine = create_engine(os.environ["PG_CONN"])
-AOI_ID = 1
+AOI_ID = 3
 
 aoi_gdf = gpd.read_postgis(
     f"SELECT geom FROM src.aoi WHERE aoi_id = {AOI_ID}",
@@ -71,7 +72,7 @@ gdf = gpd.read_postgis(
             geom,
             (SELECT geom FROM src.aoi WHERE aoi_id = {AOI_ID})
           )
-    LIMIT 1
+    LIMIT 1000
     """,
     engine,
     geom_col="geom",
