@@ -14,46 +14,50 @@
     <img id="patch" src="" />
   </div>
 
-  <div id="controls">
-    <h2 id="title">Building</h2>
+<div id="controls">
+  <h2 id="title">Building</h2>
 
-    <div class="question">
-      <p>Quality</p>
-      <button onclick="answer('quality','perfect', this)">Perfect</button>
-      <button onclick="answer('quality','good', this)">Good</button>
-      <button onclick="answer('quality','ok', this)">OK</button>
-      <button onclick="answer('quality','bad', this)">Bad</button>
-    </div>
+  <!-- ORIGINAL -->
+  <div class="question">
+    <p>Original (Google)</p>
 
-    <div class="question">
-      <p>Postprocessing</p>
-      <button onclick="answer('postprocessing','improved', this)">Improved</button>
-      <button onclick="answer('postprocessing','same', this)">Same</button>
-      <button onclick="answer('postprocessing','worse', this)">Worse</button>
-    </div>
+    <div id="model-tags"></div>
 
-    <div class="question">
-      <p>Best result</p>
-      <button onclick="answer('best','original', this)">Original</button>
-      <button onclick="answer('best','sam', this)">SAM</button>
-      <button onclick="answer('best','post', this)">Post</button>
-    </div>
-
-    <div class="question" id="error-section" style="display:none;">
-      <p>Error type</p>
-      <select onchange="answer('error_type', this.value)">
-        <option value="">Select...</option>
-        <option value="missing_parts">Missing parts</option>
-        <option value="oversegmented">Too many parts</option>
-        <option value="shadow">Shadow included</option>
-        <option value="wrong_shape">Wrong shape</option>
-        <option value="misaligned">Misaligned</option>
-        <option value="tree_issue">Tree occlusion</option>
-      </select>
-    </div>
-
-    <button onclick="nextSample()">Next →</button>
+    <button onclick="answer('original','correct', this)">Correct</button>
+    <button onclick="answer('original','partial', this)">Partially</button>
+    <button onclick="answer('original','wrong', this)">Wrong</button>
   </div>
+
+  <!-- SAM -->
+  <div class="question">
+    <p>SAM vs Original</p>
+    <button onclick="answer('sam','better', this)">Better</button>
+    <button onclick="answer('sam','same', this)">Same</button>
+    <button onclick="answer('sam','worse', this)">Worse</button>
+  </div>
+
+  <!-- POST -->
+  <div class="question">
+    <p>Final Result (Post)</p>
+    <button onclick="answer('post','perfect', this)">Perfect</button>
+    <button onclick="answer('post','good', this)">Good</button>
+    <button onclick="answer('post','ok', this)">OK</button>
+    <button onclick="answer('post','bad', this)">Bad</button>
+  </div>
+
+  <!-- TAG SELECTOR -->
+  <div class="question" id="tag-section" style="display:none;">
+    <p>What is wrong?</p>
+
+    <button onclick="toggleTag('MISALIGNED', this)">Misaligned</button>
+    <button onclick="toggleTag('SHAPE_MISMATCH', this)">Shape mismatch</button>
+    <button onclick="toggleTag('MISSING_PARTS', this)">Missing parts</button>
+    <button onclick="toggleTag('EXTRA_PARTS', this)">Extra parts</button>
+    <button onclick="toggleTag('OVERSIMPLIFIED', this)">Oversimplified</button>
+  </div>
+
+  <button onclick="nextSample()">Next →</button>
+</div>
 
 </div>
 

@@ -2,75 +2,85 @@ let samples = [];
 let index = 0;
 let results = {};
 
+function getKey(sample) {
+  return `${sample.building_id}_${sample.sam_id}`;
+}
+
 async function loadData() {
   const res = await fetch("data/samples.json");
   samples = await res.json();
   showSample();
 }
 
-function getKey(sample) {
-  return `${sample.building_id}_${sample.sam_id}`;
-}
-
-function preloadImage(src) {
-  const img = new Image();
-  img.src = src;
-}
-
 function showSample() {
   const sample = samples[index];
+  const key = getKey(sample);
 
   document.getElementById("patch").src = sample.image;
   document.getElementById("title").innerText =
     `Building ${sample.building_id} (${index + 1}/${samples.length})`;
 
-  const key = getKey(sample);
-
   if (!results[key]) {
     results[key] = {
-      building_id: sample.building_id
+      building_id: sample.building_id,
+      tags: []
     };
   }
-
-  // preload next
-  if (samples[index + 1]) preloadImage(samples[index + 1].image);
-  if (samples[index + 2]) preloadImage(samples[index + 2].image);
 
   resetUI();
 }
 
 function resetUI() {
   document.querySelectorAll("button").forEach(b => b.classList.remove("active"));
-  document.getElementById("error-section").style.display = "none";
+  document.getElementById("tag-section").style.display = "none";
 }
 
-function answer(type, value, btn = null) {
+function answer(type, value, btn) {
   const sample = samples[index];
   const key = getKey(sample);
 
-  if (!results[key]) {
-    results[key] = {
-      building_id: sample.building_id
-    };
-  }
-
   results[key][type] = value;
 
-  // highlight clicked button
-  if (btn) {
-    const group = btn.parentElement;
-    const buttons = group.querySelectorAll("button");
-    buttons.forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
+  // highlight
+  const group = btn.parentElement;
+  group.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+
+  // 🔥 LOGIC
+  if (type === "original") {
+    if (value === "partial" || value === "wrong") {
+      showTags();
+    }
   }
 
-  // show error dropdown if BAD
-  if (type === "quality") {
-    const errorSection = document.getElementById("error-section");
-    errorSection.style.display = value === "bad" ? "block" : "none";
+  if (type === "post") {
+    if (value === "ok" || value === "bad") {
+      showTags();
+    }
   }
 
   console.log("Updated:", results[key]);
+}
+
+function showTags() {
+  document.getElementById("tag-section").style.display = "block";
+}
+
+function toggleTag(tag, btn) {
+  const sample = samples[index];
+  const key = getKey(sample);
+
+  let tags = results[key].tags || [];
+
+  if (tags.includes(tag)) {
+    tags = tags.filter(t => t !== tag);
+    btn.classList.remove("active");
+  } else {
+    tags.push(tag);
+    btn.classList.add("active");
+  }
+
+  results[key].tags = tags;
 }
 
 async function nextSample() {
@@ -78,9 +88,8 @@ async function nextSample() {
   const key = getKey(sample);
   const r = results[key];
 
-  // optional guard
-  if (!r?.quality) {
-    alert("Please rate quality first");
+  if (!r?.original || !r?.post) {
+    alert("Please evaluate Original and Post");
     return;
   }
 
@@ -91,15 +100,13 @@ async function nextSample() {
     },
     body: JSON.stringify({
       building_id: sample.building_id,
-      quality: r?.quality ?? null,
-      postprocessing: r?.postprocessing ?? null,
-      best: r?.best ?? null,
-      error_type: r?.error_type ?? null,
+      original: r.original,
+      sam: r.sam ?? null,
+      post: r.post,
+      tags: r.tags ?? [],
       has_post: sample.has_post
     })
   });
-
-  console.log("Saved:", r);
 
   index++;
 

@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from sqlalchemy import create_engine, text
 from fastapi.middleware.cors import CORSMiddleware
+import json
 
 PG_CONN = os.environ["PG_CONN"]
 engine = create_engine(PG_CONN)
@@ -19,9 +20,10 @@ app.add_middleware(
 
 class Evaluation(BaseModel):
     building_id: int
-    exists_label: bool | None = None
-    improvement: str | None = None
-    quality: str | None = None
+    original: str
+    sam: str | None = None
+    post: str
+    tags: list[str] | None = None
     has_post: bool
 
 @app.post("/save")
@@ -32,20 +34,25 @@ def save(e: Evaluation):
                 text("""
                     INSERT INTO src.evaluation (
                         building_id,
-                        exists_label,
-                        improvement,
-                        quality,
+                        original,
+                        sam,
+                        post,
+                        tags,
                         has_post
                     )
                     VALUES (
                         :building_id,
-                        :exists_label,
-                        :improvement,
-                        :quality,
+                        :original,
+                        :sam,
+                        :post,
+                        :tags,
                         :has_post
                     )
                 """),
-                e.dict()
+                {
+                    **e.dict(),
+                    "tags": json.dumps(e.tags or [])
+                }
             )
         return {"status": "ok"}
 
