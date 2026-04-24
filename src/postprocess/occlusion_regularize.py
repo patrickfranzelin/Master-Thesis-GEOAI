@@ -227,8 +227,8 @@ def process_buildings(
         gdf_utm,
         simplify=True,
         parallel_threshold=2,
-        simplify_tolerance=0.5,
-        allow_45_degree=True,
+        simplify_tolerance=0.4,
+        allow_45_degree=False,
         allow_circles=True,
         circle_threshold=0.9,
         neighbor_alignment=False

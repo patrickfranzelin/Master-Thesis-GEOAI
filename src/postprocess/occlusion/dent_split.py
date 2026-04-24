@@ -33,7 +33,7 @@ def split_dents(edge, cfg):
 
             angle = abs(np.dot(v1, v2))
 
-            # 🔥 split if direction changes strongly
+            # split if direction changes strongly
             if angle < 0.8:   # threshold tunable
                 current.append(coords[i])
                 dents.append(LineString(current))
