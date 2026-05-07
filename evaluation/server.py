@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from sqlalchemy import create_engine, text
 from fastapi.middleware.cors import CORSMiddleware
 import json
+from typing import List, Optional
 
 PG_CONN = os.environ["PG_CONN"]
 engine = create_engine(PG_CONN)
@@ -18,12 +19,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 class Evaluation(BaseModel):
     building_id: int
     original: str
-    sam: str | None = None
+    original_error: Optional[List[str]] = None  # ← was str | None
+    post_vs_sam: str
     post: str
-    tags: list[str] | None = None
+    post_error: Optional[List[str]] = None       # ← was str | None
     has_post: bool
 
 @app.post("/save")
@@ -32,26 +35,29 @@ def save(e: Evaluation):
         with engine.begin() as conn:
             conn.execute(
                 text("""
-                    INSERT INTO src.evaluation (
-                        building_id,
-                        original,
-                        sam,
-                        post,
-                        tags,
-                        has_post
-                    )
-                    VALUES (
-                        :building_id,
-                        :original,
-                        :sam,
-                        :post,
-                        :tags,
-                        :has_post
-                    )
-                """),
+                     INSERT INTO src.evaluation (building_id,
+                                                 original,
+                                                 sam,
+                                                 post,
+                                                 tags,
+                                                 has_post)
+                     VALUES (:building_id,
+                             :original,
+                             :sam,
+                             :post,
+                             :tags,
+                             :has_post)
+                     """),
                 {
-                    **e.dict(),
-                    "tags": json.dumps(e.tags or [])
+                    "building_id": e.building_id,
+                    "original": e.original,
+                    "sam": e.post_vs_sam,  # map correctly
+                    "post": e.post,
+                    "tags": json.dumps({
+                        "original_errors": e.original_error,
+                        "post_errors": e.post_error
+                    }),
+                    "has_post": e.has_post
                 }
             )
         return {"status": "ok"}

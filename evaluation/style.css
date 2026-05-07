@@ -1,58 +1,330 @@
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; font-size: 15px; }
+
 body {
-  font-family: Arial;
-  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #0f0f0f;
+  color: #e8e6e1;
+  height: 100dvh;
+  overflow: hidden;
 }
 
+/* ── Layout ── */
 #app {
   display: flex;
-  height: 100vh;
+  height: 100dvh;
 }
 
 #image-container {
   flex: 2;
-  background: black;
+  background: #000;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 #patch {
   max-width: 100%;
   max-height: 100%;
-  border: 2px solid #333;
+  object-fit: contain;
+  display: block;
 }
 
 #controls {
-  flex: 1;
-  padding: 20px;
-  background: #f5f5f5;
+  flex: 0 0 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: #171615;
+  border-left: 1px solid #2a2825;
+  overflow-y: auto;
 }
 
+/* ── Header ── */
+#header {
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #2a2825;
+  position: sticky;
+  top: 0;
+  background: #171615;
+  z-index: 10;
+}
+
+#title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #9a9690;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+#progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#progress-track {
+  flex: 1;
+  height: 4px;
+  background: #2a2825;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+#progress-bar {
+  height: 100%;
+  background: #4f9a6b;
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+#progress-label {
+  font-size: 11px;
+  color: #6b6965;
+  white-space: nowrap;
+}
+
+/* ── Questions ── */
 .question {
-  margin-bottom: 20px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #222020;
+}
+
+.question-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #9a9690;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.q-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #252320;
+  color: #6b6965;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Button Groups ── */
+.btn-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 button {
-  margin: 5px;
-  padding: 10px;
-  font-size: 16px;
-  background: #ddd;
-  border: none;
   cursor: pointer;
-  transition: 0.2s;
+  border: 1px solid #2e2c29;
+  border-radius: 6px;
+  background: #1e1d1b;
+  color: #c8c5bf;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  line-height: 1;
 }
 
 button:hover {
-  background: #bbb;
+  background: #272522;
+  border-color: #3d3a36;
+  color: #e8e6e1;
+}
+
+button:active {
+  background: #2e2b27;
 }
 
 button.active {
-  background: #4caf50;
-  color: white;
-  font-weight: bold;
+  background: #1d3b2a;
+  border-color: #2e6648;
+  color: #6fcf97;
+  font-weight: 600;
 }
 
-select {
-  padding: 8px;
+button.btn-warn.active {
+  background: #3b1e1e;
+  border-color: #7a3535;
+  color: #f28b8b;
+}
+
+.key-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #2a2825;
+  color: #6b6965;
+  font-size: 10px;
+  font-weight: 700;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  letter-spacing: 0;
+  flex-shrink: 0;
+}
+
+button.active .key-hint {
+  background: rgba(111, 207, 151, 0.15);
+  color: #4f9a6b;
+}
+
+button.btn-warn.active .key-hint {
+  background: rgba(242, 139, 139, 0.15);
+  color: #c46060;
+}
+
+/* ── Error Boxes ── */
+.hidden { display: none !important; }
+
+.error-box {
+  margin-top: 12px;
+  padding: 12px;
+  background: #1a1917;
+  border: 1px solid #2a2825;
+  border-radius: 6px;
+}
+
+.error-box p {
+  font-size: 11px;
+  color: #6b6965;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.error-box label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #9a9690;
+  transition: background 0.1s, color 0.1s;
+  margin-bottom: 2px;
+}
+
+.error-box label:hover {
+  background: #222020;
+  color: #c8c5bf;
+}
+
+.error-box label.checked {
+  color: #e8a94a;
+}
+
+.error-box label input[type="checkbox"] {
+  accent-color: #e8a94a;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.error-box kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #252320;
+  color: #6b6965;
+  font-size: 10px;
+  font-weight: 700;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  font-family: inherit;
+}
+
+/* ── Validation Error ── */
+#validation-error {
+  margin: 0 20px;
+  padding: 10px 12px;
+  background: #2d1a1a;
+  border: 1px solid #5a2e2e;
+  border-radius: 6px;
+  color: #f28b8b;
+  font-size: 12px;
+}
+
+/* ── Next Button ── */
+#next-btn {
+  margin: 16px 20px 20px;
+  width: calc(100% - 40px);
+  justify-content: center;
+  padding: 10px;
+  background: #1d3b2a;
+  border-color: #2e6648;
+  color: #6fcf97;
   font-size: 14px;
+  font-weight: 600;
+}
+
+#next-btn:hover {
+  background: #224533;
+  border-color: #3d8060;
+  color: #8bddb0;
+}
+
+#next-btn kbd {
+  background: rgba(111, 207, 151, 0.15);
+  color: #4f9a6b;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-family: inherit;
+}
+
+/* ── Done Screen ── */
+#done-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100dvh;
+  width: 100vw;
+  gap: 16px;
+  text-align: center;
+}
+
+.done-icon {
+  font-size: 48px;
+  color: #4f9a6b;
+  background: #1d3b2a;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #2e6648;
+}
+
+#done-screen h2 {
+  font-size: 22px;
+  color: #e8e6e1;
+}
+
+#done-screen p {
+  font-size: 14px;
+  color: #6b6965;
 }

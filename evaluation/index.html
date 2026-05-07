@@ -4,60 +4,97 @@
   <meta charset="UTF-8">
   <title>Building Evaluation</title>
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="data:,">
 </head>
 <body>
 
 <div id="app">
 
   <div id="image-container">
-    <img id="patch" src="" />
+    <img id="patch" src="" alt="Building patch" />
   </div>
 
-<div id="controls">
-  <h2 id="title">Building</h2>
+  <div id="controls">
 
-  <!-- ORIGINAL -->
-  <div class="question">
-    <p>Original (Google)</p>
+    <div id="header">
+      <h2 id="title">Building</h2>
+      <div id="progress-wrap">
+        <div id="progress-track"><div id="progress-bar"></div></div>
+        <span id="progress-label">0 / 0 done</span>
+      </div>
+    </div>
+      <div id="jump-controls">
+        <input id="jump-input" type="number" placeholder="Go to # (e.g. 199)">
+     <button onclick="jumpTo()">Go</button>
+    </div>
+    <!-- ORIGINAL -->
+    <div class="question">
+      <p class="question-label">
+        <span class="q-num">1–4</span>
+        Original (Google)
+      </p>
+      <div class="btn-group" id="original-group">
+        <button data-value="perfect" onclick="answer('original','perfect',this)">
+          <span class="key-hint">1</span> Perfect
+        </button>
+        <button data-value="good" onclick="answer('original','good',this)">
+          <span class="key-hint">2</span> Good
+        </button>
+        <button data-value="ok" onclick="answer('original','ok',this)">
+          <span class="key-hint">3</span> OK
+        </button>
+        <button data-value="bad" onclick="answer('original','bad',this)">
+          <span class="key-hint">4</span> Bad
+        </button>
+      </div>
+      <div id="original-error-box" class="error-box hidden"></div>
+    </div>
 
-    <div id="model-tags"></div>
+    <!-- POST vs SAM -->
+    <div class="question">
+      <p class="question-label">
+        <span class="q-num">Y/N</span>
+        Did postprocessing introduce NEW geometric errors (vs SAM)?
+      </p>
+      <div class="btn-group" id="post-vs-sam-group">
+        <button data-value="no" onclick="answer('post_vs_sam','no',this)">
+          <span class="key-hint">N</span> No
+        </button>
+        <button data-value="yes" onclick="answer('post_vs_sam','yes',this)" class="btn-warn">
+          <span class="key-hint">Y</span> Yes
+        </button>
+      </div>
+    </div>
 
-    <button onclick="answer('original','correct', this)">Correct</button>
-    <button onclick="answer('original','partial', this)">Partially</button>
-    <button onclick="answer('original','wrong', this)">Wrong</button>
+    <!-- FINAL POST -->
+    <div class="question">
+      <p class="question-label">
+        <span class="q-num">5–8</span>
+        Final Result (Post)
+      </p>
+      <div class="btn-group" id="post-group">
+        <button data-value="perfect" onclick="answer('post','perfect',this)">
+          <span class="key-hint">5</span> Perfect
+        </button>
+        <button data-value="good" onclick="answer('post','good',this)">
+          <span class="key-hint">6</span> Good
+        </button>
+        <button data-value="ok" onclick="answer('post','ok',this)">
+          <span class="key-hint">7</span> OK
+        </button>
+        <button data-value="bad" onclick="answer('post','bad',this)">
+          <span class="key-hint">8</span> Bad
+        </button>
+      </div>
+      <div id="post-error-box" class="error-box hidden"></div>
+    </div>
+
+    <div id="validation-error" class="hidden"></div>
+
+    <button id="next-btn" onclick="nextSample()">
+      Next → <kbd>Enter</kbd>
+    </button>
+
   </div>
-
-  <!-- SAM -->
-  <div class="question">
-    <p>SAM vs Original</p>
-    <button onclick="answer('sam','better', this)">Better</button>
-    <button onclick="answer('sam','same', this)">Same</button>
-    <button onclick="answer('sam','worse', this)">Worse</button>
-  </div>
-
-  <!-- POST -->
-  <div class="question">
-    <p>Final Result (Post)</p>
-    <button onclick="answer('post','perfect', this)">Perfect</button>
-    <button onclick="answer('post','good', this)">Good</button>
-    <button onclick="answer('post','ok', this)">OK</button>
-    <button onclick="answer('post','bad', this)">Bad</button>
-  </div>
-
-  <!-- TAG SELECTOR -->
-  <div class="question" id="tag-section" style="display:none;">
-    <p>What is wrong?</p>
-
-    <button onclick="toggleTag('MISALIGNED', this)">Misaligned</button>
-    <button onclick="toggleTag('SHAPE_MISMATCH', this)">Shape mismatch</button>
-    <button onclick="toggleTag('MISSING_PARTS', this)">Missing parts</button>
-    <button onclick="toggleTag('EXTRA_PARTS', this)">Extra parts</button>
-    <button onclick="toggleTag('OVERSIMPLIFIED', this)">Oversimplified</button>
-  </div>
-
-  <button onclick="nextSample()">Next →</button>
-</div>
 
 </div>
 
