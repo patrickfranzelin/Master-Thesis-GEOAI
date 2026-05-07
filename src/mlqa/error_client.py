@@ -18,15 +18,37 @@ client = OpenAI(
 # ==================================================
 
 ALIGNMENT_SYSTEM = """
-You are a geospatial QA system.
+You are a geospatial QualityAssurance system.
 Return ONLY valid JSON.
 """
 
 ALIGNMENT_USER = """
 You see an aerial image with a GREEN polygon over a building.
 
-Question:
-Is the polygon shifted relative to the building?
+Task:
+Determine if the polygon is SHIFTED.
+
+STRICT PROCEDURE (follow exactly):
+
+1. Compare polygon edges with roof edges on each side:
+   - TOP
+   - BOTTOM
+   - LEFT
+   - RIGHT
+
+2. For each side decide:
+   - ALIGNED → edge overlaps roof edge
+   - NOT_ALIGNED → clear gap or offset
+
+3. Count how many sides are NOT_ALIGNED.
+
+Decision rule:
+- If 2 or more sides are NOT_ALIGNED → MISALIGNED (true)
+- Otherwise → ALIGNED (false)
+
+IMPORTANT:
+- Ignore shape errors (missing parts, simplification)
+- Only evaluate POSITION (shift)
 
 Return ONLY:
 
@@ -47,22 +69,17 @@ Return ONLY valid JSON.
 """
 
 TAGS_USER = """
-You see an aerial image with a GREEN polygon over a building.
+You see a arial image with a building on it, overlaying is a green polygon that in theory should follow perfectly the outlines  
+with the building. Now i want to classify the error types of the green polygon. 
+I now that nearly all of the Polygons are shifted according to the real building from the arial image ignore that fact and concentrate
+on the other error types. Imagine that the shift isnt there.
 
-The alignment has already been evaluated.
+ERROR TYPES:
 
-Classify the SHAPE using ONLY these tags:
-
-- STRUCTURE_MATCH
-- SHAPE_MISMATCH
-- MISSING_PARTS
-- EXTRA_PARTS
-- OVERSIMPLIFIED
-
-Rules:
-- Multiple tags allowed
-- Only choose from the list
-- No explanations
+- SHAPE_MISMATCH → wrong building footprint shape (NOT rotation)
+- ORIENTATION_MISMATCH → correct shape but rotated incorrectly
+- MISSING_PARTS → parts of roof outside polygon
+- EXTRA_PARTS → polygon includes non-building areas
 
 Return ONLY:
 
@@ -74,6 +91,8 @@ Return ONLY:
 VALID_TAGS = {
     "STRUCTURE_MATCH",
     "SHAPE_MISMATCH",
+    "ORIENTATION_MATCH",
+    "ORIENTATION_MISMATCH",
     "MISSING_PARTS",
     "EXTRA_PARTS",
     "OVERSIMPLIFIED"
@@ -89,14 +108,10 @@ Return ONLY valid JSON.
 """
 
 DESCRIPTION_TEMPLATE = """
-You see an aerial image with a GREEN polygon over a building.
+You see an aerial image with a building and a GREEN polygon. Compare polygon outline with building outline
+ Identify geometric differences as: shifted, missing parts, shape correctness, extra parts, level of detail, orientation
 
-Known:
-- misaligned: {misaligned}
-- tags: {tags}
-
-Write ONE short, simple sentence describing the issue and the area.
-
+Then summarize in a short sentence the precice geometric errors (if any).
 Return ONLY:
 
 {{

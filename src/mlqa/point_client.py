@@ -105,7 +105,7 @@ def _parse_json_safe(raw: str) -> dict:
         try:
             return json.loads(cleaned)
         except json.JSONDecodeError:
-            print("⚠ JSON parse failed → returning empty dict")
+            print("JSON parse failed → returning empty dict")
             return {}
 
 def _encode_image(path: Path) -> str:
@@ -143,7 +143,7 @@ def _ask(user_prompt: str, image_b64: str, max_tokens=128) -> dict | None:
         return _parse_json_safe(raw)
 
     except Exception as e:
-        print(f"⚠ MLQA temporary error → skipping: {e}")
+        print(f"MLQA temporary error → skipping: {e}")
         return None
 
 def _denormalize(points: list, width: int, height: int) -> list:
@@ -172,7 +172,7 @@ def _collect_positive_points(image_b64: str, n: int) -> list[list[int]]:
         result = _ask(prompt, image_b64)
 
         if result is None:
-            print("⚠ Positive point request failed → returning partial result")
+            print("Positive point request failed → returning partial result")
             return collected
 
         pts = result.get("inside", [])
@@ -193,7 +193,7 @@ def analyze_points(image_path: Path, n_points: int = 3) -> dict:
     img = cv2.imread(str(image_path))
 
     if img is None:
-        print("⚠ Could not read image → returning empty points")
+        print("Could not read image → returning empty points")
         return {"inside": [], "outside": []}
 
     height, width = img.shape[:2]
@@ -210,7 +210,7 @@ def analyze_points(image_path: Path, n_points: int = 3) -> dict:
     neg_result = _ask(NEGATIVE_USER, img_b64, max_tokens=256)
 
     if neg_result is None:
-        print("⚠ Negative point request failed → using empty list")
+        print("Negative point request failed → using empty list")
         outside_norm = []
     else:
         outside_norm = neg_result.get("outside", [])
