@@ -1,222 +1,316 @@
-# ==============================
-# repair.py
-# ==============================
 from __future__ import annotations
 
+import math
+
 import numpy as np
-from shapely import MultiPolygon
-from shapely.geometry import Polygon, Point
-from shapely.geometry import LineString
-from .geometry import dominant_axes, soft_snap, fit_line, normalize
+from shapely.geometry import Point, Polygon
+
+from .geometry import normalize
 
 
-def repair_dent(poly: Polygon, dent_data, cfg) -> Polygon:
-    from shapely.geometry import Point
-    import numpy as np
+EPS = 1e-9
 
-    # -----------------------------
-    # 0. SAFETY
-    # -----------------------------
+
+def _as_polygon(poly: Polygon) -> Polygon | None:
     if poly.geom_type == "MultiPolygon":
         poly = max(poly.geoms, key=lambda g: g.area)
 
     if not poly.is_valid:
         poly = poly.buffer(0)
+        if poly.geom_type == "MultiPolygon":
+            poly = max(poly.geoms, key=lambda g: g.area)
 
-    dent = dent_data["dent"]
-    dom = dent_data["dominant"]
+    if poly.is_empty or poly.geom_type != "Polygon":
+        return None
+    return poly
 
-    coords = list(poly.exterior.coords)
+
+def _runs(mask: list[bool]) -> list[list[int]]:
+    if not mask or not any(mask):
+        return []
+
+    n = len(mask)
+    seen = [False] * n
+    runs = []
+
+    for start in range(n):
+        if seen[start] or not mask[start]:
+            continue
+
+        run = []
+        i = start
+        while mask[i] and not seen[i]:
+            seen[i] = True
+            run.append(i)
+            i = (i + 1) % n
+
+        runs.append(run)
+
+    if len(runs) > 1 and mask[0] and mask[-1]:
+        first = next(r for r in runs if 0 in r)
+        last = next(r for r in runs if n - 1 in r)
+        if first is not last:
+            merged = last + first
+            runs = [r for r in runs if r not in (first, last)]
+            runs.append(merged)
+
+    return runs
+
+
+def _choose_occluded_run(coords, dent_line, repair_buffer):
+    dent_mid = dent_line.interpolate(0.5, normalized=True)
+    inside = [Point(c).distance(dent_line) <= repair_buffer for c in coords]
+    candidates = _runs(inside)
+
+    if not candidates:
+        return None
+
+    def score(run):
+        length = 0.0
+        dist = 0.0
+        for idx in run:
+            p = Point(coords[idx])
+            dist += p.distance(dent_mid)
+        for a, b in zip(run, run[1:]):
+            length += Point(coords[a]).distance(Point(coords[b]))
+        return (len(run), length, -dist / max(len(run), 1))
+
+    return max(candidates, key=score)
+
+
+def _building_axes(coords, excluded: set[int]) -> list[np.ndarray]:
+    clusters: list[dict] = []
     n = len(coords)
 
-    # -----------------------------
-    # 1. FIND OCCLUDED SEGMENT
-    # -----------------------------
-    inside = [Point(c).distance(dom) < cfg.repair_buffer for c in coords]
+    for i in range(n):
+        if i in excluded or (i + 1) % n in excluded:
+            continue
 
-    enter_idx, exit_idx = None, None
+        p1 = np.array(coords[i], dtype=float)
+        p2 = np.array(coords[(i + 1) % n], dtype=float)
+        vec = p2 - p1
+        length = np.linalg.norm(vec)
+        if length < 0.25:
+            continue
+
+        axis = normalize(vec)
+        matched = None
+        for cluster in clusters:
+            if abs(np.dot(axis, cluster["axis"])) > math.cos(math.radians(18.0)):
+                matched = cluster
+                break
+
+        if matched is None:
+            clusters.append({"axis": axis, "weight": length})
+            continue
+
+        if np.dot(axis, matched["axis"]) < 0:
+            axis = -axis
+        new_weight = matched["weight"] + length
+        matched["axis"] = normalize(
+            matched["axis"] * matched["weight"] + axis * length
+        )
+        matched["weight"] = new_weight
+
+    clusters.sort(key=lambda item: item["weight"], reverse=True)
+    return [item["axis"] for item in clusters]
+
+
+def _snap_to_axis(direction, axes, max_degrees=30.0):
+    if not axes:
+        return direction
+
+    best = max(axes, key=lambda axis: abs(np.dot(direction, axis)))
+    score = abs(np.dot(direction, best))
+    if score < math.cos(math.radians(max_degrees)):
+        return direction
+
+    return best if np.dot(direction, best) >= 0 else -best
+
+
+def _wall_direction(coords, anchor_idx, tangent_idx, target, axes):
+    anchor = np.array(coords[anchor_idx], dtype=float)
+    tangent = np.array(coords[tangent_idx], dtype=float) - anchor
+
+    if np.linalg.norm(tangent) < EPS:
+        direction = normalize(target - anchor)
+    else:
+        direction = normalize(tangent)
+
+    direction = _snap_to_axis(direction, axes)
+    if np.dot(direction, target - anchor) < 0:
+        direction = -direction
+
+    return direction
+
+
+def _line_intersection(p1, d1, p2, d2):
+    cross = d1[0] * d2[1] - d1[1] * d2[0]
+    if abs(cross) < 1e-6:
+        return None
+
+    delta = p2 - p1
+    t = (delta[0] * d2[1] - delta[1] * d2[0]) / cross
+    u = (delta[0] * d1[1] - delta[1] * d1[0]) / cross
+    return p1 + t * d1, t, u
+
+
+def _parallel_patch_points(p_enter, dir1, p_exit, dir2):
+    wall_dir = normalize(dir1 + dir2)
+    if np.linalg.norm(wall_dir) < 1e-6:
+        wall_dir = dir1
+
+    bridge = p_exit - p_enter
+    normal = np.array([-wall_dir[1], wall_dir[0]])
+    offset = np.dot(bridge, normal)
+
+    p1 = p_enter + normal * offset * 0.5
+    p2 = p_exit - normal * offset * 0.5
+
+    if np.linalg.norm(p2 - p1) < EPS:
+        return [tuple(p_exit)]
+    return [tuple(p1), tuple(p2)]
+
+
+def _clean_ring(coords):
+    cleaned = []
+    for coord in coords:
+        if not cleaned or Point(cleaned[-1]).distance(Point(coord)) > 1e-6:
+            cleaned.append(coord)
+
+    if len(cleaned) > 1 and Point(cleaned[0]).distance(Point(cleaned[-1])) <= 1e-6:
+        cleaned.pop()
+
+    return cleaned
+
+
+def _has_spike(coords, min_angle_degrees=12.0, min_edge_length=0.03):
+    if len(coords) < 4:
+        return False
+
+    min_sin = math.sin(math.radians(min_angle_degrees))
+    n = len(coords)
+    arr = [np.array(c, dtype=float) for c in coords]
 
     for i in range(n):
-        if not inside[i] and inside[(i + 1) % n]:
-            enter_idx = i
-        if inside[i] and not inside[(i + 1) % n]:
-            exit_idx = (i + 1) % n
+        prev_p = arr[(i - 1) % n]
+        p = arr[i]
+        next_p = arr[(i + 1) % n]
+        v1 = prev_p - p
+        v2 = next_p - p
+        l1 = np.linalg.norm(v1)
+        l2 = np.linalg.norm(v2)
 
-    if enter_idx is None or exit_idx is None:
+        if l1 < min_edge_length or l2 < min_edge_length:
+            return True
+
+        sin_angle = abs(v1[0] * v2[1] - v1[1] * v2[0]) / max(l1 * l2, EPS)
+        if sin_angle < min_sin and np.dot(v1, v2) > 0:
+            return True
+
+    return False
+
+
+def _validate_repair(original: Polygon, fixed, dent_line, patch_points) -> Polygon | None:
+    fixed = _as_polygon(fixed)
+    if fixed is None:
+        return None
+
+    if fixed.area <= 0:
+        return None
+
+    original_area = max(original.area, EPS)
+    area_ratio = fixed.area / original_area
+    if area_ratio < 0.65 or area_ratio > 1.45:
+        return None
+
+    union = fixed.union(original)
+    if union.area <= EPS:
+        return None
+
+    iou = fixed.intersection(original).area / union.area
+    if iou < 0.55:
+        return None
+
+    dent_center = np.array(dent_line.interpolate(0.5, normalized=True).coords[0])
+    gap_scale = max(dent_line.length, 1.0)
+    for point in patch_points:
+        if np.linalg.norm(np.array(point) - dent_center) > gap_scale * 4.0:
+            return None
+
+    if _has_spike(list(fixed.exterior.coords[:-1])):
+        return None
+
+    return fixed
+
+
+def repair_dent(poly: Polygon, dent_data, cfg) -> Polygon:
+    poly = _as_polygon(poly)
+    if poly is None:
         return poly
 
-    if abs(enter_idx - exit_idx) < 2:
+    dent = dent_data["dent"]
+    dent_line = dent_data.get("dominant") or dent
+    if dent_line is None or dent_line.is_empty:
         return poly
 
-    # -----------------------------
-    # 2. EXTRACT EDGE DIRECTIONS
-    # -----------------------------
-    def edge_direction(i1, i2):
-        v = np.array(coords[i2]) - np.array(coords[i1])
-        return v / (np.linalg.norm(v) + 1e-9)
+    coords = _clean_ring(list(poly.exterior.coords[:-1]))
+    n = len(coords)
+    if n < 4:
+        return poly
 
-    dir1 = edge_direction(enter_idx - 1, enter_idx)
-    dir2 = edge_direction(exit_idx, (exit_idx + 1) % n)
+    run = _choose_occluded_run(coords, dent_line, cfg.repair_buffer)
+    if not run:
+        return poly
 
-    # -----------------------------
-    # 3. MULTI-DIRECTION SNAP (🔥 key improvement)
-    # -----------------------------
-    def get_edge_directions(poly):
-        dirs = []
-        c = list(poly.exterior.coords)
-        for i in range(len(c) - 1):
-            v = np.array(c[i+1]) - np.array(c[i])
-            if np.linalg.norm(v) < 1e-6:
-                continue
-            dirs.append(v / np.linalg.norm(v))
-        return dirs
+    enter_idx = (run[0] - 1) % n
+    exit_idx = (run[-1] + 1) % n
+    if enter_idx == exit_idx or enter_idx in run or exit_idx in run:
+        return poly
 
-    def cluster_dirs(dirs, tol=15):
-        clusters = []
-        for d in dirs:
-            found = False
-            for c in clusters:
-                if abs(np.dot(d, c)) > np.cos(np.radians(tol)):
-                    c[:] = (c + d) / np.linalg.norm(c + d)
-                    found = True
-                    break
-            if not found:
-                clusters.append(d.copy())
-        return clusters
+    p_enter = np.array(coords[enter_idx], dtype=float)
+    p_exit = np.array(coords[exit_idx], dtype=float)
+    dent_center = np.array(dent_line.interpolate(0.5, normalized=True).coords[0])
 
-    def idx(i):
-        return i % n
+    excluded = set(run)
+    axes = _building_axes(coords, excluded)
 
-    dirs = [
-        edge_direction(idx(enter_idx - 2), idx(enter_idx - 1)),
-        edge_direction(idx(enter_idx - 1), idx(enter_idx)),
-        edge_direction(idx(exit_idx), idx(exit_idx + 1)),
-        edge_direction(idx(exit_idx + 1), idx(exit_idx + 2)),
-    ]
-    clusters = cluster_dirs(dirs)
+    dir1 = _wall_direction(coords, enter_idx, run[0], dent_center, axes)
+    dir2 = _wall_direction(coords, exit_idx, run[-1], dent_center, axes)
 
-    def snap_to_cluster(v):
-        best_v, best_score = None, -1
-        for c in clusters:
-            score = abs(np.dot(v, c))
-            if score > best_score:
-                best_score = score
-                # CRITICAL: Always use the direction that POINTS TOWARDS the dent
-                candidate = c if np.dot(v, c) > 0 else -c
-                # Verify it reduces dent distance
-                if candidate is not None:  # Add distance check to dent center
-                    best_v = candidate
-        return best_v
-
-    dir1 = snap_to_cluster(dir1)
-    dir2 = snap_to_cluster(dir2)
-
-    p_enter = np.array(coords[enter_idx])
-    p_exit = np.array(coords[exit_idx])
-    dent_center = (p_enter + p_exit) / 2
-
-    # Flip dir1 so it points TOWARDS dent_center from enter
-    if np.dot(dir1, dent_center - p_enter) < 0:
-        dir1 = -dir1
-
-    # Flip dir2 so it points TOWARDS dent_center from exit
-    if np.dot(dir2, dent_center - p_exit) < 0:
-        dir2 = -dir2
-
-    # -----------------------------
-    # 4. ROBUST LINE EXTENSION (🔥 critical)
-    # -----------------------------
-    def make_ray(p, d, scale=20):  # small!
-        return LineString([p, p + d * scale])
-
-    p_enter = np.array(coords[enter_idx])
-    p_exit = np.array(coords[exit_idx])
-
-    line1 = make_ray(p_enter, dir1)
-    line2 = make_ray(p_exit, dir2)
-
-    dot = abs(np.dot(dir1, dir2))
-
-    # -----------------------------
-    # 5. PARALLEL CASE (wall continuation)
-    # -----------------------------
-    if dot > 0.95:
-        wall_dir = dir1.copy()
-
-        # fallback if opposite directions
-        if np.dot(dir1, dir2) < 0:
-            wall_dir = dir1
-        else:
-            wall_dir = normalize(dir1 + dir2)
-
-        wall = make_ray(p_enter, wall_dir)
-
-        proj1 = wall.interpolate(wall.project(Point(p_enter)))
-        proj2 = wall.interpolate(wall.project(Point(p_exit)))
-
-        p1 = proj1.coords[0]
-        p2 = proj2.coords[0]
-
-        new_coords = []
-        i = exit_idx
-        while i != enter_idx:
-            new_coords.append(coords[i])
-            i = (i + 1) % n
-
-        new_coords.append(coords[enter_idx])
-        new_coords.append(p1)
-        new_coords.append(p2)
-
-    # -----------------------------
-    # 6. CORNER CASE (intersection)
-    # -----------------------------
+    same_axis = abs(np.dot(dir1, dir2)) > 0.965
+    if same_axis:
+        patch_points = _parallel_patch_points(p_enter, dir1, p_exit, dir2)
     else:
-        inter = line1.intersection(line2)
-
-        if inter.is_empty or inter.geom_type != "Point":
+        intersection = _line_intersection(p_enter, dir1, p_exit, dir2)
+        if intersection is None:
             return poly
 
-        ip = inter.coords[0]
-        ip_arr = np.array(ip)
-
-        # distance constraint (prevents spikes)
-        dent_scale = np.linalg.norm(p_exit - p_enter)
-        max_dist = dent_scale * 3.0  # tunable (2–4 works well)
-
-        if np.linalg.norm(ip_arr - dent_center) > max_dist:
+        ip, t, u = intersection
+        if t < -0.05 or u < -0.05:
             return poly
-        # ensure intersection is roughly between directions
-        v1 = normalize(ip_arr - p_enter)
-        v2 = normalize(ip_arr - p_exit)
+        patch_points = [tuple(ip)]
 
-        if np.dot(v1, dir1) < 0.3 or np.dot(v2, dir2) < 0.3:
-            return poly
+    new_coords = []
+    i = exit_idx
+    while True:
+        new_coords.append(coords[i])
+        if i == enter_idx:
+            break
+        i = (i + 1) % n
 
-        new_coords = []
-        i = exit_idx
-        while i != enter_idx:
-            new_coords.append(coords[i])
-            i = (i + 1) % n
+    new_coords.extend(patch_points)
+    new_coords = _clean_ring(new_coords)
 
-        new_coords.append(coords[enter_idx])
-        new_coords.append(ip)
-
-    # -----------------------------
-    # 7. VALIDATION (🔥 important)
-    # -----------------------------
     if len(new_coords) < 3:
         return poly
 
     try:
-        fixed = Polygon(new_coords).buffer(0)
-
-        # stronger validation
-        iou = fixed.intersection(poly).area / fixed.union(poly).area
-
-        if fixed.is_valid and iou > 0.5:
-            return fixed
-
+        fixed = Polygon(new_coords)
+        if not fixed.is_valid:
+            fixed = fixed.buffer(0)
     except Exception:
-        pass
+        return poly
 
-    return poly
+    validated = _validate_repair(poly, fixed, dent_line, patch_points)
+    return validated if validated is not None else poly
