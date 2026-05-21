@@ -135,10 +135,21 @@ def md_table(df: pd.DataFrame) -> str:
 
 
 def save_table(df: pd.DataFrame, name: str) -> pd.DataFrame:
-    df.to_csv(TABLE_DIR / f"{name}.csv", index=False)
-    (TABLE_DIR / f"{name}.md").write_text(md_table(df), encoding="utf-8")
+    csv_path = TABLE_DIR / f"{name}.csv"
+    md_path = TABLE_DIR / f"{name}.md"
+    tex_path = TABLE_DIR / f"{name}.tex"
     try:
-        df.to_latex(TABLE_DIR / f"{name}.tex", index=False, escape=True)
+        df.to_csv(csv_path, index=False)
+    except PermissionError:
+        warnings.warn(f"Could not write locked table file: {csv_path}", stacklevel=2)
+    try:
+        md_path.write_text(md_table(df), encoding="utf-8")
+    except PermissionError:
+        warnings.warn(f"Could not write locked table file: {md_path}", stacklevel=2)
+    try:
+        df.to_latex(tex_path, index=False, escape=True)
+    except PermissionError:
+        warnings.warn(f"Could not write locked table file: {tex_path}", stacklevel=2)
     except Exception as exc:  # pragma: no cover - optional export
         warnings.warn(f"Could not save LaTeX table {name}: {exc}")
     return df
@@ -475,7 +486,7 @@ def build_tables() -> dict[str, pd.DataFrame]:
         f"""
         with ev_latest as (
           select distinct on (e.building_id)
-            e.building_id, e.original, e.post, e.sam as post_introduced_new_errors,
+            e.id as evaluation_id, e.building_id, e.original, e.post, e.sam as post_introduced_new_errors,
             {SCORE_ORIGINAL} as original_score, {SCORE_POST} as post_score,
             case when {SCORE_POST} > {SCORE_ORIGINAL} then 'improved'
                  when {SCORE_POST} < {SCORE_ORIGINAL} then 'degraded'
@@ -491,10 +502,40 @@ def build_tables() -> dict[str, pd.DataFrame]:
         ), post as (
           select building_id, ST_UnaryUnion(ST_Collect(ST_MakeValid(geom))) geom
           from src_google.detected_house_regularized group by building_id
+        ), mlqa as (
+          select distinct on (building_id)
+            building_id, house_present, full_house_present
+          from src_google.building_mlqa
+          order by building_id, analyzed_at desc
+        ), trees as (
+          select
+            building_id,
+            count(*)::int as tree_count,
+            sum(ST_Area(ST_MakeValid(geom)::geography)) as tree_area_m2
+          from src_google.detected_tree
+          group by building_id
         )
         select ev.building_id,
           {COUNTRY_CASE_B} as country,
+          b.confidence as google_confidence,
           ev.original, ev.post, ev.change, ev.original_score, ev.post_score,
+          ev.post_introduced_new_errors,
+          mlqa.house_present, mlqa.full_house_present,
+          exists (
+            select 1
+            from jsonb_array_elements_text(coalesce(e.tags->'original_errors', '[]'::jsonb)) as x(err)
+            where x.err = 'SHIFTED'
+          ) as original_shifted,
+          exists (
+            select 1
+            from jsonb_array_elements_text(coalesce(e.tags->'post_errors', '[]'::jsonb)) as x(err)
+            where x.err = 'MISSING_PARTS'
+          ) as post_missing_parts,
+          exists (
+            select 1
+            from jsonb_array_elements_text(coalesce(e.tags->'post_errors', '[]'::jsonb)) as x(err)
+            where x.err = 'EXTRA_PARTS'
+          ) as post_extra_parts,
           ST_Area(ST_MakeValid(b.geom)::geography) as original_area_m2,
           ST_Area(s.geom::geography) as sam_area_m2,
           ST_Area(p.geom::geography) as post_area_m2,
@@ -503,11 +544,16 @@ def build_tables() -> dict[str, pd.DataFrame]:
           ST_NPoints(p.geom) as post_vertices,
           ST_Distance(ST_Centroid(ST_MakeValid(b.geom))::geography, ST_Centroid(s.geom)::geography) as orig_sam_shift_m,
           ST_Distance(ST_Centroid(ST_MakeValid(b.geom))::geography, ST_Centroid(p.geom)::geography) as orig_post_shift_m,
-          ST_Distance(ST_Centroid(s.geom)::geography, ST_Centroid(p.geom)::geography) as sam_post_shift_m
-        from ev_latest ev
+          ST_Distance(ST_Centroid(s.geom)::geography, ST_Centroid(p.geom)::geography) as sam_post_shift_m,
+          coalesce(trees.tree_count, 0) as tree_count,
+          coalesce(trees.tree_area_m2, 0) as tree_area_m2
+          from ev_latest ev
+        join src_google.evaluation e on e.id=ev.evaluation_id
         join src_google.buildings b on b.id=ev.building_id
+        left join mlqa on mlqa.building_id=ev.building_id
         left join sam s on s.building_id=ev.building_id
         left join post p on p.building_id=ev.building_id
+        left join trees on trees.building_id=ev.building_id
         """
     )
     geom_eval["sam_original_area_ratio"] = geom_eval["sam_area_m2"] / geom_eval[
@@ -522,6 +568,80 @@ def build_tables() -> dict[str, pd.DataFrame]:
     geom_eval["sam_vertex_delta"] = geom_eval["sam_vertices"] - geom_eval["original_vertices"]
     geom_eval["post_vertex_delta"] = geom_eval["post_vertices"] - geom_eval["original_vertices"]
     geom_eval["post_sam_vertex_delta"] = geom_eval["post_vertices"] - geom_eval["sam_vertices"]
+    geom_eval["post_area_bias_pct"] = 100 * (geom_eval["post_original_area_ratio"] - 1)
+    geom_eval["post_abs_area_error_pct"] = geom_eval["post_area_bias_pct"].abs()
+    geom_eval["sam_area_bias_pct"] = 100 * (geom_eval["sam_original_area_ratio"] - 1)
+    geom_eval["sam_abs_area_error_pct"] = geom_eval["sam_area_bias_pct"].abs()
+    geom_eval["post_shift_delta_vs_sam_m"] = (
+        geom_eval["orig_post_shift_m"] - geom_eval["orig_sam_shift_m"]
+    )
+    geom_eval["post_closer_than_sam"] = (
+        geom_eval["orig_post_shift_m"] < geom_eval["orig_sam_shift_m"]
+    )
+    geom_eval["tree_area_original_ratio"] = geom_eval["tree_area_m2"] / geom_eval[
+        "original_area_m2"
+    ].replace(0, np.nan)
+
+    area_error_bins = [
+        -np.inf,
+        -50,
+        -25,
+        -10,
+        10,
+        25,
+        50,
+        np.inf,
+    ]
+    area_error_labels = [
+        "more than 50% smaller",
+        "25-50% smaller",
+        "10-25% smaller",
+        "within +/-10%",
+        "10-25% larger",
+        "25-50% larger",
+        "more than 50% larger",
+    ]
+    geom_eval["post_area_agreement"] = pd.cut(
+        geom_eval["post_area_bias_pct"],
+        bins=area_error_bins,
+        labels=area_error_labels,
+    )
+    geom_eval["mlqa_visibility"] = np.select(
+        [
+            geom_eval["house_present"].isna(),
+            geom_eval["house_present"].eq(False),
+            geom_eval["house_present"].eq(True)
+            & geom_eval["full_house_present"].eq(False),
+            geom_eval["house_present"].eq(True)
+            & geom_eval["full_house_present"].eq(True),
+        ],
+        ["not analyzed", "no visible house", "partial house", "full house"],
+        default="not analyzed",
+    )
+    geom_eval["tree_context"] = np.select(
+        [
+            geom_eval["tree_count"].eq(0),
+            geom_eval["tree_area_original_ratio"].le(0.25),
+            geom_eval["tree_area_original_ratio"].le(1.0),
+        ],
+        ["no detected tree", "low tree context", "medium tree context"],
+        default="high tree context",
+    )
+    geom_eval["tree_detected"] = np.where(
+        geom_eval["tree_count"].gt(0), "tree detected", "no detected tree"
+    )
+    geom_eval["post_new_error_flag"] = (
+        geom_eval["post_introduced_new_errors"]
+        .fillna("no")
+        .astype(str)
+        .str.lower()
+        .eq("yes")
+    )
+    geom_eval["google_confidence_pct"] = np.where(
+        geom_eval["google_confidence"].le(1),
+        geom_eval["google_confidence"] * 100,
+        geom_eval["google_confidence"],
+    )
     geom_eval.to_csv(TABLE_DIR / "03_geometry_eval_building_level_raw.csv", index=False)
 
     geometry_summary = pd.DataFrame(
@@ -574,6 +694,50 @@ def build_tables() -> dict[str, pd.DataFrame]:
     )
     save_table(geometry_country, "03_country_geometry_summary")
 
+    post_area_agreement = (
+        geom_eval.dropna(subset=["post_area_agreement"])
+        .groupby(["country", "post_area_agreement"], observed=False)
+        .size()
+        .rename("n")
+        .reset_index()
+    )
+    country_totals = post_area_agreement.groupby("country")["n"].transform("sum")
+    post_area_agreement["share_pct"] = (
+        100 * post_area_agreement["n"] / country_totals.replace(0, np.nan)
+    ).round(1)
+    save_table(post_area_agreement, "03_post_area_agreement_by_country")
+
+    geometry_result_factors = (
+        geom_eval.assign(
+            post_good_or_perfect=geom_eval["post"].isin(["good", "perfect"]),
+            original_shifted=geom_eval["original_shifted"].fillna(False),
+            post_closer_than_sam=geom_eval["post_closer_than_sam"].fillna(False),
+        )
+        .groupby("country")
+        .agg(
+            n=("building_id", "count"),
+            good_or_perfect_pct=("post_good_or_perfect", lambda s: 100 * s.mean()),
+            median_abs_area_error_pct=("post_abs_area_error_pct", "median"),
+            median_post_shift_m=("orig_post_shift_m", "median"),
+            shifted_originals=("original_shifted", "sum"),
+            shifted_originals_closer_than_sam_pct=(
+                "post_closer_than_sam",
+                lambda s: 100 * s[geom_eval.loc[s.index, "original_shifted"].fillna(False)].mean()
+                if geom_eval.loc[s.index, "original_shifted"].fillna(False).any()
+                else np.nan,
+            ),
+            post_missing_parts_pct=("post_missing_parts", lambda s: 100 * s.fillna(False).mean()),
+            post_extra_parts_pct=("post_extra_parts", lambda s: 100 * s.fillna(False).mean()),
+            medium_high_tree_context_pct=(
+                "tree_context",
+                lambda s: 100 * s.isin(["medium tree context", "high tree context"]).mean(),
+            ),
+        )
+        .round(1)
+        .reset_index()
+    )
+    save_table(geometry_result_factors, "03_geometry_result_factors_by_country")
+
     geometry_by_quality = (
         geom_eval.assign(post_good_or_perfect=geom_eval["post"].isin(["good", "perfect"]))
         .groupby("post_good_or_perfect")
@@ -590,10 +754,196 @@ def build_tables() -> dict[str, pd.DataFrame]:
     )
     save_table(geometry_by_quality, "03_geometry_by_post_quality")
 
+    geometry_by_visibility = (
+        geom_eval.assign(
+            post_good_or_perfect=geom_eval["post"].isin(["good", "perfect"]),
+        )
+        .groupby("mlqa_visibility")
+        .agg(
+            n=("building_id", "count"),
+            good_or_perfect_pct=("post_good_or_perfect", lambda s: 100 * s.mean()),
+            median_abs_area_error_pct=("post_abs_area_error_pct", "median"),
+            missing_parts_pct=("post_missing_parts", lambda s: 100 * s.fillna(False).mean()),
+            extra_parts_pct=("post_extra_parts", lambda s: 100 * s.fillna(False).mean()),
+        )
+        .round(1)
+        .reset_index()
+    )
+    save_table(geometry_by_visibility, "03_geometry_by_mlqa_visibility")
+
+    geometry_by_tree_context = (
+        geom_eval.assign(post_good_or_perfect=geom_eval["post"].isin(["good", "perfect"]))
+        .groupby("tree_context")
+        .agg(
+            n=("building_id", "count"),
+            good_or_perfect_pct=("post_good_or_perfect", lambda s: 100 * s.mean()),
+            median_abs_area_error_pct=("post_abs_area_error_pct", "median"),
+            missing_parts_pct=("post_missing_parts", lambda s: 100 * s.fillna(False).mean()),
+            extra_parts_pct=("post_extra_parts", lambda s: 100 * s.fillna(False).mean()),
+        )
+        .round(1)
+        .reset_index()
+    )
+    save_table(geometry_by_tree_context, "03_geometry_by_tree_context")
+
+    confidence_eval = geom_eval.dropna(subset=["google_confidence_pct"]).copy()
+    confidence_eval["post_good_or_perfect"] = confidence_eval["post"].isin(["good", "perfect"])
+    confidence_eval["improved_flag"] = confidence_eval["change"].eq("improved")
+    confidence_eval["degraded_flag"] = confidence_eval["change"].eq("degraded")
+    confidence_eval["score_delta"] = (
+        confidence_eval["post_score"] - confidence_eval["original_score"]
+    )
+    confidence_eval["confidence_quartile"] = pd.qcut(
+        confidence_eval["google_confidence_pct"],
+        q=4,
+        labels=[
+            "Q1 lowest confidence",
+            "Q2 lower-middle",
+            "Q3 upper-middle",
+            "Q4 highest confidence",
+        ],
+        duplicates="drop",
+    )
+
+    confidence_summary_country = (
+        confidence_eval.groupby("country")
+        .agg(
+            n=("building_id", "count"),
+            mean_confidence_pct=("google_confidence_pct", "mean"),
+            median_confidence_pct=("google_confidence_pct", "median"),
+            min_confidence_pct=("google_confidence_pct", "min"),
+            max_confidence_pct=("google_confidence_pct", "max"),
+            good_or_perfect_pct=("post_good_or_perfect", lambda s: 100 * s.mean()),
+            degraded_pct=("degraded_flag", lambda s: 100 * s.mean()),
+            post_new_error_pct=("post_new_error_flag", lambda s: 100 * s.mean()),
+        )
+        .round(2)
+        .reset_index()
+    )
+    save_table(confidence_summary_country, "03_google_confidence_by_country")
+
+    confidence_by_quartile = (
+        confidence_eval.groupby("confidence_quartile", observed=False)
+        .agg(
+            n=("building_id", "count"),
+            confidence_min_pct=("google_confidence_pct", "min"),
+            confidence_median_pct=("google_confidence_pct", "median"),
+            confidence_max_pct=("google_confidence_pct", "max"),
+            good_or_perfect_pct=("post_good_or_perfect", lambda s: 100 * s.mean()),
+            improved_pct=("improved_flag", lambda s: 100 * s.mean()),
+            degraded_pct=("degraded_flag", lambda s: 100 * s.mean()),
+            post_new_error_pct=("post_new_error_flag", lambda s: 100 * s.mean()),
+            median_abs_area_error_pct=("post_abs_area_error_pct", "median"),
+            median_post_shift_m=("orig_post_shift_m", "median"),
+            missing_parts_pct=("post_missing_parts", lambda s: 100 * s.fillna(False).mean()),
+            extra_parts_pct=("post_extra_parts", lambda s: 100 * s.fillna(False).mean()),
+        )
+        .round(2)
+        .reset_index()
+    )
+    save_table(confidence_by_quartile, "03_google_confidence_by_quartile")
+
+    def correlation_row(metric: str, column: str) -> dict[str, float | str | int]:
+        subset = confidence_eval[["google_confidence_pct", "country", column]].dropna().copy()
+        subset[column] = subset[column].astype(float)
+        if len(subset) < 3:
+            return {
+                "metric": metric,
+                "n": len(subset),
+                "pearson": np.nan,
+                "spearman": np.nan,
+                "within_country_pearson": np.nan,
+            }
+        x = subset["google_confidence_pct"]
+        y = subset[column]
+        x_centered = x - subset.groupby("country")["google_confidence_pct"].transform("mean")
+        y_centered = y - subset.groupby("country")[column].transform("mean")
+        return {
+            "metric": metric,
+            "n": len(subset),
+            "pearson": x.corr(y),
+            "spearman": x.rank().corr(y.rank()),
+            "within_country_pearson": x_centered.corr(y_centered),
+        }
+
+    confidence_correlations = pd.DataFrame(
+        [
+            correlation_row("original_manual_score", "original_score"),
+            correlation_row("postprocessed_manual_score", "post_score"),
+            correlation_row("score_delta_post_minus_original", "score_delta"),
+            correlation_row("post_good_or_perfect_flag", "post_good_or_perfect"),
+            correlation_row("improved_flag", "improved_flag"),
+            correlation_row("degraded_flag", "degraded_flag"),
+            correlation_row("post_introduced_new_error_flag", "post_new_error_flag"),
+            correlation_row("post_abs_area_error_pct", "post_abs_area_error_pct"),
+            correlation_row("orig_post_shift_m", "orig_post_shift_m"),
+            correlation_row("post_missing_parts_flag", "post_missing_parts"),
+            correlation_row("post_extra_parts_flag", "post_extra_parts"),
+        ]
+    ).round(3)
+    save_table(confidence_correlations, "03_google_confidence_correlations")
+
+    new_errors_by_tree_detection = (
+        geom_eval.groupby("tree_detected")
+        .agg(
+            n=("building_id", "count"),
+            post_new_errors=("post_new_error_flag", "sum"),
+            post_new_error_pct=("post_new_error_flag", lambda s: 100 * s.mean()),
+            good_or_perfect_pct=("post", lambda s: 100 * s.isin(["good", "perfect"]).mean()),
+            median_abs_area_change_pct=("post_abs_area_error_pct", "median"),
+            missing_parts_pct=("post_missing_parts", lambda s: 100 * s.fillna(False).mean()),
+            extra_parts_pct=("post_extra_parts", lambda s: 100 * s.fillna(False).mean()),
+        )
+        .round(1)
+        .reset_index()
+    )
+    save_table(new_errors_by_tree_detection, "03_new_errors_by_tree_detection")
+
+    new_errors_by_tree_context = (
+        geom_eval.groupby("tree_context")
+        .agg(
+            n=("building_id", "count"),
+            post_new_errors=("post_new_error_flag", "sum"),
+            post_new_error_pct=("post_new_error_flag", lambda s: 100 * s.mean()),
+            good_or_perfect_pct=("post", lambda s: 100 * s.isin(["good", "perfect"]).mean()),
+            median_abs_area_change_pct=("post_abs_area_error_pct", "median"),
+            missing_parts_pct=("post_missing_parts", lambda s: 100 * s.fillna(False).mean()),
+            extra_parts_pct=("post_extra_parts", lambda s: 100 * s.fillna(False).mean()),
+        )
+        .round(1)
+        .reset_index()
+    )
+    save_table(new_errors_by_tree_context, "03_new_errors_by_tree_context")
+
+    tree_yes = geom_eval["tree_count"].gt(0)
+    error_yes = geom_eval["post_new_error_flag"]
+    a = int((tree_yes & error_yes).sum())
+    b = int((tree_yes & ~error_yes).sum())
+    c = int((~tree_yes & error_yes).sum())
+    d = int((~tree_yes & ~error_yes).sum())
+    risk_tree = a / (a + b) if (a + b) else np.nan
+    risk_no_tree = c / (c + d) if (c + d) else np.nan
+    denom = np.sqrt((a + b) * (c + d) * (a + c) * (b + d))
+    phi = ((a * d - b * c) / denom) if denom else np.nan
+    new_error_tree_association = pd.DataFrame(
+        [
+            {"metric": "tree_detected_and_new_error", "value": a},
+            {"metric": "tree_detected_no_new_error", "value": b},
+            {"metric": "no_tree_detected_and_new_error", "value": c},
+            {"metric": "no_tree_detected_no_new_error", "value": d},
+            {"metric": "new_error_rate_with_tree_pct", "value": 100 * risk_tree},
+            {"metric": "new_error_rate_without_tree_pct", "value": 100 * risk_no_tree},
+            {"metric": "risk_difference_percentage_points", "value": 100 * (risk_tree - risk_no_tree)},
+            {"metric": "risk_ratio_tree_vs_no_tree", "value": risk_tree / risk_no_tree if risk_no_tree else np.nan},
+            {"metric": "phi_correlation_tree_detected_new_error", "value": phi},
+        ]
+    )
+    save_table(new_error_tree_association.round(3), "03_new_error_tree_association")
+
     shift_eval = read_sql(
         f"""
         with ev_latest as (
-          select distinct on (e.building_id) e.building_id
+          select distinct on (e.building_id) e.building_id, e.post
           from src_google.evaluation e
           join src_google.buildings b on b.id = e.building_id
           where {COUNTRY_CASE_B} in {INCLUDED_COUNTRY_SQL}
@@ -610,7 +960,7 @@ def build_tables() -> dict[str, pd.DataFrame]:
           select building_id, ST_UnaryUnion(ST_Collect(ST_MakeValid(geom))) geom
           from src_google.detected_house_regularized group by building_id
         ), vectors as (
-          select ev.building_id, {COUNTRY_CASE_B} as country,
+          select ev.building_id, ev.post, {COUNTRY_CASE_B} as country,
             ST_Distance(ST_Centroid(ST_MakeValid(b.geom))::geography, ST_Centroid(s.geom)::geography) sam_dist,
             ST_Azimuth(ST_Centroid(ST_MakeValid(b.geom))::geography, ST_Centroid(s.geom)::geography) sam_az,
             ST_Distance(ST_Centroid(ST_MakeValid(b.geom))::geography, ST_Centroid(p.geom)::geography) post_dist,
@@ -620,7 +970,7 @@ def build_tables() -> dict[str, pd.DataFrame]:
           left join sam s on s.building_id=ev.building_id
           left join post p on p.building_id=ev.building_id
         )
-        select building_id, country, sam_dist, sam_az,
+        select building_id, country, post, sam_dist, sam_az,
                sam_dist * sin(sam_az) as sam_dx_m,
                sam_dist * cos(sam_az) as sam_dy_m,
                post_dist, post_az,
@@ -630,6 +980,11 @@ def build_tables() -> dict[str, pd.DataFrame]:
         """
     )
     shift_eval.to_csv(TABLE_DIR / "04_shift_vectors_raw.csv", index=False)
+    shift_eval_good_post = shift_eval[shift_eval["post"].isin(["good", "perfect"])].copy()
+    shift_eval_good_post.to_csv(
+        TABLE_DIR / "04_shift_vectors_good_perfect_post_raw.csv",
+        index=False,
+    )
     shift_country = (
         shift_eval.groupby("country")
         .agg(
@@ -651,6 +1006,71 @@ def build_tables() -> dict[str, pd.DataFrame]:
         .reset_index()
     )
     save_table(shift_country, "04_country_shift_vectors")
+
+    def _circular_mean_deg(series: pd.Series) -> float:
+        values = series.dropna().to_numpy(dtype=float)
+        if len(values) == 0:
+            return np.nan
+        sin_mean = np.sin(values).mean()
+        cos_mean = np.cos(values).mean()
+        return float((np.degrees(np.arctan2(sin_mean, cos_mean)) + 360) % 360)
+
+    def _directional_concentration(series: pd.Series) -> float:
+        values = series.dropna().to_numpy(dtype=float)
+        if len(values) == 0:
+            return np.nan
+        return float(np.hypot(np.sin(values).mean(), np.cos(values).mean()))
+
+    shift_stats = (
+        shift_eval.groupby("country")
+        .agg(
+            n=("building_id", "count"),
+            mean_shift_m=("post_dist", "mean"),
+            median_shift_m=("post_dist", "median"),
+            p75_shift_m=("post_dist", lambda s: s.quantile(0.75)),
+            p90_shift_m=("post_dist", lambda s: s.quantile(0.90)),
+            max_shift_m=("post_dist", "max"),
+            share_le_1m_pct=("post_dist", lambda s: 100 * (s <= 1).mean()),
+            share_le_2m_pct=("post_dist", lambda s: 100 * (s <= 2).mean()),
+            share_le_5m_pct=("post_dist", lambda s: 100 * (s <= 5).mean()),
+            mean_dx_m=("post_dx_m", "mean"),
+            mean_dy_m=("post_dy_m", "mean"),
+            sd_dx_m=("post_dx_m", "std"),
+            sd_dy_m=("post_dy_m", "std"),
+            mean_direction_deg=("post_az", _circular_mean_deg),
+            directional_concentration=("post_az", _directional_concentration),
+        )
+        .reset_index()
+    )
+    shift_stats["resultant_shift_m"] = np.hypot(
+        shift_stats["mean_dx_m"], shift_stats["mean_dy_m"]
+    )
+    shift_stats["resultant_direction_deg"] = (
+        np.degrees(np.arctan2(shift_stats["mean_dx_m"], shift_stats["mean_dy_m"])) + 360
+    ) % 360
+    shift_stats = shift_stats[
+        [
+            "country",
+            "n",
+            "mean_shift_m",
+            "median_shift_m",
+            "p75_shift_m",
+            "p90_shift_m",
+            "max_shift_m",
+            "share_le_1m_pct",
+            "share_le_2m_pct",
+            "share_le_5m_pct",
+            "mean_dx_m",
+            "mean_dy_m",
+            "resultant_shift_m",
+            "resultant_direction_deg",
+            "mean_direction_deg",
+            "directional_concentration",
+            "sd_dx_m",
+            "sd_dy_m",
+        ]
+    ].round(2)
+    save_table(shift_stats, "04_shift_summary_for_discussion")
 
     mlqa_error_counts = read_sql(
         """
@@ -684,6 +1104,114 @@ def build_tables() -> dict[str, pd.DataFrame]:
     )
     save_table(missing_outputs, "05_missing_outputs_by_country")
 
+    # ------------------------------------------------------------------
+    # Thesis results integration tables
+    # ------------------------------------------------------------------
+    # These tables collect the five result additions that are most useful
+    # for the written results chapter. They deliberately reuse the core
+    # statistics above so the numbers stay reproducible from one generator.
+    pipeline_dropoff = coverage.merge(
+        missing_outputs[
+            [
+                "country",
+                "no_sam_detection",
+                "sam_but_no_post",
+                "no_post_output",
+            ]
+        ],
+        on="country",
+        how="left",
+    )
+    pipeline_dropoff["mlqa_rate_of_total_pct"] = (
+        100 * pipeline_dropoff["mlqa_analyzed"] / pipeline_dropoff["total_buildings"].replace(0, np.nan)
+    ).round(1)
+    pipeline_dropoff["sam_rate_of_mlqa_pct"] = (
+        100 * pipeline_dropoff["with_sam"] / pipeline_dropoff["mlqa_analyzed"].replace(0, np.nan)
+    ).round(1)
+    pipeline_dropoff["post_rate_of_total_pct"] = (
+        100 * pipeline_dropoff["with_post"] / pipeline_dropoff["total_buildings"].replace(0, np.nan)
+    ).round(1)
+    pipeline_dropoff = pipeline_dropoff[
+        [
+            "country",
+            "total_buildings",
+            "mlqa_analyzed",
+            "with_sam",
+            "with_post",
+            "manually_evaluated",
+            "no_sam_detection",
+            "sam_but_no_post",
+            "no_post_output",
+            "mlqa_rate_of_total_pct",
+            "sam_rate_of_mlqa_pct",
+            "post_rate_of_sam_pct",
+            "manual_eval_rate_of_post_pct",
+        ]
+    ]
+    save_table(pipeline_dropoff, "06_results_pipeline_dropoff")
+
+    stage_comparison = geometry_summary.copy()
+    original = stage_comparison.loc[
+        stage_comparison["geometry_stage"] == "Original Google"
+    ].iloc[0]
+    stage_comparison["mean_area_change_vs_original_pct"] = (
+        100 * (stage_comparison["mean_area_m2"] / original["mean_area_m2"] - 1)
+    ).round(1)
+    stage_comparison["mean_vertex_change_vs_original_pct"] = (
+        100 * (stage_comparison["mean_vertices"] / original["mean_vertices"] - 1)
+    ).round(1)
+    save_table(stage_comparison, "06_results_stage_comparison")
+
+    tree_context_results = geometry_by_tree_context.copy()
+    tree_context_results = tree_context_results.rename(
+        columns={"median_abs_area_error_pct": "median_abs_area_change_pct"}
+    )
+    tree_context_results = tree_context_results[
+        [
+            "tree_context",
+            "n",
+            "good_or_perfect_pct",
+            "median_abs_area_change_pct",
+            "missing_parts_pct",
+            "extra_parts_pct",
+        ]
+    ]
+    save_table(tree_context_results, "06_results_tree_context")
+
+    mlqa_visibility_results = geometry_by_visibility.copy()
+    mlqa_visibility_results = mlqa_visibility_results.rename(
+        columns={"median_abs_area_error_pct": "median_abs_area_change_pct"}
+    )
+    mlqa_visibility_results = mlqa_visibility_results[
+        [
+            "mlqa_visibility",
+            "n",
+            "good_or_perfect_pct",
+            "median_abs_area_change_pct",
+            "missing_parts_pct",
+            "extra_parts_pct",
+        ]
+    ]
+    save_table(mlqa_visibility_results, "06_results_mlqa_visibility")
+
+    country_synthesis = geometry_result_factors.copy()
+    country_synthesis = country_synthesis.rename(
+        columns={"median_abs_area_error_pct": "median_abs_area_change_pct"}
+    )
+    country_synthesis = country_synthesis[
+        [
+            "country",
+            "n",
+            "good_or_perfect_pct",
+            "median_abs_area_change_pct",
+            "median_post_shift_m",
+            "post_missing_parts_pct",
+            "post_extra_parts_pct",
+            "medium_high_tree_context_pct",
+        ]
+    ]
+    save_table(country_synthesis, "06_results_country_synthesis")
+
     return {
         "table_counts": table_counts,
         "coverage": coverage,
@@ -694,9 +1222,24 @@ def build_tables() -> dict[str, pd.DataFrame]:
         "error_compare": error_compare,
         "country_error_profile": country_error_profile,
         "geom_eval": geom_eval,
+        "geometry_summary": geometry_summary,
+        "geometry_result_factors": geometry_result_factors,
+        "geometry_by_visibility": geometry_by_visibility,
+        "geometry_by_tree_context": geometry_by_tree_context,
+        "confidence_by_quartile": confidence_by_quartile,
+        "confidence_correlations": confidence_correlations,
+        "new_errors_by_tree_detection": new_errors_by_tree_detection,
+        "new_errors_by_tree_context": new_errors_by_tree_context,
+        "new_error_tree_association": new_error_tree_association,
         "shift_eval": shift_eval,
+        "shift_eval_good_post": shift_eval_good_post,
         "shift_country": shift_country,
         "missing_outputs": missing_outputs,
+        "pipeline_dropoff": pipeline_dropoff,
+        "stage_comparison": stage_comparison,
+        "tree_context_results": tree_context_results,
+        "mlqa_visibility_results": mlqa_visibility_results,
+        "country_synthesis": country_synthesis,
     }
 
 
@@ -709,8 +1252,17 @@ def build_figures(data: dict[str, pd.DataFrame]) -> None:
     country_error_profile = data["country_error_profile"]
     geom_eval = data["geom_eval"]
     shift_eval = data["shift_eval"]
+    shift_eval_good_post = data["shift_eval_good_post"]
     shift_country = data["shift_country"]
     missing_outputs = data["missing_outputs"]
+    pipeline_dropoff = data["pipeline_dropoff"]
+    stage_comparison = data["stage_comparison"]
+    tree_context_results = data["tree_context_results"]
+    mlqa_visibility_results = data["mlqa_visibility_results"]
+    country_synthesis = data["country_synthesis"]
+    new_errors_by_tree_detection = data["new_errors_by_tree_detection"]
+    new_errors_by_tree_context = data["new_errors_by_tree_context"]
+    confidence_by_quartile = data["confidence_by_quartile"]
 
     fig, ax = plt.subplots(figsize=(8.2, 4.8))
     plot_df = coverage.melt(
@@ -906,29 +1458,50 @@ def build_figures(data: dict[str, pd.DataFrame]) -> None:
     fig.subplots_adjust(left=0.16, right=0.92, top=0.86, bottom=0.14)
     save_fig(fig, "02_error_categories_by_location_total", tight=False)
 
-    vertex_long = geom_eval[
-        ["building_id", "original_vertices", "sam_vertices", "post_vertices"]
-    ].melt(id_vars="building_id", var_name="stage", value_name="vertices").dropna()
-    vertex_long["stage"] = vertex_long["stage"].map(
-        {
-            "original_vertices": "Original Google",
-            "sam_vertices": "SAM",
-            "post_vertices": "Postprocessed",
-        }
+    agreement_order = [
+        "more than 50% smaller",
+        "25-50% smaller",
+        "10-25% smaller",
+        "within +/-10%",
+        "10-25% larger",
+        "25-50% larger",
+        "more than 50% larger",
+    ]
+    area_agreement = (
+        geom_eval.dropna(subset=["post_area_agreement"])
+        .groupby(["country", "post_area_agreement"], observed=False)
+        .size()
+        .rename("n")
+        .reset_index()
     )
-    fig, ax = plt.subplots(figsize=(7.4, 4.8))
-    sns.boxplot(
-        data=vertex_long,
-        x="stage",
-        y="vertices",
-        showfliers=False,
+    area_agreement["share_pct"] = 100 * area_agreement["n"] / area_agreement.groupby(
+        "country"
+    )["n"].transform("sum")
+    area_pivot = (
+        area_agreement.pivot(index="country", columns="post_area_agreement", values="share_pct")
+        .reindex(index=INCLUDED_COUNTRIES, columns=agreement_order)
+        .fillna(0)
+    )
+    fig, ax = plt.subplots(figsize=(9.0, 4.8))
+    area_pivot.plot(
+        kind="barh",
+        stacked=True,
         ax=ax,
-        palette=[PALETTE["original"], PALETTE["sam"], PALETTE["post"]],
+        color=["#8C3B46", "#C7545A", "#E7A95B", "#5DA271", "#7BAFD4", "#4C78A8", "#5B4B8A"],
+        width=0.72,
     )
-    ax.set_title("Vertex count distribution")
-    ax.set_xlabel("Geometry stage")
-    ax.set_ylabel("Number of vertices, outliers hidden")
-    save_fig(fig, "03_vertex_count_distribution")
+    ax.set_title("Postprocessed area agreement with original geometry")
+    ax.set_xlabel("Share of evaluated postprocessed buildings (%)")
+    ax.set_ylabel("")
+    ax.set_xlim(0, 100)
+    ax.invert_yaxis()
+    ax.legend(
+        title="Post / original area",
+        bbox_to_anchor=(0.5, -0.18),
+        loc="upper center",
+        ncol=3,
+    )
+    save_fig(fig, "03_post_area_agreement_by_country", tight=False)
 
     area_ratio_long = geom_eval[
         ["building_id", "sam_original_area_ratio", "post_original_area_ratio"]
@@ -946,15 +1519,40 @@ def build_figures(data: dict[str, pd.DataFrame]) -> None:
         data=area_ratio_long,
         x="ratio_type",
         y="area_ratio",
+        hue="ratio_type",
         showfliers=False,
         ax=ax,
         palette=[PALETTE["sam"], PALETTE["post"]],
+        legend=False,
     )
     ax.axhline(1.0, color="black", linewidth=1, linestyle="--")
     ax.set_title("Area ratio relative to original geometry")
     ax.set_xlabel("Comparison")
     ax.set_ylabel("Area ratio, outliers hidden")
     save_fig(fig, "03_area_ratio_distribution")
+
+    fig, ax = plt.subplots(figsize=(7.6, 4.8))
+    area_quality_df = geom_eval.dropna(subset=["post", "post_abs_area_error_pct"]).copy()
+    area_quality_df = area_quality_df[
+        area_quality_df["post_abs_area_error_pct"]
+        <= area_quality_df["post_abs_area_error_pct"].quantile(0.98)
+    ]
+    sns.boxplot(
+        data=area_quality_df,
+        x="post",
+        y="post_abs_area_error_pct",
+        hue="post",
+        order=RATING_ORDER,
+        hue_order=RATING_ORDER,
+        showfliers=False,
+        ax=ax,
+        palette=[PALETTE[r] for r in RATING_ORDER],
+        legend=False,
+    )
+    ax.set_title("Area error by manual postprocessed quality")
+    ax.set_xlabel("Manual postprocessed rating")
+    ax.set_ylabel("Absolute area error vs original (%)")
+    save_fig(fig, "03_post_area_error_by_quality")
 
     fig, ax = plt.subplots(figsize=(7.2, 5.0))
     scatter_df = geom_eval.dropna(subset=["original_area_m2", "post_area_m2"]).copy()
@@ -978,6 +1576,98 @@ def build_figures(data: dict[str, pd.DataFrame]) -> None:
     ax.set_ylabel("Postprocessed area (m2)")
     ax.legend(title="Country", bbox_to_anchor=(1.02, 1), loc="upper left")
     save_fig(fig, "03_original_vs_post_area_scatter")
+
+    context_df = geom_eval.assign(
+        post_good_or_perfect=geom_eval["post"].isin(["good", "perfect"])
+    )
+    context_summary = (
+        context_df.groupby("mlqa_visibility")
+        .agg(good_or_perfect_pct=("post_good_or_perfect", lambda s: 100 * s.mean()))
+        .reindex(["full house", "partial house", "no visible house", "not analyzed"])
+        .dropna()
+        .reset_index()
+    )
+    fig, ax = plt.subplots(figsize=(7.2, 4.5))
+    sns.barplot(
+        data=context_summary,
+        x="mlqa_visibility",
+        y="good_or_perfect_pct",
+        color=PALETTE["post"],
+        ax=ax,
+    )
+    ax.set_title("Postprocessed quality by MLQA visibility")
+    ax.set_xlabel("MLQA visibility class")
+    ax.set_ylabel("Good or perfect postprocessed results (%)")
+    ax.set_ylim(0, 100)
+    ax.tick_params(axis="x", rotation=20)
+    save_fig(fig, "03_post_quality_by_mlqa_visibility")
+
+    tree_summary = (
+        context_df.groupby("tree_context")
+        .agg(good_or_perfect_pct=("post_good_or_perfect", lambda s: 100 * s.mean()))
+        .reindex(
+            [
+                "no detected tree",
+                "low tree context",
+                "medium tree context",
+                "high tree context",
+            ]
+        )
+        .dropna()
+        .reset_index()
+    )
+    fig, ax = plt.subplots(figsize=(7.2, 4.5))
+    sns.barplot(
+        data=tree_summary,
+        x="tree_context",
+        y="good_or_perfect_pct",
+        color="#6B8F71",
+        ax=ax,
+    )
+    ax.set_title("Postprocessed quality by tree context")
+    ax.set_xlabel("Detected tree context")
+    ax.set_ylabel("Good or perfect postprocessed results (%)")
+    ax.set_ylim(0, 100)
+    ax.tick_params(axis="x", rotation=20)
+    save_fig(fig, "03_post_quality_by_tree_context")
+
+    confidence_plot = confidence_by_quartile[
+        [
+            "confidence_quartile",
+            "good_or_perfect_pct",
+            "improved_pct",
+            "degraded_pct",
+            "post_new_error_pct",
+        ]
+    ].melt(
+        id_vars="confidence_quartile",
+        var_name="metric",
+        value_name="share_pct",
+    )
+    confidence_plot["metric"] = confidence_plot["metric"].map(
+        {
+            "good_or_perfect_pct": "good/perfect",
+            "improved_pct": "improved",
+            "degraded_pct": "degraded",
+            "post_new_error_pct": "new post error",
+        }
+    )
+    fig, ax = plt.subplots(figsize=(8.4, 4.8))
+    sns.lineplot(
+        data=confidence_plot,
+        x="confidence_quartile",
+        y="share_pct",
+        hue="metric",
+        marker="o",
+        ax=ax,
+    )
+    ax.set_title("Postprocessed result by Google Open Buildings confidence")
+    ax.set_xlabel("Google Open Buildings confidence quartile")
+    ax.set_ylabel("Share of evaluated buildings (%)")
+    ax.set_ylim(0, 100)
+    ax.tick_params(axis="x", rotation=18)
+    ax.legend(title="")
+    save_fig(fig, "03_post_quality_by_google_confidence")
 
     fig, ax = plt.subplots(figsize=(7.2, 4.8))
     sns.boxplot(data=shift_eval, x="country", y="post_dist", showfliers=False, ax=ax, color="#7BAFD4")
@@ -1028,7 +1718,19 @@ def build_figures(data: dict[str, pd.DataFrame]) -> None:
                 np.abs(scatter[["post_dx_m", "post_dy_m"]].to_numpy(dtype=float))
             )
         )
-        lim = max(lim + 0.5, 1.0)
+        lim = min(max(lim + 0.5, 1.0), 12.0)
+        major_tick_step = 4.0
+        minor_tick_step = 2.0
+        major_ticks = np.arange(
+            np.floor(-lim / major_tick_step) * major_tick_step,
+            np.ceil(lim / major_tick_step) * major_tick_step + major_tick_step,
+            major_tick_step,
+        )
+        minor_ticks = np.arange(
+            np.floor(-lim / minor_tick_step) * minor_tick_step,
+            np.ceil(lim / minor_tick_step) * minor_tick_step + minor_tick_step,
+            minor_tick_step,
+        )
         fig, axes = plt.subplots(2, 3, figsize=(9.0, 5.8), sharex=True, sharey=True)
         flat_axes = axes.ravel()
         for ax, country in zip(flat_axes, countries):
@@ -1048,16 +1750,138 @@ def build_figures(data: dict[str, pd.DataFrame]) -> None:
             ax.set_title(f"{country} (n={len(country_df)})", fontsize=10)
             ax.set_xlim(-lim, lim)
             ax.set_ylim(-lim, lim)
+            ax.set_xticks(major_ticks)
+            ax.set_yticks(major_ticks)
+            ax.set_xticks(minor_ticks, minor=True)
+            ax.set_yticks(minor_ticks, minor=True)
             ax.set_aspect("equal", adjustable="box")
-            ax.grid(True, linewidth=0.35, alpha=0.25)
+            ax.set_axisbelow(True)
+            ax.grid(True, which="major", linewidth=0.65, alpha=0.45, color="#8A8A8A")
+            ax.grid(True, which="minor", linewidth=0.5, alpha=0.38, color="#A8A8A8")
 
         for ax in flat_axes[len(countries):]:
             ax.axis("off")
 
+        fig.subplots_adjust(bottom=0.16, top=0.9, left=0.09, right=0.98, hspace=0.32, wspace=0.18)
         fig.suptitle("Shift-vector cloud for shifted originals by country", fontweight="bold")
-        fig.supxlabel("East-west shift dx (m)")
+        fig.supxlabel("East-west shift dx (m)", y=0.005)
         fig.supylabel("North-south shift dy (m)")
         save_fig(fig, "04_post_shift_vector_scatter_by_country", tight=False)
+
+    scatter_good = shift_eval_good_post.dropna(subset=["post_dx_m", "post_dy_m"]).copy()
+    if not scatter_good.empty:
+        fig, ax = plt.subplots(figsize=(7.0, 5.2))
+        sns.scatterplot(
+            data=scatter_good,
+            x="post_dx_m",
+            y="post_dy_m",
+            hue="country",
+            s=24,
+            alpha=0.6,
+            ax=ax,
+        )
+        ax.axhline(0, color="grey", linewidth=0.8)
+        ax.axvline(0, color="grey", linewidth=0.8)
+        ax.set_title("Shift-vector cloud for shifted originals with good/perfect post result")
+        ax.set_xlabel("East-west shift dx (m)")
+        ax.set_ylabel("North-south shift dy (m)")
+        ax.legend(title="Country", bbox_to_anchor=(1.02, 1), loc="upper left")
+        save_fig(fig, "04_post_shift_vector_scatter_good_perfect")
+
+        countries_good = [c for c in INCLUDED_COUNTRIES if c in set(scatter_good["country"])]
+        if countries_good:
+            lim_good = float(
+                np.nanmax(
+                    np.abs(scatter_good[["post_dx_m", "post_dy_m"]].to_numpy(dtype=float))
+                )
+            )
+            lim_good = min(max(lim_good + 0.5, 1.0), 12.0)
+            major_tick_step = 4.0
+            minor_tick_step = 2.0
+            major_ticks_good = np.arange(
+                np.floor(-lim_good / major_tick_step) * major_tick_step,
+                np.ceil(lim_good / major_tick_step) * major_tick_step + major_tick_step,
+                major_tick_step,
+            )
+            minor_ticks_good = np.arange(
+                np.floor(-lim_good / minor_tick_step) * minor_tick_step,
+                np.ceil(lim_good / minor_tick_step) * minor_tick_step + minor_tick_step,
+                minor_tick_step,
+            )
+            fig, axes = plt.subplots(2, 3, figsize=(9.0, 5.8), sharex=True, sharey=True)
+            flat_axes = axes.ravel()
+            for ax, country in zip(flat_axes, countries_good):
+                country_df = scatter_good[scatter_good["country"] == country]
+                sns.scatterplot(
+                    data=country_df,
+                    x="post_dx_m",
+                    y="post_dy_m",
+                    s=18,
+                    alpha=0.6,
+                    color=PALETTE["good"],
+                    edgecolor=None,
+                    ax=ax,
+                )
+                ax.axhline(0, color="grey", linewidth=0.7)
+                ax.axvline(0, color="grey", linewidth=0.7)
+                ax.set_title(f"{country} (n={len(country_df)})", fontsize=10)
+                ax.set_xlim(-lim_good, lim_good)
+                ax.set_ylim(-lim_good, lim_good)
+                ax.set_xticks(major_ticks_good)
+                ax.set_yticks(major_ticks_good)
+                ax.set_xticks(minor_ticks_good, minor=True)
+                ax.set_yticks(minor_ticks_good, minor=True)
+                ax.set_aspect("equal", adjustable="box")
+                ax.set_axisbelow(True)
+                ax.grid(True, which="major", linewidth=0.65, alpha=0.45, color="#8A8A8A")
+                ax.grid(True, which="minor", linewidth=0.5, alpha=0.38, color="#A8A8A8")
+
+            for ax in flat_axes[len(countries_good):]:
+                ax.axis("off")
+
+            fig.subplots_adjust(bottom=0.16, top=0.88, left=0.09, right=0.98, hspace=0.32, wspace=0.18)
+            fig.suptitle(
+                "Shift-vector cloud for shifted originals with good/perfect post result by country",
+                fontweight="bold",
+            )
+            fig.supxlabel("East-west shift dx (m)", y=0.005)
+            fig.supylabel("North-south shift dy (m)")
+            save_fig(fig, "04_post_shift_vector_scatter_good_perfect_by_country", tight=False)
+
+    direction_df = shift_eval.dropna(subset=["post_dist", "post_az"]).copy()
+    direction_df["post_direction_deg"] = np.degrees(direction_df["post_az"])
+    fig, axes = plt.subplots(1, 2, figsize=(10.5, 4.6))
+    sns.boxplot(
+        data=direction_df,
+        x="country",
+        y="post_dist",
+        order=INCLUDED_COUNTRIES,
+        showfliers=False,
+        ax=axes[0],
+        color="#7BAFD4",
+    )
+    axes[0].set_title("Shift distance")
+    axes[0].set_xlabel("Country / AOI")
+    axes[0].set_ylabel("Original-to-post shift (m)")
+    axes[0].tick_params(axis="x", rotation=25)
+
+    sns.boxplot(
+        data=direction_df,
+        x="country",
+        y="post_direction_deg",
+        order=INCLUDED_COUNTRIES,
+        showfliers=False,
+        ax=axes[1],
+        color="#D9A441",
+    )
+    axes[1].set_title("Shift direction")
+    axes[1].set_xlabel("Country / AOI")
+    axes[1].set_ylabel("Azimuth (degrees clockwise from north)")
+    axes[1].set_ylim(0, 360)
+    axes[1].set_yticks(np.arange(0, 361, 45))
+    axes[1].tick_params(axis="x", rotation=25)
+    fig.suptitle("Shift distance and direction for shifted originals", fontweight="bold")
+    save_fig(fig, "04_post_shift_distance_direction_by_country")
 
     fig, ax = plt.subplots(figsize=(8.0, 4.8))
     mlqa_plot = coverage.melt(
@@ -1088,6 +1912,143 @@ def build_figures(data: dict[str, pd.DataFrame]) -> None:
     ax.tick_params(axis="x", rotation=25)
     ax.legend(title="Output status")
     save_fig(fig, "05_output_status_by_country")
+
+    # ------------------------------------------------------------------
+    # Thesis results integration figures
+    # ------------------------------------------------------------------
+    fig, ax = plt.subplots(figsize=(8.6, 4.8))
+    dropoff_plot = pipeline_dropoff.melt(
+        id_vars="country",
+        value_vars=["mlqa_analyzed", "with_sam", "with_post", "manually_evaluated"],
+        var_name="pipeline_stage",
+        value_name="count",
+    )
+    sns.barplot(
+        data=dropoff_plot,
+        x="country",
+        y="count",
+        hue="pipeline_stage",
+        ax=ax,
+        palette="muted",
+    )
+    ax.set_title("Result addition 1: pipeline coverage and drop-off")
+    ax.set_xlabel("Country / AOI")
+    ax.set_ylabel("Number of buildings")
+    ax.tick_params(axis="x", rotation=25)
+    ax.legend(title="Pipeline stage")
+    save_fig(fig, "06_results_pipeline_dropoff")
+
+    stage_long = stage_comparison.melt(
+        id_vars="geometry_stage",
+        value_vars=["mean_area_m2", "mean_vertices"],
+        var_name="metric",
+        value_name="value",
+    )
+    fig, axes = plt.subplots(1, 2, figsize=(9.0, 4.3))
+    sns.barplot(
+        data=stage_long[stage_long["metric"] == "mean_area_m2"],
+        x="geometry_stage",
+        y="value",
+        ax=axes[0],
+        palette=[PALETTE["original"], PALETTE["sam"], PALETTE["post"]],
+    )
+    axes[0].set_title("Mean area")
+    axes[0].set_xlabel("")
+    axes[0].set_ylabel("Area (m2)")
+    axes[0].tick_params(axis="x", rotation=20)
+    sns.barplot(
+        data=stage_long[stage_long["metric"] == "mean_vertices"],
+        x="geometry_stage",
+        y="value",
+        ax=axes[1],
+        palette=[PALETTE["original"], PALETTE["sam"], PALETTE["post"]],
+    )
+    axes[1].set_title("Mean vertices")
+    axes[1].set_xlabel("")
+    axes[1].set_ylabel("Vertices")
+    axes[1].tick_params(axis="x", rotation=20)
+    fig.suptitle("Result addition 2: original vs SAM vs postprocessed geometry")
+    save_fig(fig, "06_results_stage_comparison")
+
+    fig, axes = plt.subplots(1, 2, figsize=(10.5, 4.4), sharey=True)
+    sns.barplot(
+        data=tree_context_results,
+        x="tree_context",
+        y="good_or_perfect_pct",
+        ax=axes[0],
+        color="#6B8F71",
+    )
+    axes[0].set_title("Tree context")
+    axes[0].set_xlabel("")
+    axes[0].set_ylabel("Good or perfect results (%)")
+    axes[0].set_ylim(0, 100)
+    axes[0].tick_params(axis="x", rotation=25)
+    sns.barplot(
+        data=mlqa_visibility_results,
+        x="mlqa_visibility",
+        y="good_or_perfect_pct",
+        ax=axes[1],
+        color=PALETTE["post"],
+    )
+    axes[1].set_title("MLQA visibility")
+    axes[1].set_xlabel("")
+    axes[1].set_ylabel("")
+    axes[1].set_ylim(0, 100)
+    axes[1].tick_params(axis="x", rotation=25)
+    fig.suptitle("Result additions 3 and 4: context effects on final quality")
+    save_fig(fig, "06_results_context_effects")
+
+    fig, ax = plt.subplots(figsize=(8.8, 4.8))
+    sns.scatterplot(
+        data=country_synthesis,
+        x="median_abs_area_change_pct",
+        y="good_or_perfect_pct",
+        size="medium_high_tree_context_pct",
+        hue="country",
+        sizes=(80, 360),
+        ax=ax,
+    )
+    for _, row in country_synthesis.iterrows():
+        ax.text(
+            row["median_abs_area_change_pct"] + 0.4,
+            row["good_or_perfect_pct"] + 0.4,
+            row["country"],
+            fontsize=9,
+        )
+    ax.set_title("Result addition 5: country synthesis")
+    ax.set_xlabel("Median absolute area change vs original (%)")
+    ax.set_ylabel("Good or perfect results (%)")
+    ax.set_ylim(55, 90)
+    ax.legend(title="Country / tree context", bbox_to_anchor=(1.02, 1), loc="upper left")
+    save_fig(fig, "06_results_country_synthesis")
+
+    fig, axes = plt.subplots(1, 2, figsize=(10.5, 4.4), sharey=True)
+    sns.barplot(
+        data=new_errors_by_tree_detection,
+        x="tree_detected",
+        y="post_new_error_pct",
+        ax=axes[0],
+        color="#C7545A",
+    )
+    axes[0].set_title("Tree detected vs no tree")
+    axes[0].set_xlabel("")
+    axes[0].set_ylabel("Postprocessing introduced new errors (%)")
+    axes[0].set_ylim(0, 30)
+    axes[0].tick_params(axis="x", rotation=15)
+    sns.barplot(
+        data=new_errors_by_tree_context,
+        x="tree_context",
+        y="post_new_error_pct",
+        ax=axes[1],
+        color="#C7545A",
+    )
+    axes[1].set_title("Tree-context intensity")
+    axes[1].set_xlabel("")
+    axes[1].set_ylabel("")
+    axes[1].set_ylim(0, 30)
+    axes[1].tick_params(axis="x", rotation=25)
+    fig.suptitle("Postprocessing-introduced errors by detected tree context")
+    save_fig(fig, "06_results_new_errors_by_tree")
 
 
 COMMON_SETUP_CODE = r"""
@@ -1258,15 +2219,17 @@ def build_notebooks() -> None:
             ## What this notebook shows
 
             This notebook measures how the geometry changes numerically. It looks at building area,
-            vertex count, and centroid displacement for original Google footprints, raw SAM geometry,
-            and postprocessed geometry.
+            centroid displacement, MLQA visibility, and tree context for original Google footprints
+            and postprocessed geometry. Raw SAM geometry is kept in the raw export where it helps
+            interpret intermediate pipeline behavior, but the figures focus on result quality.
             """,
             """
             ## Main reading
 
-            Original Google footprints are usually very simple. SAM produces much more detailed
-            boundaries. Postprocessing reduces the SAM vertex count strongly, which makes the geometry
-            more GIS-like, but it can also remove roof parts or add unwanted parts in difficult scenes.
+            The most useful results signal is not that SAM has many vertices. The more relevant
+            question is where postprocessing preserves area, reduces shift, and still receives a
+            good manual rating. Visibility and nearby detected trees help explain difficult cases,
+            especially missing or extra parts after postprocessing.
             """,
             """
             ## Method note
@@ -1281,10 +2244,20 @@ def build_notebooks() -> None:
             """
             show_table("03_geometry_stage_summary")
             show_table("03_country_geometry_summary")
+            show_table("03_geometry_result_factors_by_country")
+            show_table("03_post_area_agreement_by_country")
             show_table("03_geometry_by_post_quality")
-            show_figure("03_vertex_count_distribution")
+            show_table("03_geometry_by_mlqa_visibility")
+            show_table("03_geometry_by_tree_context")
+            show_table("03_new_errors_by_tree_detection")
+            show_table("03_new_errors_by_tree_context")
+            show_table("03_new_error_tree_association")
+            show_figure("03_post_area_agreement_by_country", width=1050)
             show_figure("03_area_ratio_distribution")
+            show_figure("03_post_area_error_by_quality")
             show_figure("03_original_vs_post_area_scatter")
+            show_figure("03_post_quality_by_mlqa_visibility")
+            show_figure("03_post_quality_by_tree_context")
             raw = pd.read_csv(TABLE_DIR / "03_geometry_eval_building_level_raw.csv")
             display(raw.head())
             print(f"Raw building-level geometry rows: {len(raw)}")
@@ -1330,13 +2303,20 @@ def build_notebooks() -> None:
             COMMON_SETUP_CODE,
             """
             show_table("04_country_shift_vectors")
+            show_table("04_shift_summary_for_discussion")
             show_figure("04_post_shift_distance_by_country")
+            show_figure("04_post_shift_distance_direction_by_country", width=950)
             show_figure("04_mean_post_shift_vectors")
             show_figure("04_post_shift_vector_scatter")
             show_figure("04_post_shift_vector_scatter_by_country", width=950)
+            show_figure("04_post_shift_vector_scatter_good_perfect")
+            show_figure("04_post_shift_vector_scatter_good_perfect_by_country", width=950)
             raw = pd.read_csv(TABLE_DIR / "04_shift_vectors_raw.csv")
             display(raw.head())
             print(f"Raw shift-vector rows: {len(raw)}")
+            raw_good = pd.read_csv(TABLE_DIR / "04_shift_vectors_good_perfect_post_raw.csv")
+            display(raw_good.head())
+            print(f"Raw shifted-original rows with good/perfect post result: {len(raw_good)}")
             """,
         ],
     )
@@ -1379,6 +2359,81 @@ def build_notebooks() -> None:
     )
 
     write_nb(
+        "06_results_section_additions.ipynb",
+        "Results Section Additions",
+        [
+            """
+            ## Purpose
+
+            This notebook collects the five additional result blocks that strengthen the written
+            results chapter without mixing them into the lower-level exploratory notebooks.
+            The same tables and figures are generated by `generate_thesis_statistics.py`, so each
+            number can be reproduced from the database.
+            """,
+            """
+            ## Result addition 1: pipeline coverage and drop-off
+
+            Use this near the beginning of the results chapter. It explains how many buildings pass
+            each stage: original candidates, MLQA-analyzed buildings, SAM outputs, postprocessed
+            outputs, and manually evaluated cases.
+            """,
+            """
+            ## Result addition 2: original vs SAM vs postprocessed geometry
+
+            Use this after the main improvement rates. It shows the role of the intermediate SAM
+            geometry: SAM creates detailed image-derived polygons, while postprocessing reduces
+            complexity and produces cleaner footprints.
+            """,
+            """
+            ## Result additions 3 and 4: failure conditions
+
+            Tree context and MLQA visibility help explain where the workflow performs worse. In the
+            thesis text, call the area metric an absolute area change relative to the original
+            footprint, not a ground-truth error.
+            """,
+            """
+            ## Result addition 5: country synthesis
+
+            Use the country synthesis table as a compact explanation of why the study areas differ.
+            It combines quality, area change, shift, postprocessing errors, and tree context.
+            """,
+            """
+            ## Additional check: new errors and detected trees
+
+            This checks whether postprocessing-introduced errors are more frequent when tree masks
+            were detected around a building. The association is descriptive, not causal: detected
+            trees are also a proxy for visually complex scenes.
+            """,
+        ],
+        [
+            COMMON_SETUP_CODE,
+            """
+            show_table("06_results_pipeline_dropoff")
+            show_figure("06_results_pipeline_dropoff")
+            """,
+            """
+            show_table("06_results_stage_comparison")
+            show_figure("06_results_stage_comparison")
+            """,
+            """
+            show_table("06_results_tree_context")
+            show_table("06_results_mlqa_visibility")
+            show_figure("06_results_context_effects")
+            """,
+            """
+            show_table("06_results_country_synthesis")
+            show_figure("06_results_country_synthesis")
+            """,
+            """
+            show_table("03_new_errors_by_tree_detection")
+            show_table("03_new_errors_by_tree_context")
+            show_table("03_new_error_tree_association")
+            show_figure("06_results_new_errors_by_tree")
+            """,
+        ],
+    )
+
+    write_nb(
         "README_statistics_index.ipynb",
         "Statistics Notebook Index",
         [
@@ -1388,9 +2443,11 @@ def build_notebooks() -> None:
             - `00_generate_all_statistics.ipynb`: generator documentation.
             - `01_dataset_and_pipeline_overview.ipynb`: dataset and stage coverage.
             - `02_manual_evaluation_categories.ipynb`: manual ratings and error categories.
-            - `03_geometry_before_after.ipynb`: area, vertices, and geometry complexity.
+            - `03_geometry_before_after.ipynb`: postprocessed area agreement, geometry shift,
+              MLQA visibility, and tree-context signals.
             - `04_shift_analysis.ipynb`: centroid shift distance and direction.
             - `05_non_buildings_and_dropoff.ipynb`: no-house proxy and pipeline drop-off.
+            - `06_results_section_additions.ipynb`: thesis-facing result additions 1--5.
             """,
             """
             ## Suggested thesis storyline
@@ -1399,8 +2456,8 @@ def build_notebooks() -> None:
             2. Show that postprocessing improves most manually evaluated buildings.
             3. Explain that the original error profile is dominated by spatial shift, and use the
                location-plus-total profile to show how the error mix differs between AOIs.
-            4. Show that postprocessing regularizes geometry, especially vertices, but can introduce
-               missing or extra parts.
+            4. Show where postprocessed geometry preserves area and quality, and use MLQA/tree
+               context to explain missing or extra parts.
             5. Use the shift-vector analysis to argue that misalignment is spatially heterogeneous.
             6. Close with no-house/drop-off analysis as evidence that data quality matters.
             """,
@@ -1411,6 +2468,7 @@ def build_notebooks() -> None:
             show_table("01_table_counts")
             show_table("02_overall_improvement")
             show_table("04_country_shift_vectors")
+            show_table("06_results_country_synthesis")
             """,
         ],
     )
