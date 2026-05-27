@@ -1082,6 +1082,183 @@ def build_tables() -> dict[str, pd.DataFrame]:
     )
     save_table(mlqa_error_counts, "05_mlqa_error_counts")
 
+    semantic_error_flags = read_sql(
+        f"""
+        with categories(category) as (
+          values
+            ('SHIFTED'),
+            ('SHAPE_MISMATCH'),
+            ('OVERSIMPLIFIED'),
+            ('MISSING_PARTS'),
+            ('EXTRA_PARTS')
+        ), ev_latest as (
+          select distinct on (e.building_id)
+            e.building_id,
+            {COUNTRY_CASE_B} as country,
+            coalesce(e.tags->'original_errors', '[]'::jsonb) as manual_errors
+          from src_google.evaluation e
+          join src_google.buildings b on b.id = e.building_id
+          where {COUNTRY_CASE_B} in {INCLUDED_COUNTRY_SQL}
+          order by e.building_id, e.created_at desc, e.id desc
+        ), mlqa_latest as (
+          select distinct on (m.building_id)
+            m.building_id,
+            coalesce(m.errors, '[]'::jsonb) as mlqa_errors
+          from src_google.building_mlqa m
+          order by m.building_id, m.analyzed_at desc
+        ), paired as (
+          select
+            ev.building_id,
+            ev.country,
+            ev.manual_errors,
+            mlqa.mlqa_errors
+          from ev_latest ev
+          join mlqa_latest mlqa on mlqa.building_id = ev.building_id
+        )
+        select
+          p.building_id,
+          p.country,
+          c.category,
+          exists (
+            select 1
+            from jsonb_array_elements_text(p.manual_errors) as x(err)
+            where x.err = c.category
+          ) as manual_present,
+          exists (
+            select 1
+            from jsonb_array_elements_text(p.mlqa_errors) as x(err)
+            where case x.err
+              when 'MISALIGNED' then 'SHIFTED'
+              when 'ORIENTATION_MISMATCH' then 'SHAPE_MISMATCH'
+              else x.err
+            end = c.category
+          ) as mlqa_present
+        from paired p
+        cross join categories c
+        order by p.country, p.building_id, c.category
+        """
+    )
+    save_table(semantic_error_flags, "05_semantic_error_building_level_flags")
+
+    if semantic_error_flags.empty:
+        semantic_error_agreement = pd.DataFrame()
+        semantic_error_frequency = pd.DataFrame()
+        semantic_error_case_summary = pd.DataFrame()
+    else:
+        semantic_error_flags["manual_present"] = semantic_error_flags["manual_present"].astype(bool)
+        semantic_error_flags["mlqa_present"] = semantic_error_flags["mlqa_present"].astype(bool)
+        paired_case_count = semantic_error_flags["building_id"].nunique()
+
+        agreement_rows = []
+        for category, group in semantic_error_flags.groupby("category", sort=False):
+            manual = group["manual_present"]
+            mlqa = group["mlqa_present"]
+            tp = int((manual & mlqa).sum())
+            fp = int((~manual & mlqa).sum())
+            fn = int((manual & ~mlqa).sum())
+            tn = int((~manual & ~mlqa).sum())
+            precision = tp / (tp + fp) if tp + fp else np.nan
+            recall = tp / (tp + fn) if tp + fn else np.nan
+            f1 = 2 * precision * recall / (precision + recall) if precision + recall else np.nan
+            agreement_rows.append(
+                {
+                    "category": category,
+                    "paired_cases": int(group["building_id"].nunique()),
+                    "manual_count": int(manual.sum()),
+                    "mlqa_count": int(mlqa.sum()),
+                    "true_positive": tp,
+                    "false_positive": fp,
+                    "false_negative": fn,
+                    "true_negative": tn,
+                    "precision": round(precision, 3) if not pd.isna(precision) else np.nan,
+                    "recall": round(recall, 3) if not pd.isna(recall) else np.nan,
+                    "f1": round(f1, 3) if not pd.isna(f1) else np.nan,
+                    "accuracy": round((tp + tn) / len(group), 3) if len(group) else np.nan,
+                    "mlqa_minus_manual_count": int(mlqa.sum() - manual.sum()),
+                    "mlqa_manual_count_ratio": round(mlqa.sum() / manual.sum(), 2) if manual.sum() else np.nan,
+                }
+            )
+        semantic_error_agreement = pd.DataFrame(agreement_rows)
+        semantic_error_agreement["category"] = pd.Categorical(
+            semantic_error_agreement["category"], categories=ERROR_ORDER, ordered=True
+        )
+        semantic_error_agreement = semantic_error_agreement.sort_values("category")
+        save_table(semantic_error_agreement, "05_semantic_error_category_agreement")
+
+        frequency_rows = []
+        total_manual_labels = int(semantic_error_flags["manual_present"].sum())
+        total_mlqa_labels = int(semantic_error_flags["mlqa_present"].sum())
+        for category, group in semantic_error_flags.groupby("category", sort=False):
+            manual_count = int(group["manual_present"].sum())
+            mlqa_count = int(group["mlqa_present"].sum())
+            frequency_rows.extend(
+                [
+                    {
+                        "source": "Manual original errors",
+                        "category": category,
+                        "count": manual_count,
+                        "share_of_cases_pct": round(100 * manual_count / paired_case_count, 1),
+                        "share_of_all_labels_pct": round(100 * manual_count / total_manual_labels, 1)
+                        if total_manual_labels
+                        else np.nan,
+                    },
+                    {
+                        "source": "MLQA normalized errors",
+                        "category": category,
+                        "count": mlqa_count,
+                        "share_of_cases_pct": round(100 * mlqa_count / paired_case_count, 1),
+                        "share_of_all_labels_pct": round(100 * mlqa_count / total_mlqa_labels, 1)
+                        if total_mlqa_labels
+                        else np.nan,
+                    },
+                ]
+            )
+        semantic_error_frequency = pd.DataFrame(frequency_rows)
+        semantic_error_frequency["category"] = pd.Categorical(
+            semantic_error_frequency["category"], categories=ERROR_ORDER, ordered=True
+        )
+        semantic_error_frequency = semantic_error_frequency.sort_values(["category", "source"])
+        save_table(semantic_error_frequency, "05_semantic_error_category_frequency_compare")
+
+        semantic_error_sets = (
+            semantic_error_flags.assign(
+                manual_label=lambda df: np.where(df["manual_present"], df["category"].astype(str), None),
+                mlqa_label=lambda df: np.where(df["mlqa_present"], df["category"].astype(str), None),
+            )
+            .groupby(["building_id", "country"], as_index=False)
+            .agg(
+                manual_labels=("manual_label", lambda s: sorted(x for x in s if pd.notna(x))),
+                mlqa_labels=("mlqa_label", lambda s: sorted(x for x in s if pd.notna(x))),
+            )
+        )
+        semantic_error_sets["exact_set_match"] = (
+            semantic_error_sets["manual_labels"].map(tuple)
+            == semantic_error_sets["mlqa_labels"].map(tuple)
+        )
+        semantic_error_sets["jaccard_similarity"] = semantic_error_sets.apply(
+            lambda row: (
+                len(set(row["manual_labels"]) & set(row["mlqa_labels"]))
+                / len(set(row["manual_labels"]) | set(row["mlqa_labels"]))
+                if set(row["manual_labels"]) | set(row["mlqa_labels"])
+                else 1.0
+            ),
+            axis=1,
+        )
+        semantic_error_case_summary = pd.DataFrame(
+            [
+                {
+                    "paired_cases": int(len(semantic_error_sets)),
+                    "exact_set_match_count": int(semantic_error_sets["exact_set_match"].sum()),
+                    "exact_set_match_pct": round(100 * semantic_error_sets["exact_set_match"].mean(), 1),
+                    "mean_jaccard_similarity": round(semantic_error_sets["jaccard_similarity"].mean(), 3),
+                    "median_jaccard_similarity": round(semantic_error_sets["jaccard_similarity"].median(), 3),
+                    "mean_manual_labels_per_case": round(semantic_error_sets["manual_labels"].map(len).mean(), 2),
+                    "mean_mlqa_labels_per_case": round(semantic_error_sets["mlqa_labels"].map(len).mean(), 2),
+                }
+            ]
+        )
+        save_table(semantic_error_case_summary, "05_semantic_error_case_set_agreement")
+
     missing_outputs = read_sql(
         f"""
         with b as (
@@ -1234,6 +1411,10 @@ def build_tables() -> dict[str, pd.DataFrame]:
         "shift_eval": shift_eval,
         "shift_eval_good_post": shift_eval_good_post,
         "shift_country": shift_country,
+        "semantic_error_flags": semantic_error_flags,
+        "semantic_error_agreement": semantic_error_agreement,
+        "semantic_error_frequency": semantic_error_frequency,
+        "semantic_error_case_summary": semantic_error_case_summary,
         "missing_outputs": missing_outputs,
         "pipeline_dropoff": pipeline_dropoff,
         "stage_comparison": stage_comparison,
@@ -2352,6 +2533,9 @@ def build_notebooks() -> None:
             show_table("01_country_pipeline_coverage")
             show_table("05_missing_outputs_by_country")
             show_table("05_mlqa_error_counts")
+            show_table("05_semantic_error_category_frequency_compare")
+            show_table("05_semantic_error_category_agreement")
+            show_table("05_semantic_error_case_set_agreement")
             show_figure("05_mlqa_presence_classes_by_country")
             show_figure("05_output_status_by_country")
             """,
