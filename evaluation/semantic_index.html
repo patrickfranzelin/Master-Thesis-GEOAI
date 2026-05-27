@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Semantic Description Evaluation</title>
+  <link rel="stylesheet" href="semantic_style.css">
+</head>
+<body>
+<div id="app">
+  <div id="image-container">
+    <img id="patch" src="" alt="Building patch">
+  </div>
+
+  <div id="controls">
+    <div id="header">
+      <h2 id="title">Semantic Description</h2>
+      <div id="progress-wrap">
+        <div id="progress-track"><div id="progress-bar"></div></div>
+        <span id="progress-label">0 / 0 done</span>
+      </div>
+    </div>
+
+    <div id="jump-controls">
+      <input id="jump-input" type="number" placeholder="Go to #">
+      <button onclick="jumpTo()">Go</button>
+    </div>
+
+    <div class="sentence-card">
+      <p class="label">MLQA sentence</p>
+      <p id="sentence"></p>
+    </div>
+
+    <div class="question">
+      <p class="question-label"><span class="q-num">1-4</span> Sentence quality</p>
+      <div class="btn-group" id="quality-group">
+        <button data-value="correct" onclick="answer('sentence_quality','correct',this)">
+          <span class="key-hint">1</span> Correct
+        </button>
+        <button data-value="partly_correct" onclick="answer('sentence_quality','partly_correct',this)">
+          <span class="key-hint">2</span> Partly
+        </button>
+        <button data-value="too_vague" onclick="answer('sentence_quality','too_vague',this)">
+          <span class="key-hint">3</span> Too vague
+        </button>
+        <button data-value="wrong" onclick="answer('sentence_quality','wrong',this)" class="btn-warn">
+          <span class="key-hint">4</span> Wrong
+        </button>
+      </div>
+    </div>
+
+    <div id="validation-error" class="hidden"></div>
+
+    <button id="next-btn" onclick="nextSample()">Next <kbd>Enter</kbd></button>
+  </div>
+</div>
+
+<script src="semantic_app.js"></script>
+</body>
+</html>
