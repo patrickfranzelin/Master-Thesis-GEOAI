@@ -5,9 +5,12 @@ All database access is read-only and targets the src_google schema.
 
 from __future__ import annotations
 
+import json
 import os
+import re
 import textwrap
 import warnings
+from collections import Counter
 from pathlib import Path
 
 import matplotlib
@@ -36,14 +39,19 @@ if not PG_CONN:
 
 engine = create_engine(PG_CONN)
 
-sns.set_theme(context="paper", style="whitegrid", font_scale=1.1)
+sns.set_theme(context="paper", style="whitegrid", font_scale=1.35)
 plt.rcParams.update(
     {
         "figure.dpi": 120,
         "savefig.dpi": 300,
         "axes.titleweight": "bold",
-        "axes.labelsize": 11,
-        "axes.titlesize": 12,
+        "axes.labelsize": 14,
+        "axes.titlesize": 16,
+        "xtick.labelsize": 12,
+        "ytick.labelsize": 12,
+        "legend.fontsize": 12,
+        "legend.title_fontsize": 12,
+        "figure.titlesize": 17,
         "legend.frameon": False,
     }
 )
@@ -75,8 +83,8 @@ ERROR_COLORS = {
     "MISSING_PARTS": "#C7545A",
     "EXTRA_PARTS": "#7A4FA3",
 }
-INCLUDED_COUNTRIES = ["Liberia", "Mexico", "Mozambique", "Nepal", "Niger"]
-INCLUDED_COUNTRY_SQL = "('Liberia', 'Mexico', 'Mozambique', 'Nepal', 'Niger')"
+INCLUDED_COUNTRIES = ["Niger", "Mozambique", "Liberia", "Mexico", "Nepal"]
+INCLUDED_COUNTRY_SQL = "('Niger', 'Mozambique', 'Liberia', 'Mexico', 'Nepal')"
 
 COUNTRY_CASE_B = """
 case
@@ -163,6 +171,168 @@ def save_fig(fig, name: str, tight: bool = True) -> None:
     plt.close(fig)
 
 
+SENTENCE_CATEGORY_PATTERNS = {
+    "SHIFTED": [
+        r"\bshift(?:ed|s|ing)?\b",
+        r"\boffset\b",
+        r"\bmisalign(?:ed|ment)?\b",
+        r"\bdisplaced\b",
+        r"\bnot aligned\b",
+        r"\baway from\b",
+    ],
+    "SHAPE_MISMATCH": [
+        r"\bshape\b",
+        r"\bform\b",
+        r"\bwrong\b",
+        r"\bincorrect\b",
+        r"\bmismatch(?:ed)?\b",
+        r"\bdoes not match\b",
+        r"\bnot match(?:ing)?\b",
+        r"\bnot follow(?:ing)?\b",
+        r"\bdeviat(?:e|es|ing|ion)\b",
+        r"\bdistort(?:ed|ion)?\b",
+        r"\birregular\b",
+    ],
+    "OVERSIMPLIFIED": [
+        r"\boversimplif(?:ied|ication|y)\b",
+        r"\btoo simplified\b",
+        r"\bover simplified\b",
+        r"\blacks detail\b",
+        r"\blacking detail\b",
+        r"\blow detail\b",
+        r"\btoo simple\b",
+        r"\bgeneraliz(?:ed|ation)\b",
+    ],
+    "MISSING_PARTS": [
+        r"\bmissing\b",
+        r"\bomitted\b",
+        r"\bincomplete\b",
+        r"\bnot fully (?:cover|enclose|capture)",
+        r"\bdoes not fully (?:cover|enclose|capture)",
+        r"\bparts? (?:of )?(?:the )?(?:building|roof) (?:outside|not covered)",
+        r"\bcut off\b",
+        r"\buncovered\b",
+    ],
+    "EXTRA_PARTS": [
+        r"\bextra\b",
+        r"\bincludes?\b",
+        r"\bnon[- ]building\b",
+        r"\bsurrounding (?:area|green|ground|vegetation)\b",
+        r"\bbeyond\b",
+        r"\bextend(?:s|ed|ing)? into\b",
+        r"\boutside the building\b",
+        r"\btoo large\b",
+        r"\bover(?:-| )?extends?\b",
+    ],
+}
+
+TEXT_STOPWORDS = {
+    "a",
+    "an",
+    "and",
+    "are",
+    "as",
+    "at",
+    "be",
+    "building",
+    "buildings",
+    "by",
+    "compared",
+    "from",
+    "green",
+    "has",
+    "have",
+    "in",
+    "is",
+    "it",
+    "its",
+    "of",
+    "on",
+    "or",
+    "outline",
+    "polygon",
+    "roof",
+    "some",
+    "the",
+    "to",
+    "with",
+}
+
+
+def extract_sentence_categories(description: str) -> list[str]:
+    text_value = str(description or "").lower()
+    categories = []
+    for category in ERROR_ORDER:
+        patterns = SENTENCE_CATEGORY_PATTERNS[category]
+        if any(re.search(pattern, text_value) for pattern in patterns):
+            categories.append(category)
+    return categories
+
+
+def tokenize_description(description: str) -> list[str]:
+    tokens = re.findall(r"[a-z][a-z\-]{2,}", str(description or "").lower())
+    return [token for token in tokens if token not in TEXT_STOPWORDS]
+
+
+def normalize_json_list(value) -> list[str]:
+    if isinstance(value, list):
+        return [str(item) for item in value]
+    if pd.isna(value):
+        return []
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+        except Exception:
+            return []
+        if isinstance(parsed, list):
+            return [str(item) for item in parsed]
+    return []
+
+
+def metric_rows_from_flags(
+    flags: pd.DataFrame,
+    predicted_col: str,
+    predicted_name: str,
+) -> pd.DataFrame:
+    rows = []
+    for category, group in flags.groupby("category", sort=False):
+        manual = group["manual_present"]
+        predicted = group[predicted_col]
+        tp = int((manual & predicted).sum())
+        fp = int((~manual & predicted).sum())
+        fn = int((manual & ~predicted).sum())
+        tn = int((~manual & ~predicted).sum())
+        precision = tp / (tp + fp) if tp + fp else np.nan
+        recall = tp / (tp + fn) if tp + fn else np.nan
+        f1 = 2 * precision * recall / (precision + recall) if precision + recall else np.nan
+        rows.append(
+            {
+                "source": predicted_name,
+                "category": category,
+                "paired_cases": int(group["building_id"].nunique()),
+                "manual_count": int(manual.sum()),
+                "predicted_count": int(predicted.sum()),
+                "true_positive": tp,
+                "false_positive": fp,
+                "false_negative": fn,
+                "true_negative": tn,
+                "precision": round(precision, 3) if not pd.isna(precision) else np.nan,
+                "recall": round(recall, 3) if not pd.isna(recall) else np.nan,
+                "f1": round(f1, 3) if not pd.isna(f1) else np.nan,
+                "accuracy": round((tp + tn) / len(group), 3) if len(group) else np.nan,
+                "predicted_minus_manual_count": int(predicted.sum() - manual.sum()),
+                "predicted_manual_count_ratio": round(predicted.sum() / manual.sum(), 2)
+                if manual.sum()
+                else np.nan,
+            }
+        )
+    out = pd.DataFrame(rows)
+    if not out.empty:
+        out["category"] = pd.Categorical(out["category"], categories=ERROR_ORDER, ordered=True)
+        out = out.sort_values("category")
+    return out
+
+
 def build_tables() -> dict[str, pd.DataFrame]:
     table_counts = read_sql(
         f"""
@@ -216,9 +386,30 @@ def build_tables() -> dict[str, pd.DataFrame]:
     ).round(1)
     save_table(coverage, "01_country_pipeline_coverage")
 
+    dup_summary = read_sql(
+        f"""
+        select 'evaluation_rows' as metric, count(*)::int as value
+        from src_google.evaluation e
+        join src_google.buildings b on b.id = e.building_id
+        where {COUNTRY_CASE_B} in {INCLUDED_COUNTRY_SQL}
+        union all
+        select 'distinct_evaluated_buildings', count(distinct e.building_id)::int
+        from src_google.evaluation e
+        join src_google.buildings b on b.id = e.building_id
+        where {COUNTRY_CASE_B} in {INCLUDED_COUNTRY_SQL}
+        union all
+        select 'duplicate_rows', (count(*) - count(distinct e.building_id))::int
+        from src_google.evaluation e
+        join src_google.buildings b on b.id = e.building_id
+        where {COUNTRY_CASE_B} in {INCLUDED_COUNTRY_SQL}
+        """
+    )
+    save_table(dup_summary, "02_evaluation_duplicate_summary")
+
     eval_rows = read_sql(
         f"""
-        select e.id, e.building_id, e.original,
+        select distinct on (e.building_id)
+               e.id, e.building_id, e.original,
                e.sam as post_introduced_new_errors,
                e.post, e.tags, e.has_post, e.created_at,
                {COUNTRY_CASE_B} as country,
@@ -227,6 +418,7 @@ def build_tables() -> dict[str, pd.DataFrame]:
         from src_google.evaluation e
         join src_google.buildings b on b.id = e.building_id
         where {COUNTRY_CASE_B} in {INCLUDED_COUNTRY_SQL}
+        order by e.building_id, e.created_at desc, e.id desc
         """
     )
     eval_rows["change"] = np.select(
@@ -237,22 +429,6 @@ def build_tables() -> dict[str, pd.DataFrame]:
         ["improved", "degraded"],
         default="unchanged",
     )
-
-    dup_summary = pd.DataFrame(
-        {
-            "metric": [
-                "evaluation_rows",
-                "distinct_evaluated_buildings",
-                "duplicate_rows",
-            ],
-            "value": [
-                len(eval_rows),
-                eval_rows["building_id"].nunique(),
-                len(eval_rows) - eval_rows["building_id"].nunique(),
-            ],
-        }
-    )
-    save_table(dup_summary, "02_evaluation_duplicate_summary")
 
     rating_dist = pd.concat(
         [
@@ -358,17 +534,31 @@ def build_tables() -> dict[str, pd.DataFrame]:
     save_table(new_errors, "02_postprocessing_new_error_frequency")
 
     original_errors = read_sql(
-        """
+        f"""
+        with ev_latest as (
+          select distinct on (e.building_id) e.*
+          from src_google.evaluation e
+          join src_google.buildings b on b.id = e.building_id
+          where {COUNTRY_CASE_B} in {INCLUDED_COUNTRY_SQL}
+          order by e.building_id, e.created_at desc, e.id desc
+        )
         select x.err as error_type, count(*)::int as count
-        from src_google.evaluation e
+        from ev_latest e
         cross join lateral jsonb_array_elements_text(coalesce(e.tags->'original_errors', '[]'::jsonb)) as x(err)
         group by x.err order by count desc
         """
     )
     post_errors = read_sql(
-        """
+        f"""
+        with ev_latest as (
+          select distinct on (e.building_id) e.*
+          from src_google.evaluation e
+          join src_google.buildings b on b.id = e.building_id
+          where {COUNTRY_CASE_B} in {INCLUDED_COUNTRY_SQL}
+          order by e.building_id, e.created_at desc, e.id desc
+        )
         select x.err as error_type, count(*)::int as count
-        from src_google.evaluation e
+        from ev_latest e
         cross join lateral jsonb_array_elements_text(coalesce(e.tags->'post_errors', '[]'::jsonb)) as x(err)
         group by x.err order by count desc
         """
@@ -381,8 +571,13 @@ def build_tables() -> dict[str, pd.DataFrame]:
 
     country_original_errors = read_sql(
         f"""
+        with ev_latest as (
+          select distinct on (e.building_id) e.*
+          from src_google.evaluation e
+          order by e.building_id, e.created_at desc, e.id desc
+        )
         select {COUNTRY_CASE_B} as country, x.err as error_type, count(*)::int as count
-        from src_google.evaluation e
+        from ev_latest e
         join src_google.buildings b on b.id=e.building_id
         cross join lateral jsonb_array_elements_text(coalesce(e.tags->'original_errors', '[]'::jsonb)) as x(err)
         where {COUNTRY_CASE_B} in {INCLUDED_COUNTRY_SQL}
@@ -391,8 +586,13 @@ def build_tables() -> dict[str, pd.DataFrame]:
     )
     country_post_errors = read_sql(
         f"""
+        with ev_latest as (
+          select distinct on (e.building_id) e.*
+          from src_google.evaluation e
+          order by e.building_id, e.created_at desc, e.id desc
+        )
         select {COUNTRY_CASE_B} as country, x.err as error_type, count(*)::int as count
-        from src_google.evaluation e
+        from ev_latest e
         join src_google.buildings b on b.id=e.building_id
         cross join lateral jsonb_array_elements_text(coalesce(e.tags->'post_errors', '[]'::jsonb)) as x(err)
         where {COUNTRY_CASE_B} in {INCLUDED_COUNTRY_SQL}
@@ -409,8 +609,13 @@ def build_tables() -> dict[str, pd.DataFrame]:
     )
     country_original_error_cases = read_sql(
         f"""
+        with ev_latest as (
+          select distinct on (e.building_id) e.*
+          from src_google.evaluation e
+          order by e.building_id, e.created_at desc, e.id desc
+        )
         select {COUNTRY_CASE_B} as country, x.err as error_type, count(distinct e.id)::int as count
-        from src_google.evaluation e
+        from ev_latest e
         join src_google.buildings b on b.id=e.building_id
         cross join lateral jsonb_array_elements_text(coalesce(e.tags->'original_errors', '[]'::jsonb)) as x(err)
         where {COUNTRY_CASE_B} in {INCLUDED_COUNTRY_SQL}
@@ -419,8 +624,13 @@ def build_tables() -> dict[str, pd.DataFrame]:
     )
     country_post_error_cases = read_sql(
         f"""
+        with ev_latest as (
+          select distinct on (e.building_id) e.*
+          from src_google.evaluation e
+          order by e.building_id, e.created_at desc, e.id desc
+        )
         select {COUNTRY_CASE_B} as country, x.err as error_type, count(distinct e.id)::int as count
-        from src_google.evaluation e
+        from ev_latest e
         join src_google.buildings b on b.id=e.building_id
         cross join lateral jsonb_array_elements_text(coalesce(e.tags->'post_errors', '[]'::jsonb)) as x(err)
         where {COUNTRY_CASE_B} in {INCLUDED_COUNTRY_SQL}
@@ -1259,6 +1469,217 @@ def build_tables() -> dict[str, pd.DataFrame]:
         )
         save_table(semantic_error_case_summary, "05_semantic_error_case_set_agreement")
 
+    sentence_error_rows = read_sql(
+        f"""
+        with ev_latest as (
+          select distinct on (e.building_id)
+            e.building_id,
+            {COUNTRY_CASE_B} as country,
+            coalesce(e.tags->'original_errors', '[]'::jsonb) as manual_errors
+          from src_google.evaluation e
+          join src_google.buildings b on b.id = e.building_id
+          where {COUNTRY_CASE_B} in {INCLUDED_COUNTRY_SQL}
+          order by e.building_id, e.created_at desc, e.id desc
+        ), mlqa_latest as (
+          select distinct on (m.building_id)
+            m.building_id,
+            m.error_description
+          from src_google.building_mlqa m
+          where nullif(trim(m.error_description), '') is not null
+            and m.error_description not like 'MLQA_PARSE_ERROR:%'
+            and lower(trim(m.error_description)) <> 'no building detected'
+            and coalesce(m.house_present, true) = true
+          order by m.building_id, m.analyzed_at desc
+        )
+        select
+          ev.building_id,
+          ev.country,
+          ev.manual_errors,
+          mlqa.error_description
+        from ev_latest ev
+        join mlqa_latest mlqa on mlqa.building_id = ev.building_id
+        order by ev.country, ev.building_id
+        """
+    )
+
+    if sentence_error_rows.empty:
+        sentence_error_flags = pd.DataFrame()
+        sentence_error_agreement = pd.DataFrame()
+        sentence_error_frequency = pd.DataFrame()
+        sentence_error_case_summary = pd.DataFrame()
+        sentence_error_word_frequency = pd.DataFrame()
+        sentence_error_bigram_frequency = pd.DataFrame()
+    else:
+        sentence_error_rows["extracted_categories"] = sentence_error_rows[
+            "error_description"
+        ].map(extract_sentence_categories)
+        sentence_error_rows["manual_categories"] = sentence_error_rows["manual_errors"].map(
+            normalize_json_list
+        )
+        save_table(
+            sentence_error_rows[
+                [
+                    "building_id",
+                    "country",
+                    "error_description",
+                    "manual_categories",
+                    "extracted_categories",
+                ]
+            ],
+            "05_sentence_error_description_category_extraction_raw",
+        )
+
+        sentence_flag_rows = []
+        for row in sentence_error_rows.itertuples(index=False):
+            manual_set = set(row.manual_categories)
+            extracted_set = set(row.extracted_categories)
+            for category in ERROR_ORDER:
+                sentence_flag_rows.append(
+                    {
+                        "building_id": row.building_id,
+                        "country": row.country,
+                        "category": category,
+                        "manual_present": category in manual_set,
+                        "sentence_extracted_present": category in extracted_set,
+                    }
+                )
+        sentence_error_flags = pd.DataFrame(sentence_flag_rows)
+        save_table(sentence_error_flags, "05_sentence_error_description_category_flags")
+
+        sentence_error_agreement = metric_rows_from_flags(
+            sentence_error_flags,
+            "sentence_extracted_present",
+            "Sentence keyword extraction",
+        )
+        save_table(sentence_error_agreement, "05_sentence_error_description_category_agreement")
+
+        paired_sentence_cases = sentence_error_flags["building_id"].nunique()
+        total_manual_sentence_labels = int(sentence_error_flags["manual_present"].sum())
+        total_extracted_sentence_labels = int(
+            sentence_error_flags["sentence_extracted_present"].sum()
+        )
+        sentence_frequency_rows = []
+        for category, group in sentence_error_flags.groupby("category", sort=False):
+            manual_count = int(group["manual_present"].sum())
+            extracted_count = int(group["sentence_extracted_present"].sum())
+            sentence_frequency_rows.extend(
+                [
+                    {
+                        "source": "Manual original errors",
+                        "category": category,
+                        "count": manual_count,
+                        "share_of_cases_pct": round(100 * manual_count / paired_sentence_cases, 1),
+                        "share_of_all_labels_pct": round(
+                            100 * manual_count / total_manual_sentence_labels, 1
+                        )
+                        if total_manual_sentence_labels
+                        else np.nan,
+                    },
+                    {
+                        "source": "Sentence keyword extraction",
+                        "category": category,
+                        "count": extracted_count,
+                        "share_of_cases_pct": round(
+                            100 * extracted_count / paired_sentence_cases, 1
+                        ),
+                        "share_of_all_labels_pct": round(
+                            100 * extracted_count / total_extracted_sentence_labels, 1
+                        )
+                        if total_extracted_sentence_labels
+                        else np.nan,
+                    },
+                ]
+            )
+        sentence_error_frequency = pd.DataFrame(sentence_frequency_rows)
+        sentence_error_frequency["category"] = pd.Categorical(
+            sentence_error_frequency["category"], categories=ERROR_ORDER, ordered=True
+        )
+        sentence_error_frequency = sentence_error_frequency.sort_values(["category", "source"])
+        save_table(sentence_error_frequency, "05_sentence_error_description_category_frequency")
+
+        sentence_sets = sentence_error_rows.copy()
+        sentence_sets["exact_set_match"] = (
+            sentence_sets["manual_categories"].map(lambda x: tuple(sorted(x)))
+            == sentence_sets["extracted_categories"].map(lambda x: tuple(sorted(x)))
+        )
+        sentence_sets["jaccard_similarity"] = sentence_sets.apply(
+            lambda row: (
+                len(set(row["manual_categories"]) & set(row["extracted_categories"]))
+                / len(set(row["manual_categories"]) | set(row["extracted_categories"]))
+                if set(row["manual_categories"]) | set(row["extracted_categories"])
+                else 1.0
+            ),
+            axis=1,
+        )
+        sentence_error_case_summary = pd.DataFrame(
+            [
+                {
+                    "paired_cases": int(len(sentence_sets)),
+                    "exact_set_match_count": int(sentence_sets["exact_set_match"].sum()),
+                    "exact_set_match_pct": round(100 * sentence_sets["exact_set_match"].mean(), 1),
+                    "mean_jaccard_similarity": round(sentence_sets["jaccard_similarity"].mean(), 3),
+                    "median_jaccard_similarity": round(
+                        sentence_sets["jaccard_similarity"].median(), 3
+                    ),
+                    "mean_manual_labels_per_case": round(
+                        sentence_sets["manual_categories"].map(len).mean(), 2
+                    ),
+                    "mean_extracted_labels_per_case": round(
+                        sentence_sets["extracted_categories"].map(len).mean(), 2
+                    ),
+                }
+            ]
+        )
+        save_table(sentence_error_case_summary, "05_sentence_error_description_case_set_agreement")
+
+        token_counter = Counter()
+        bigram_counter = Counter()
+        for description in sentence_error_rows["error_description"]:
+            tokens = tokenize_description(description)
+            token_counter.update(tokens)
+            bigram_counter.update(zip(tokens, tokens[1:]))
+        sentence_error_word_frequency = pd.DataFrame(
+            [
+                {"word": word, "count": count}
+                for word, count in token_counter.most_common(40)
+            ]
+        )
+        sentence_error_bigram_frequency = pd.DataFrame(
+            [
+                {"bigram": f"{left} {right}", "count": count}
+                for (left, right), count in bigram_counter.most_common(40)
+            ]
+        )
+        save_table(sentence_error_word_frequency, "05_sentence_error_description_word_frequency")
+        save_table(sentence_error_bigram_frequency, "05_sentence_error_description_bigram_frequency")
+
+    semantic_quality_summary = read_sql(
+        """
+        with ranked as (
+          select
+            id,
+            building_id,
+            sentence_quality,
+            created_at,
+            row_number() over (
+              partition by building_id
+              order by created_at desc, id desc
+            ) as row_number
+          from src_google.semantic_description_evaluation
+        )
+        select 'all_rows' as scope, sentence_quality, count(*)::int as count
+        from ranked
+        group by sentence_quality
+        union all
+        select 'latest_per_building', sentence_quality, count(*)::int
+        from ranked
+        where row_number = 1
+        group by sentence_quality
+        order by scope, sentence_quality
+        """
+    )
+    save_table(semantic_quality_summary, "05_semantic_description_qualitative_summary")
+
     missing_outputs = read_sql(
         f"""
         with b as (
@@ -1415,6 +1836,13 @@ def build_tables() -> dict[str, pd.DataFrame]:
         "semantic_error_agreement": semantic_error_agreement,
         "semantic_error_frequency": semantic_error_frequency,
         "semantic_error_case_summary": semantic_error_case_summary,
+        "sentence_error_flags": sentence_error_flags,
+        "sentence_error_agreement": sentence_error_agreement,
+        "sentence_error_frequency": sentence_error_frequency,
+        "sentence_error_case_summary": sentence_error_case_summary,
+        "sentence_error_word_frequency": sentence_error_word_frequency,
+        "sentence_error_bigram_frequency": sentence_error_bigram_frequency,
+        "semantic_quality_summary": semantic_quality_summary,
         "missing_outputs": missing_outputs,
         "pipeline_dropoff": pipeline_dropoff,
         "stage_comparison": stage_comparison,
@@ -1507,6 +1935,7 @@ def build_figures(data: dict[str, pd.DataFrame]) -> None:
         x="country",
         y="percentage",
         hue="change",
+        order=INCLUDED_COUNTRIES,
         hue_order=["improved", "unchanged", "degraded"],
         ax=ax,
         palette=[PALETTE["improved"], PALETTE["unchanged"], PALETTE["degraded"]],
@@ -1515,7 +1944,7 @@ def build_figures(data: dict[str, pd.DataFrame]) -> None:
     ax.set_xlabel("Country / AOI")
     ax.set_ylabel("Share of evaluated samples (%)")
     ax.tick_params(axis="x", rotation=25)
-    ax.legend(title="Change")
+    ax.legend(title="Change", bbox_to_anchor=(1.02, 1), loc="upper left", borderaxespad=0)
     save_fig(fig, "02_country_improvement_rates")
 
     fig, ax = plt.subplots(figsize=(8.0, 4.8))
@@ -1550,93 +1979,56 @@ def build_figures(data: dict[str, pd.DataFrame]) -> None:
     )
     error_profile = error_profile.sort_values(["country", "stage", "error_type"])
 
-    fig = plt.figure(figsize=(11.4, 7.8))
-    grid = fig.add_gridspec(2, 1, height_ratios=[1.35, 1.0], hspace=0.50)
-    ax_bar = fig.add_subplot(grid[0])
-    ax_heat = fig.add_subplot(grid[1])
+    fig, axes = plt.subplots(3, 2, figsize=(11.4, 8.4), sharex=True, sharey=True)
+    axes = axes.ravel()
+    profile_idx = error_profile.set_index(["country", "stage", "error_type"])["share_pct"]
+    y_positions = np.arange(len(ERROR_ORDER))
+    bar_height = 0.36
+    display_error_labels = [label.replace("_", " ").title() for label in ERROR_ORDER]
 
-    bar_rows = []
-    y_positions = []
-    y_labels = []
-    y = 0
-    for country in location_order:
-        for stage in stage_order:
-            bar_rows.append((country, stage))
-            y_positions.append(y)
-            y_labels.append(f"{country} | {'Original' if stage == 'Original Google' else 'Post'}")
-            y += 1
-        y += 0.45
-
-    profile_idx = error_profile.set_index(["country", "stage", "error_type"])
-    for error_type in ERROR_ORDER:
-        left = []
-        widths = []
-        for country, stage in bar_rows:
-            previous = sum(
-                profile_idx.loc[(country, stage, earlier), "share_pct"]
-                for earlier in ERROR_ORDER[: ERROR_ORDER.index(error_type)]
-            )
-            left.append(previous)
-            widths.append(profile_idx.loc[(country, stage, error_type), "share_pct"])
-        ax_bar.barh(
-            y_positions,
-            widths,
-            left=left,
-            height=0.78,
-            color=ERROR_COLORS[error_type],
-            edgecolor="white",
-            linewidth=0.7,
-            label=error_type.replace("_", " ").title(),
+    for ax, country in zip(axes, location_order):
+        original_values = [
+            profile_idx.loc[(country, "Original Google", error_type)] for error_type in ERROR_ORDER
+        ]
+        post_values = [
+            profile_idx.loc[(country, "Postprocessed", error_type)] for error_type in ERROR_ORDER
+        ]
+        ax.barh(
+            y_positions - bar_height / 2,
+            original_values,
+            height=bar_height,
+            color=PALETTE["original"],
+            label="Original Google",
         )
+        ax.barh(
+            y_positions + bar_height / 2,
+            post_values,
+            height=bar_height,
+            color=PALETTE["post"],
+            label="Postprocessed",
+        )
+        ax.set_title(country, fontweight="bold" if country == "Total" else "normal")
+        ax.set_xlim(0, 100)
+        ax.grid(axis="x", color="#D0D0D0", linewidth=0.7, alpha=0.8)
+        ax.set_axisbelow(True)
+        for y_pos, original, post in zip(y_positions, original_values, post_values):
+            if original >= 8:
+                ax.text(original + 1.0, y_pos - bar_height / 2, f"{original:.1f}", va="center", fontsize=10)
+            if post >= 8:
+                ax.text(post + 1.0, y_pos + bar_height / 2, f"{post:.1f}", va="center", fontsize=10)
 
-    ax_bar.set_xlim(0, 100)
-    ax_bar.set_yticks(y_positions)
-    ax_bar.set_yticklabels(y_labels)
-    ax_bar.invert_yaxis()
-    ax_bar.set_xlabel("Share of evaluated cases (%)")
-    ax_bar.set_title("Error profile by location and total", pad=14)
-    ax_bar.legend(
-        ncol=5,
-        loc="upper center",
-        bbox_to_anchor=(0.5, 1.24),
-        columnspacing=1.2,
-        handlelength=1.8,
-    )
-
-    original_share = (
-        error_profile[error_profile["stage"] == "Original Google"]
-        .pivot(index="country", columns="error_type", values="share_pct")
-        .reindex(index=location_order, columns=ERROR_ORDER)
-    )
-    post_share = (
-        error_profile[error_profile["stage"] == "Postprocessed"]
-        .pivot(index="country", columns="error_type", values="share_pct")
-        .reindex(index=location_order, columns=ERROR_ORDER)
-    )
-    delta_share = post_share - original_share
-    max_abs_delta = float(np.nanmax(np.abs(delta_share.to_numpy())))
-    sns.heatmap(
-        delta_share,
-        annot=True,
-        fmt=".1f",
-        cmap="RdBu_r",
-        center=0,
-        vmin=-max_abs_delta,
-        vmax=max_abs_delta,
-        linewidths=0.6,
-        linecolor="white",
-        cbar_kws={"label": "Share change (percentage points)"},
-        ax=ax_heat,
-    )
-    ax_heat.set_title("Shift in error composition after postprocessing")
-    ax_heat.set_xlabel("")
-    ax_heat.set_ylabel("")
-    ax_heat.set_xticklabels(
-        [label.get_text().replace("_", " ").title() for label in ax_heat.get_xticklabels()],
-        rotation=25,
-        ha="right",
-    )
-    fig.subplots_adjust(left=0.16, right=0.92, top=0.86, bottom=0.14)
+    for ax in axes[::2]:
+        ax.set_yticks(y_positions)
+        ax.set_yticklabels(display_error_labels)
+    for ax in axes[1::2]:
+        ax.tick_params(axis="y", labelleft=False)
+    for ax in axes[-2:]:
+        ax.set_xlabel("Share of evaluated cases (%)")
+    axes[0].invert_yaxis()
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="upper center", ncol=2, frameon=False, bbox_to_anchor=(0.5, 0.98))
+    fig.suptitle("Error profile by location and total", y=0.94)
+    fig.subplots_adjust(left=0.18, right=0.98, top=0.87, bottom=0.08, hspace=0.34, wspace=0.20)
     save_fig(fig, "02_error_categories_by_location_total", tight=False)
 
     agreement_order = [
@@ -1712,7 +2104,7 @@ def build_figures(data: dict[str, pd.DataFrame]) -> None:
     ax.set_ylabel("Area ratio, outliers hidden")
     save_fig(fig, "03_area_ratio_distribution")
 
-    fig, ax = plt.subplots(figsize=(7.6, 4.8))
+    fig, ax = plt.subplots(figsize=(8.8, 4.8))
     area_quality_df = geom_eval.dropna(subset=["post", "post_abs_area_error_pct"]).copy()
     area_quality_df = area_quality_df[
         area_quality_df["post_abs_area_error_pct"]
@@ -1869,7 +2261,7 @@ def build_figures(data: dict[str, pd.DataFrame]) -> None:
             length_includes_head=True,
             linewidth=1.8,
         )
-        ax.text(row["avg_post_dx_m"] * 1.07, row["avg_post_dy_m"] * 1.07, row["country"], fontsize=9)
+        ax.text(row["avg_post_dx_m"] * 1.07, row["avg_post_dy_m"] * 1.07, row["country"], fontsize=11)
     lim = max(abs(shift_country["avg_post_dx_m"]).max(), abs(shift_country["avg_post_dy_m"]).max()) + 0.8
     ax.axhline(0, color="grey", linewidth=0.8)
     ax.axvline(0, color="grey", linewidth=0.8)
@@ -1928,13 +2320,15 @@ def build_figures(data: dict[str, pd.DataFrame]) -> None:
             )
             ax.axhline(0, color="grey", linewidth=0.7)
             ax.axvline(0, color="grey", linewidth=0.7)
-            ax.set_title(f"{country} (n={len(country_df)})", fontsize=10)
+            ax.set_title(f"{country} (n={len(country_df)})", fontsize=12)
             ax.set_xlim(-lim, lim)
             ax.set_ylim(-lim, lim)
             ax.set_xticks(major_ticks)
             ax.set_yticks(major_ticks)
             ax.set_xticks(minor_ticks, minor=True)
             ax.set_yticks(minor_ticks, minor=True)
+            ax.set_xlabel("")
+            ax.set_ylabel("")
             ax.set_aspect("equal", adjustable="box")
             ax.set_axisbelow(True)
             ax.grid(True, which="major", linewidth=0.65, alpha=0.45, color="#8A8A8A")
@@ -1943,7 +2337,7 @@ def build_figures(data: dict[str, pd.DataFrame]) -> None:
         for ax in flat_axes[len(countries):]:
             ax.axis("off")
 
-        fig.subplots_adjust(bottom=0.16, top=0.9, left=0.09, right=0.98, hspace=0.32, wspace=0.18)
+        fig.subplots_adjust(bottom=0.16, top=0.9, left=0.11, right=0.98, hspace=0.32, wspace=0.18)
         fig.suptitle("Shift-vector cloud for shifted originals by country", fontweight="bold")
         fig.supxlabel("East-west shift dx (m)", y=0.005)
         fig.supylabel("North-south shift dy (m)")
@@ -2005,13 +2399,15 @@ def build_figures(data: dict[str, pd.DataFrame]) -> None:
                 )
                 ax.axhline(0, color="grey", linewidth=0.7)
                 ax.axvline(0, color="grey", linewidth=0.7)
-                ax.set_title(f"{country} (n={len(country_df)})", fontsize=10)
+                ax.set_title(f"{country} (n={len(country_df)})", fontsize=12)
                 ax.set_xlim(-lim_good, lim_good)
                 ax.set_ylim(-lim_good, lim_good)
                 ax.set_xticks(major_ticks_good)
                 ax.set_yticks(major_ticks_good)
                 ax.set_xticks(minor_ticks_good, minor=True)
                 ax.set_yticks(minor_ticks_good, minor=True)
+                ax.set_xlabel("")
+                ax.set_ylabel("")
                 ax.set_aspect("equal", adjustable="box")
                 ax.set_axisbelow(True)
                 ax.grid(True, which="major", linewidth=0.65, alpha=0.45, color="#8A8A8A")
@@ -2020,7 +2416,7 @@ def build_figures(data: dict[str, pd.DataFrame]) -> None:
             for ax in flat_axes[len(countries_good):]:
                 ax.axis("off")
 
-            fig.subplots_adjust(bottom=0.16, top=0.88, left=0.09, right=0.98, hspace=0.32, wspace=0.18)
+            fig.subplots_adjust(bottom=0.16, top=0.88, left=0.11, right=0.98, hspace=0.32, wspace=0.18)
             fig.suptitle(
                 "Shift-vector cloud for shifted originals with good/perfect post result by country",
                 fontweight="bold",
@@ -2360,10 +2756,10 @@ def build_notebooks() -> None:
             ## Location-specific error profile
 
             The location-plus-total error profile should be used when the thesis needs a richer
-            explanation than the global before/after bars alone. The stacked bars compare the
+            explanation than the global before/after bars alone. The grouped bars compare the
             prevalence of each error category over all evaluated cases for every AOI and for the
-            complete evaluation set, while the heatmap shows how strongly each category's share
-            changes after postprocessing.
+            complete evaluation set. Error categories are shown independently because one building
+            can receive multiple error labels.
             """,
             """
             ## Rating scale
@@ -2536,6 +2932,11 @@ def build_notebooks() -> None:
             show_table("05_semantic_error_category_frequency_compare")
             show_table("05_semantic_error_category_agreement")
             show_table("05_semantic_error_case_set_agreement")
+            show_table("05_sentence_error_description_category_frequency")
+            show_table("05_sentence_error_description_category_agreement")
+            show_table("05_sentence_error_description_case_set_agreement")
+            show_table("05_sentence_error_description_word_frequency")
+            show_table("05_sentence_error_description_bigram_frequency")
             show_figure("05_mlqa_presence_classes_by_country")
             show_figure("05_output_status_by_country")
             """,
