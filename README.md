@@ -139,6 +139,19 @@ Current table counts:
 
 Main geometry columns use EPSG:4326. Building inputs are `MULTIPOLYGON`; detected houses, regularized houses, trees, and TIFF extents are `POLYGON`.
 
+## Data Availability
+
+The processed thesis data is available in the Dockerized PostGIS database after running the copy workflow. In this workspace it is exposed at:
+
+```text
+container: geoai-postgis
+host connection: postgresql://postgres:geoai@localhost:5434/geoai
+schemas: src, src_google
+main thesis schema: src_google
+```
+
+The database contains the input footprints, MLQA outputs, SAM detections, regularized footprints, manual evaluation rows, and semantic description evaluations. Raw source imagery and large generated outputs are not committed to GitHub. See `docs/APPENDIX_DATA_AVAILABILITY.md` for the reproducible access notes.
+
 ## Repository Layout
 
 ```text
@@ -234,6 +247,13 @@ The repo includes a Docker Compose setup for an isolated PostGIS copy. This is u
 docker compose up -d db
 .\scripts\db_copy_local_to_docker.ps1 -SourcePassword "<local-db-password>"
 $env:PG_CONN="postgresql://postgres:geoai@localhost:5433/geoai"
+```
+
+On machines where `5433` is already allocated, use another host port:
+
+```powershell
+.\scripts\db_copy_local_to_docker.ps1 -SourcePassword "<local-db-password>" -TargetPort 5434
+$env:PG_CONN="postgresql://postgres:geoai@localhost:5434/geoai"
 ```
 
 See `docs/docker_postgis.md` for details.
