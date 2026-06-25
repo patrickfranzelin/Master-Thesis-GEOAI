@@ -1,8 +1,28 @@
 # Docker PostGIS Workflow
 
-This keeps the local PostgreSQL database intact and copies it into an isolated Docker PostGIS database.
+This repository supports two Docker database workflows:
+
+- `data-db`: run the public GHCR image that already contains the thesis database dump.
+- `db`: start an empty PostGIS database and copy from a local PostgreSQL source.
+
+## Run Public Data Image
+
+```powershell
+docker compose up -d data-db
+$env:PG_CONN="postgresql://postgres:geoai@localhost:5434/geoai"
+```
+
+This uses:
+
+```text
+ghcr.io/patrickfranzelin/master-thesis-geoai-data:latest
+```
+
+The image restores the embedded PostGIS dump on first startup.
 
 ## Start Docker PostGIS
+
+This starts an empty PostGIS database for local copy/import workflows.
 
 ```powershell
 docker compose up -d db
