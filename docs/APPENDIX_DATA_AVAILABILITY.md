@@ -1,13 +1,38 @@
 # Appendix: Data Availability
 
-The thesis data used by this code repository is available as a local Dockerized PostGIS database. The database is not committed to GitHub because it contains large geospatial tables and generated outputs.
+The thesis data used by this code repository is available as a Dockerized PostGIS data image on GitHub Container Registry. The raw database dump is not committed to git; it is embedded into the container image and restored on first startup.
 
-## Docker Access
-
-After starting the Docker database and copying the local source database, access the data with:
+## Public Docker Image
 
 ```text
-container: geoai-postgis
+image: ghcr.io/patrickfranzelin/master-thesis-geoai/postgis-data:latest
+```
+
+The image must be public in GitHub Packages for anonymous users to pull it. If Docker returns an authorization error, open the package settings in GitHub and change package visibility to public.
+
+Run with Docker Compose:
+
+```powershell
+docker compose up -d data-db
+$env:PG_CONN="postgresql://postgres:geoai@localhost:5434/geoai"
+```
+
+Run directly:
+
+```powershell
+docker run --name geoai-postgis-data -p 5434:5432 `
+  -e POSTGRES_DB=geoai `
+  -e POSTGRES_USER=postgres `
+  -e POSTGRES_PASSWORD=geoai `
+  ghcr.io/patrickfranzelin/master-thesis-geoai/postgis-data:latest
+```
+
+## Database Access
+
+After starting the image, access the data with:
+
+```text
+container: geoai-postgis-data
 host: localhost
 port: 5434
 database: geoai
@@ -18,7 +43,9 @@ connection string: postgresql://postgres:geoai@localhost:5434/geoai
 
 If port `5434` is already used on another machine, choose another host port with `-TargetPort` and update the connection string accordingly.
 
-## Copy Workflow
+## Local Copy Workflow
+
+If you maintain a local PostgreSQL source database and want to rebuild the data image, first create or refresh the Docker dump:
 
 ```powershell
 .\scripts\db_copy_local_to_docker.ps1 -SourcePassword "<local-db-password>" -TargetPort 5434
@@ -26,6 +53,13 @@ $env:PG_CONN="postgresql://postgres:geoai@localhost:5434/geoai"
 ```
 
 The copy workflow keeps the original local database unchanged and restores a dump into the Docker volume.
+
+The image build context is under `docker/postgis-data`. Copy the verified dump into that directory before building:
+
+```powershell
+Copy-Item .docker_db_backups\geoai-20260625_114034.dump docker\postgis-data\geoai.dump
+docker build -t ghcr.io/patrickfranzelin/master-thesis-geoai/postgis-data:latest docker/postgis-data
+```
 
 ## Available Schemas
 
@@ -52,10 +86,10 @@ All main geometry columns use EPSG:4326. Building inputs are stored as `MULTIPOL
 
 ## Backup Artifact
 
-The latest verified local Docker import was created from:
+The data image was built from the latest verified local Docker import:
 
 ```text
 .docker_db_backups/geoai-20260625_114034.dump
 ```
 
-This dump is intentionally ignored by git. It can be recreated from the local PostgreSQL source database with the copy script above.
+This dump and `docker/postgis-data/geoai.dump` are intentionally ignored by git. They can be recreated from the local PostgreSQL source database with the copy script above.

@@ -141,10 +141,11 @@ Main geometry columns use EPSG:4326. Building inputs are `MULTIPOLYGON`; detecte
 
 ## Data Availability
 
-The processed thesis data is available in the Dockerized PostGIS database after running the copy workflow. In this workspace it is exposed at:
+The processed thesis data is available as a Dockerized PostGIS data image. The image initializes a `geoai` database with the `src` and `src_google` schemas on first startup.
 
 ```text
-container: geoai-postgis
+image: ghcr.io/patrickfranzelin/master-thesis-geoai/postgis-data:latest
+container: geoai-postgis-data
 host connection: postgresql://postgres:geoai@localhost:5434/geoai
 schemas: src, src_google
 main thesis schema: src_google
@@ -241,7 +242,16 @@ uv run python evaluation/statistics/generate_thesis_statistics.py
 
 ## Docker PostGIS Option
 
-The repo includes a Docker Compose setup for an isolated PostGIS copy. This is useful when you want to keep the local database untouched and work against a containerized copy.
+The repo includes two Docker options.
+
+To run the public data image from GitHub Container Registry:
+
+```powershell
+docker compose up -d data-db
+$env:PG_CONN="postgresql://postgres:geoai@localhost:5434/geoai"
+```
+
+To create an isolated empty PostGIS database and copy from a local source database:
 
 ```powershell
 docker compose up -d db

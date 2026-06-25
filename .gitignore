@@ -3,6 +3,7 @@ data/
 .venv/
 .docker_db_backups/
 .env.docker.local
+docker/postgis-data/geoai.dump
 .git/
 _oldoutputs/
 scripts/SetUpRunpodDou.txt
