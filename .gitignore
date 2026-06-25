@@ -1,6 +1,8 @@
 outputs/
 data/
 .venv/
+.docker_db_backups/
+.env.docker.local
 .git/
 _oldoutputs/
 scripts/SetUpRunpodDou.txt

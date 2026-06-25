@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgis/postgis:18-3.6
+    container_name: geoai-postgis
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${GEOAI_DB_NAME:-geoai}
+      POSTGRES_USER: ${GEOAI_DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${GEOAI_DB_PASSWORD:-geoai}
+    ports:
+      - "${GEOAI_DB_PORT:-5433}:5432"
+    volumes:
+      - geoai_postgis_pg18_root:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${GEOAI_DB_USER:-postgres} -d ${GEOAI_DB_NAME:-geoai}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  geoai_postgis_pg18_root:
