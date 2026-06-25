@@ -144,7 +144,7 @@ Main geometry columns use EPSG:4326. Building inputs are `MULTIPOLYGON`; detecte
 The processed thesis data is available as a Dockerized PostGIS data image. The image initializes a `geoai` database with the `src` and `src_google` schemas on first startup.
 
 ```text
-image: ghcr.io/patrickfranzelin/master-thesis-geoai/postgis-data:latest
+image: ghcr.io/patrickfranzelin/master-thesis-geoai-data:latest
 container: geoai-postgis-data
 host connection: postgresql://postgres:geoai@localhost:5434/geoai
 schemas: src, src_google

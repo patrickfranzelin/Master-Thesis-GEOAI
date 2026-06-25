@@ -18,7 +18,7 @@ services:
       retries: 20
 
   data-db:
-    image: ${GEOAI_DATA_IMAGE:-ghcr.io/patrickfranzelin/master-thesis-geoai/postgis-data:latest}
+    image: ${GEOAI_DATA_IMAGE:-ghcr.io/patrickfranzelin/master-thesis-geoai-data:latest}
     container_name: geoai-postgis-data
     restart: unless-stopped
     environment:

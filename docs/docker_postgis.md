@@ -15,7 +15,7 @@ $env:PG_CONN="postgresql://postgres:geoai@localhost:5434/geoai"
 This uses:
 
 ```text
-ghcr.io/patrickfranzelin/master-thesis-geoai/postgis-data:latest
+ghcr.io/patrickfranzelin/master-thesis-geoai-data:latest
 ```
 
 The image restores the embedded PostGIS dump on first startup.

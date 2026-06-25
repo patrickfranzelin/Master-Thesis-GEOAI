@@ -11,8 +11,8 @@ Copy-Item .docker_db_backups\geoai-20260625_114034.dump docker\postgis-data\geoa
 Build and tag for GitHub Container Registry:
 
 ```powershell
-docker build -t ghcr.io/patrickfranzelin/master-thesis-geoai/postgis-data:latest docker/postgis-data
-docker push ghcr.io/patrickfranzelin/master-thesis-geoai/postgis-data:latest
+docker build -t ghcr.io/patrickfranzelin/master-thesis-geoai-data:latest docker/postgis-data
+docker push ghcr.io/patrickfranzelin/master-thesis-geoai-data:latest
 ```
 
 After pushing, make the package public in GitHub Packages if external users should be able to pull it without authentication.
@@ -24,7 +24,7 @@ docker run --name geoai-postgis-data -p 5434:5432 `
   -e POSTGRES_DB=geoai `
   -e POSTGRES_USER=postgres `
   -e POSTGRES_PASSWORD=geoai `
-  ghcr.io/patrickfranzelin/master-thesis-geoai/postgis-data:latest
+  ghcr.io/patrickfranzelin/master-thesis-geoai-data:latest
 ```
 
 Connection string:

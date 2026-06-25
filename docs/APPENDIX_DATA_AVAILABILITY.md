@@ -5,7 +5,7 @@ The thesis data used by this code repository is available as a Dockerized PostGI
 ## Public Docker Image
 
 ```text
-image: ghcr.io/patrickfranzelin/master-thesis-geoai/postgis-data:latest
+image: ghcr.io/patrickfranzelin/master-thesis-geoai-data:latest
 ```
 
 The image must be public in GitHub Packages for anonymous users to pull it. If Docker returns an authorization error, open the package settings in GitHub and change package visibility to public.
@@ -24,7 +24,7 @@ docker run --name geoai-postgis-data -p 5434:5432 `
   -e POSTGRES_DB=geoai `
   -e POSTGRES_USER=postgres `
   -e POSTGRES_PASSWORD=geoai `
-  ghcr.io/patrickfranzelin/master-thesis-geoai/postgis-data:latest
+  ghcr.io/patrickfranzelin/master-thesis-geoai-data:latest
 ```
 
 ## Database Access
@@ -58,7 +58,7 @@ The image build context is under `docker/postgis-data`. Copy the verified dump i
 
 ```powershell
 Copy-Item .docker_db_backups\geoai-20260625_114034.dump docker\postgis-data\geoai.dump
-docker build -t ghcr.io/patrickfranzelin/master-thesis-geoai/postgis-data:latest docker/postgis-data
+docker build -t ghcr.io/patrickfranzelin/master-thesis-geoai-data:latest docker/postgis-data
 ```
 
 ## Available Schemas
